@@ -159,7 +159,7 @@ function App() {
     if (window.confirm('Bạn có chắc muốn chạy kiểm tra bài viết 6 tháng cho file này? Việc này sẽ gọi API Apify và tốn thời gian.')) {
         try {
             await axios.post(`http://localhost:3001/api/queue/${jobId}/check-activity`, { minDelay: 2000, maxDelay: 5000 });
-            setActiveTab('queue');
+            setActiveTab('check6m');
         } catch (e) {
             alert(e.response?.data?.error || 'Có lỗi xảy ra');
         }
@@ -238,6 +238,9 @@ function App() {
             <button className={`btn-outline ${activeTab === 'history' ? 'neon-text-purple' : ''}`} style={{ borderColor: activeTab === 'history' ? 'var(--neon-purple)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'history' ? 'bold' : 'normal' }} onClick={() => setActiveTab('history')}>
                 Lịch sử
             </button>
+            <button className={`btn-outline ${activeTab === 'check6m' ? 'neon-text-purple' : ''}`} style={{ borderColor: activeTab === 'check6m' ? 'var(--neon-purple)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'check6m' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setActiveTab('check6m')}>
+                <Calendar size={16}/> Kiểm tra 6 tháng
+            </button>
             <button className={`btn-outline ${activeTab === 'api' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'api' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'api' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setActiveTab('api')}>
                 <Key size={16}/> API Keys
             </button>
@@ -246,7 +249,7 @@ function App() {
 
       <div className="flex gap-4 flex-col" style={{ marginTop: '20px' }}>
         
-        {activeTab !== 'api' && (
+        {activeTab !== 'api' && activeTab !== 'check6m' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -286,16 +289,16 @@ function App() {
         </div>
         )}
 
-        <div style={{ marginTop: activeTab !== 'api' ? '32px' : '0' }}>
+        <div style={{ marginTop: activeTab !== 'api' && activeTab !== 'check6m' ? '32px' : '0' }}>
             {activeTab !== 'api' && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }} className={activeTab === 'queue' ? "neon-text-cyan" : "neon-text-purple"}>
-                   {activeTab === 'queue' ? 'Hàng đợi tiến trình' : 'Lịch sử tiến trình'} 
+                   {activeTab === 'queue' ? 'Hàng đợi tiến trình' : activeTab === 'check6m' ? 'Hàng đợi Kiểm tra 6 tháng' : 'Lịch sử tiến trình'} 
                    <span style={{ background: activeTab === 'queue' ? 'var(--neon-purple)' : 'var(--neon-cyan)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '1rem' }}>
-                       {activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)).length : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length}
+                       {activeTab === 'check6m' ? queue.filter(j => j.type === 'CHECK_ACTIVITY').length : activeTab === 'queue' ? queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)).length : queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length}
                    </span>
                 </h2>
-                {activeTab === 'history' && queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length > 0 && (
+                {activeTab === 'history' && queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length > 0 && (
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button onClick={() => handleBatchDownload('alive')} className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Download size={18} /> Tải Link Sống
@@ -313,7 +316,7 @@ function App() {
             
             {activeTab !== 'api' && (
             <AnimatePresence>
-                {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => b.createdAt - a.createdAt)).map(job => {
+                {(activeTab === 'check6m' ? queue.filter(j => j.type === 'CHECK_ACTIVITY') : activeTab === 'queue' ? queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => b.createdAt - a.createdAt)).map(job => {
                     const percent = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
                     return (
                         <motion.div key={job.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, height: 0 }} className="glass-panel p-6" style={{ marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
@@ -407,9 +410,9 @@ function App() {
             </AnimatePresence>
             )}
             
-            {activeTab !== 'api' && (activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).length === 0 && (
+            {activeTab !== 'api' && (activeTab === 'check6m' ? queue.filter(j => j.type === 'CHECK_ACTIVITY') : activeTab === 'queue' ? queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).length === 0 && (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', padding: '40px', border: '1px dashed var(--glass-border)', borderRadius: '16px' }}>
-                    Chưa có tiến trình nào trong {activeTab === 'queue' ? 'hàng đợi' : 'lịch sử'}.{activeTab === 'queue' ? <><br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!</> : ''}
+                    Chưa có tiến trình nào trong {activeTab === 'queue' ? 'hàng đợi' : activeTab === 'check6m' ? 'Kiểm tra 6 tháng' : 'lịch sử'}.{activeTab === 'queue' ? <><br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!</> : ''}
                 </div>
             )}
             
