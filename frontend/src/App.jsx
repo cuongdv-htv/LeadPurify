@@ -126,6 +126,12 @@ function App() {
     });
   };
 
+  const handleClearHistory = async () => {
+    if (window.confirm('Bạn có chắc muốn xóa toàn bộ lịch sử tiến trình không?')) {
+        await axios.post('http://localhost:3001/api/clear-history');
+    }
+  };
+
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
       <header className="text-center mb-4">
@@ -197,9 +203,14 @@ function App() {
                    </span>
                 </h2>
                 {activeTab === 'history' && queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length > 0 && (
-                    <button onClick={handleBatchDownload} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Download size={18} /> Tải toàn bộ kết quả
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button onClick={handleBatchDownload} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Download size={18} /> Tải toàn bộ kết quả
+                        </button>
+                        <button onClick={handleClearHistory} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Trash2 size={18} /> Xóa lịch sử
+                        </button>
+                    </div>
                 )}
             </div>
             <AnimatePresence>

@@ -294,6 +294,12 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   res.json({ success: true, jobId: job.id });
 });
 
+app.post('/api/clear-history', (req, res) => {
+  queue = queue.filter(j => !['COMPLETED', 'ERROR', 'CANCELED', 'REMOVED'].includes(j.status));
+  broadcastQueue();
+  res.json({ success: true });
+});
+
 app.post('/api/queue/:id/:action', (req, res) => {
   const { id, action } = req.params;
   const job = queue.find(j => j.id === id);
