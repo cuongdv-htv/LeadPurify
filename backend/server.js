@@ -96,6 +96,48 @@ async function processQueue() {
   isWorkerRunning = false;
 }
 
+function getFacebookAvatarUrl(fbLink) {
+    if (!fbLink || typeof fbLink !== 'string') return null;
+
+    try {
+        let urlString = fbLink.trim();
+        if (!urlString.startsWith('http')) {
+            urlString = 'https://' + urlString;
+        }
+
+        const urlObj = new URL(urlString);
+        if (!urlObj.hostname.includes('facebook.com') && !urlObj.hostname.includes('fb.com')) {
+            return null;
+        }
+
+        if (urlObj.pathname.includes('profile.php')) {
+            const id = urlObj.searchParams.get('id');
+            if (id) {
+                return `https://graph.facebook.com/${id}/picture?width=800`;
+            }
+        }
+
+        const pathParts = urlObj.pathname.split('/').filter(part => part.length > 0);
+        if (pathParts.length === 0) return null;
+
+        let usernameOrId = null;
+
+        if (pathParts[0] === 'people' && pathParts.length >= 3) {
+            usernameOrId = pathParts[2];
+        } else if (!['people', 'groups', 'events', 'watch', 'marketplace'].includes(pathParts[0])) {
+            usernameOrId = pathParts[0];
+        }
+
+        if (usernameOrId) {
+            return `https://graph.facebook.com/${usernameOrId}/picture?width=800`;
+        }
+
+        return null;
+    } catch (error) {
+        return null; 
+    }
+}
+
 async function runJob(job) {
   pushLog(job, `Khởi tạo tiến trình quét file: ${job.filename}`, 'info');
   const csvFile = fs.readFileSync(job.filePath, 'utf8');
@@ -187,7 +229,15 @@ async function runJob(job) {
                     let imageWorks = false;
                     let currentImgUrl = imgCol ? row[imgCol] : null;
                     
-                    if (currentImgUrl) {
+                    const graphApiAvatar = getFacebookAvatarUrl(fullUrl); 
+                    if (graphApiAvatar) {
+                        if (!imgCol) imgCol = 'Avatar';
+                        row[imgCol] = graphApiAvatar;
+                        imageWorks = true;
+                        pushLog(job, `✅ Lưu ảnh đại diện vĩnh viễn bằng Graph API`, 'success');
+                    }
+                    
+                    if (!imageWorks && currentImgUrl) {
                         const imgPage = await browser.newPage();
                         const imgRes = await imgPage.goto(currentImgUrl, { timeout: 15000 }).catch(() => null);
                         if (imgRes && imgRes.status() === 200) {
