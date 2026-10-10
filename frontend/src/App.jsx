@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock, Eye } from 'lucide-react';
+import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock, Eye, Calendar } from 'lucide-react';
 import './index.css';
 import CsvEditorModal from './components/CsvEditorModal';
 
@@ -145,6 +145,17 @@ function App() {
   const handleClearHistory = async () => {
     if (window.confirm('Bạn có chắc muốn xóa toàn bộ lịch sử tiến trình không?')) {
         await axios.post('http://localhost:3001/api/clear-history');
+    }
+  };
+
+  const handleCheckActivity = async (jobId) => {
+    if (window.confirm('Bạn có chắc muốn chạy kiểm tra bài viết 6 tháng cho file này? Việc này sẽ gọi API Apify và tốn thời gian.')) {
+        try {
+            await axios.post(`http://localhost:3001/api/queue/${jobId}/check-activity`, { minDelay: 2000, maxDelay: 5000 });
+            setActiveTab('queue');
+        } catch (e) {
+            alert(e.response?.data?.error || 'Có lỗi xảy ra');
+        }
     }
   };
 
@@ -314,6 +325,16 @@ function App() {
                                             <button onClick={() => handlePreviewHistory(job.downloadLinks.deadFile, `Dead_${job.filename}`)} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px', borderRight: 'none', borderRadius: '4px 0 0 4px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }} title="Xem trước"><Eye size={14}/></button>
                                             <a href={job.downloadLinks.deadFile} download className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px', borderRadius: '0 4px 4px 0', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Link Chết</a>
                                         </div>
+                                    )}
+                                    {job.downloadLinks.checkedFile && (
+                                        <div style={{ display: 'flex' }}>
+                                            <a href={job.downloadLinks.checkedFile} download className="btn-outline" style={{ borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', padding: '6px 12px', borderRadius: '4px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Kết quả 6 tháng</a>
+                                        </div>
+                                    )}
+                                    {job.status === 'COMPLETED' && job.downloadLinks.aliveFile && !job.downloadLinks.checkedFile && job.type !== 'CHECK_ACTIVITY' && (
+                                        <button onClick={() => handleCheckActivity(job.id)} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '6px 12px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}>
+                                            <Calendar size={14} /> Kiểm tra 6 tháng
+                                        </button>
                                     )}
                                 </div>
                             )}

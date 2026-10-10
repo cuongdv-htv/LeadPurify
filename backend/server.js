@@ -8,6 +8,64 @@ const fs = require('fs');
 const path = require('path');
 const Papa = require('papaparse');
 const crypto = require('crypto');
+const https = require('https');
+
+function callApify(url, token) {
+    return new Promise((resolve, reject) => {
+        const payload = JSON.stringify({
+            startUrls: [{ url }],
+            resultsLimit: 1
+        });
+        const req = https.request(`https://api.apify.com/v2/acts/apify~facebook-posts-scraper/run-sync-get-dataset?token=${token}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    try { resolve(JSON.parse(data)); } catch(e) { reject(e); }
+                } else {
+                    reject(new Error(`Apify error: ${res.statusCode} - ${data}`));
+                }
+            });
+        });
+        req.on('error', reject);
+        req.write(payload);
+        req.end();
+    });
+}
+
+function getApifyKey() {
+    try {
+        const keysPath = path.join(__dirname, 'apify_keys.json');
+        if (!fs.existsSync(keysPath)) return null;
+        let keys = JSON.parse(fs.readFileSync(keysPath, 'utf8'));
+        const activeKey = keys.find(k => k.status === 'active' && k.usage < 400);
+        return activeKey ? activeKey.key : null;
+    } catch(e) { return null; }
+}
+
+function incrementKeyUsage(token) {
+    try {
+        const keysPath = path.join(__dirname, 'apify_keys.json');
+        let keys = JSON.parse(fs.readFileSync(keysPath, 'utf8'));
+        const k = keys.find(k => k.key === token);
+        if (k) { k.usage = (k.usage || 0) + 1; fs.writeFileSync(keysPath, JSON.stringify(keys, null, 2)); }
+    } catch(e) {}
+}
+
+function markKeyAsExpired(token) {
+    try {
+        const keysPath = path.join(__dirname, 'apify_keys.json');
+        let keys = JSON.parse(fs.readFileSync(keysPath, 'utf8'));
+        const k = keys.find(k => k.key === token);
+        if (k) { k.status = 'expired'; fs.writeFileSync(keysPath, JSON.stringify(keys, null, 2)); }
+    } catch(e) {}
+}
 
 const app = express();
 app.use(cors());
@@ -139,6 +197,9 @@ function getFacebookAvatarUrl(fbLink) {
 }
 
 async function runJob(job) {
+  if (job.type === 'CHECK_ACTIVITY') {
+      return runCheckActivityJob(job);
+  }
   pushLog(job, `Khởi tạo tiến trình quét file: ${job.filename}`, 'info');
   const csvFile = fs.readFileSync(job.filePath, 'utf8');
   
@@ -206,6 +267,16 @@ async function runJob(job) {
                   await checkState();
                   page = await browser.newPage();
                   const fullUrl = fbMatch.startsWith('http') ? fbMatch : `https://${fbMatch}`;
+                  
+                  // Chờ random thời gian trước khi truy cập để mô phỏng người thật
+                  const minD = job.minDelay || 2000;
+                  const maxD = Math.max(job.maxDelay || 5000, minD); // Đảm bảo max >= min
+                  const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
+                  
+                  pushLog(job, `⏳ Chờ ${(randomDelay/1000).toFixed(1)}s trước khi mở: ${fullUrl}`, 'info');
+                  await new Promise(r => setTimeout(r, randomDelay));
+                  await checkState();
+
                   pushLog(job, `⚡ Đang kiểm tra: ${fullUrl}`, 'info');
                   
                   await page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -321,6 +392,143 @@ async function runJob(job) {
 
 app.get('/api/queue', (req, res) => res.json(queue));
 
+async function runCheckActivityJob(job) {
+  pushLog(job, `Khởi tạo tiến trình Check 6 tháng: ${job.filename}`, 'info');
+  const csvFile = fs.readFileSync(job.filePath, 'utf8');
+  
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvFile, {
+      header: true, skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const rows = results.data;
+          if (rows.length === 0) throw new Error('File CSV rỗng');
+          
+          let fbCol = Object.keys(rows[0]).find(c => c.toLowerCase().includes('facebook'));
+          if (!fbCol) {
+            const rowWithFb = rows.find(r => Object.values(r).some(v => v && v.includes('facebook.com')));
+            if (rowWithFb) fbCol = Object.keys(rowWithFb).find(k => rowWithFb[k] && rowWithFb[k].includes('facebook.com'));
+          }
+          if (!fbCol) throw new Error('Không tìm thấy cột chứa link Facebook');
+
+          job.total = rows.length;
+          broadcastQueue();
+          let checkedRows = [];
+          
+          const checkState = async () => {
+             while (job.status === 'PAUSED') await new Promise(r => setTimeout(r, 1000));
+             if (job.status === 'CANCELED' || job.status === 'REMOVED') throw new Error('ABORTED');
+          };
+
+          try {
+            for (const row of rows) {
+                await checkState();
+                
+                let url = row[fbCol];
+                let fbMatch = null;
+                const match = JSON.stringify(row).match(/(?:https?:\/\/)?(?:www\.)?facebook\.com\/[^\s,"']+/i);
+                if (match) fbMatch = match[0];
+                else if (url && typeof url === 'string') {
+                    const uM = url.match(/(?:https?:\/\/)?(?:www\.)?facebook\.com\/[^\s,"']+/i);
+                    if (uM) fbMatch = uM[0];
+                }
+
+                if (!fbMatch) {
+                   checkedRows.push(row);
+                   job.completed++;
+                   broadcastQueue();
+                   continue;
+                }
+
+                const fullUrl = fbMatch.startsWith('http') ? fbMatch : `https://${fbMatch}`;
+                
+                const minD = job.minDelay || 2000;
+                const maxD = Math.max(job.maxDelay || 5000, minD);
+                const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
+                pushLog(job, `⏳ Chờ ${(randomDelay/1000).toFixed(1)}s trước khi gọi Apify cho: ${fullUrl}`, 'info');
+                await new Promise(r => setTimeout(r, randomDelay));
+                await checkState();
+
+                let token = getApifyKey();
+                if (!token) {
+                    pushLog(job, `❌ Đã hết sạch API Key hợp lệ trong apify_keys.json`, 'error');
+                    throw new Error('Hết API Key Apify');
+                }
+
+                pushLog(job, `⚡ Gọi Apify kiểm tra: ${fullUrl}`, 'info');
+                try {
+                    const data = await callApify(fullUrl, token);
+                    incrementKeyUsage(token);
+                    
+                    let active = false;
+                    let lastPostDate = '';
+                    if (data && data.length > 0) {
+                        const post = data[0];
+                        if (post.time) {
+                            lastPostDate = post.time;
+                            const postDate = new Date(post.time);
+                            const sixMonthsAgo = new Date();
+                            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+                            if (postDate >= sixMonthsAgo) active = true;
+                        }
+                    }
+                    
+                    row['Latest_Post_Date'] = lastPostDate;
+                    row['Active_Within_6_Months'] = active ? 'TRUE' : 'FALSE';
+                    
+                    if (active) {
+                        job.stats.alive++;
+                        pushLog(job, `✅ Sống (có bài đăng): ${lastPostDate.substring(0,10)}`, 'success');
+                    } else {
+                        job.stats.dead++;
+                        pushLog(job, `❌ Không có bài đăng trong 6 tháng`, 'error');
+                    }
+                } catch (apiErr) {
+                    if (apiErr.message.includes('403') || apiErr.message.includes('429')) {
+                        pushLog(job, `⚠️ API Key lỗi/hết hạn, đánh dấu hết hạn...`, 'warning');
+                        markKeyAsExpired(token);
+                    } else {
+                        pushLog(job, `⚠️ LỖI Apify: ${apiErr.message}`, 'error');
+                    }
+                    job.stats.error++;
+                    row['Latest_Post_Date'] = 'LỖI_API';
+                    row['Active_Within_6_Months'] = 'UNKNOWN';
+                }
+                
+                checkedRows.push(row);
+                job.completed++;
+                broadcastQueue();
+            }
+          } catch (e) {
+            if (e.message !== 'ABORTED' && e.message !== 'Hết API Key Apify') throw e;
+          } finally {
+            if (job.status !== 'REMOVED') {
+                const ts = new Date().getTime();
+                const baseName = job.filename.replace(/\.[^/.]+$/, "");
+                const outFilename = `${baseName}_checked_${ts}.csv`;
+                const outPath = path.join(__dirname, 'outputs', outFilename);
+                fs.writeFileSync(outPath, Papa.unparse(checkedRows));
+                
+                job.downloadLinks = job.downloadLinks || {};
+                job.downloadLinks.checkedFile = `http://localhost:3001/api/download/${encodeURIComponent(outFilename)}`;
+                
+                if (job.status !== 'CANCELED') job.status = 'COMPLETED';
+                if (job.lastStartedAt) {
+                    job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
+                    job.lastStartedAt = null;
+                }
+                pushLog(job, `🎉 Hoàn thành Check 6 tháng!`, 'success');
+            }
+            resolve();
+          }
+        } catch (err) {
+          reject(err);
+        }
+      }
+    });
+  });
+}
+
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   const job = {
@@ -329,6 +537,8 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
     status: 'PENDING',
     concurrency: parseInt(req.body.concurrency) || 3,
     headless: req.body.headless === 'true' || req.body.headless === true,
+    minDelay: parseInt(req.body.minDelay) || 2000,
+    maxDelay: parseInt(req.body.maxDelay) || 5000,
     stats: { alive: 0, dead: 0, error: 0 },
     completed: 0,
     total: 0,
@@ -386,6 +596,40 @@ app.post('/api/queue/:id/:action', (req, res) => {
   
   broadcastQueue();
   res.json({ success: true });
+});
+
+app.post('/api/queue/:id/check-activity', (req, res) => {
+  const { id } = req.params;
+  const historyJob = queue.find(j => j.id === id);
+  if (!historyJob || !historyJob.downloadLinks || !historyJob.downloadLinks.aliveFile) {
+      return res.status(400).json({ error: 'Job không hợp lệ hoặc chưa có file Alive' });
+  }
+  
+  const filename = historyJob.downloadLinks.aliveFile.split('/').pop();
+  const filePath = path.join(__dirname, 'outputs', decodeURIComponent(filename));
+  
+  const job = {
+    id: crypto.randomBytes(8).toString('hex'),
+    type: 'CHECK_ACTIVITY',
+    filename: `Check6m_${historyJob.filename}`,
+    status: 'PENDING',
+    concurrency: 1, // Chạy 1 luồng để xoay vòng API an toàn
+    headless: true,
+    minDelay: parseInt(req.body.minDelay) || 2000,
+    maxDelay: parseInt(req.body.maxDelay) || 5000,
+    stats: { alive: 0, dead: 0, error: 0 },
+    completed: 0,
+    total: 0,
+    logs: [],
+    filePath: filePath,
+    createdAt: Date.now(),
+    accumulatedTime: 0,
+    lastStartedAt: null
+  };
+  queue.push(job);
+  broadcastQueue();
+  processQueue(); 
+  res.json({ success: true, jobId: job.id });
 });
 
 app.get('/api/download/:filename', (req, res) => {
