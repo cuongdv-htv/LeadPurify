@@ -51,6 +51,7 @@ function App() {
   const [queue, setQueue] = useState([]);
   const [concurrency, setConcurrency] = useState(3);
   const [headless, setHeadless] = useState(true);
+  const [activeTab, setActiveTab] = useState('queue');
 
   useEffect(() => {
     socket.on('queue_update', (data) => setQueue(data));
@@ -107,7 +108,16 @@ function App() {
         </motion.div>
       </header>
 
-      <div className="flex gap-4 flex-col" style={{ marginTop: '40px' }}>
+      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '24px' }}>
+        <button className={`btn-outline ${activeTab === 'queue' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'queue' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 24px', fontWeight: activeTab === 'queue' ? 'bold' : 'normal' }} onClick={() => setActiveTab('queue')}>
+            Đang chạy
+        </button>
+        <button className={`btn-outline ${activeTab === 'history' ? 'neon-text-purple' : ''}`} style={{ borderColor: activeTab === 'history' ? 'var(--neon-purple)' : 'var(--glass-border)', padding: '8px 24px', fontWeight: activeTab === 'history' ? 'bold' : 'normal' }} onClick={() => setActiveTab('history')}>
+            Lịch sử
+        </button>
+      </div>
+
+      <div className="flex gap-4 flex-col" style={{ marginTop: '20px' }}>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <motion.div 
@@ -148,12 +158,14 @@ function App() {
         </div>
 
         <div style={{ marginTop: '32px' }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }} className="neon-text-cyan">
-               Hàng đợi tiến trình 
-               <span style={{ background: 'var(--neon-purple)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '1rem' }}>{queue.length}</span>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }} className={activeTab === 'queue' ? "neon-text-cyan" : "neon-text-purple"}>
+               {activeTab === 'queue' ? 'Hàng đợi tiến trình' : 'Lịch sử tiến trình'} 
+               <span style={{ background: activeTab === 'queue' ? 'var(--neon-purple)' : 'var(--neon-cyan)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '1rem' }}>
+                   {activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)).length : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length}
+               </span>
             </h2>
             <AnimatePresence>
-                {queue.map(job => {
+                {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).map(job => {
                     const percent = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
                     return (
                         <motion.div key={job.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, height: 0 }} className="glass-panel p-6" style={{ marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
@@ -220,9 +232,9 @@ function App() {
                     );
                 })}
             </AnimatePresence>
-            {queue.length === 0 && (
+            {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).length === 0 && (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', padding: '40px', border: '1px dashed var(--glass-border)', borderRadius: '16px' }}>
-                    Chưa có tiến trình nào trong hàng đợi.<br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!
+                    Chưa có tiến trình nào trong {activeTab === 'queue' ? 'hàng đợi' : 'lịch sử'}.{activeTab === 'queue' ? <><br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!</> : ''}
                 </div>
             )}
         </div>
