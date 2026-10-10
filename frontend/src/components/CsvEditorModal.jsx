@@ -1,16 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2, UploadCloud, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { X, Trash2, UploadCloud, ChevronLeft, ChevronRight, Download, Plus } from 'lucide-react';
 import './CsvEditorModal.css';
 
 const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
   const [data, setData] = useState([]);
   const [headers, setHeaders] = useState([]);
-  const [editingCell, setEditingCell] = useState(null);
+  const [editingCell, setEditingCell] = useState(null); // { rowIndex, colIndex }
   const [editValue, setEditValue] = useState('');
+  
+  const [editingHeader, setEditingHeader] = useState(null); // colIndex
+  const [headerEditValue, setHeaderEditValue] = useState('');
+
+  const [selection, setSelection] = useState(null); // { start: { row, col }, end: { row, col } }
+  const [isDragging, setIsDragging] = useState(false);
+
   const [page, setPage] = useState(1);
   const rowsPerPage = 50;
+
+  const modalRef = useRef(null);
 
   useEffect(() => {
     if (file) {
@@ -32,32 +41,209 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
   const totalPages = Math.ceil(data.length / rowsPerPage);
   const currentData = data.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
-  const startEditing = (rowIndex, colName, value) => {
-    setEditingCell({ rowIndex: (page - 1) * rowsPerPage + rowIndex, colName });
+  useEffect(() => {
+    if (modalRef.current) {
+      modalRef.current.focus();
+    }
+  }, []);
+
+  const startEditing = (rowIndex, colIndex, value) => {
+    setEditingCell({ rowIndex, colIndex });
     setEditValue(value || '');
   };
 
   const saveEdit = () => {
     if (editingCell) {
+      const { rowIndex, colIndex } = editingCell;
+      const colName = headers[colIndex];
       const newData = [...data];
-      newData[editingCell.rowIndex][editingCell.colName] = editValue;
+      newData[rowIndex][colName] = editValue;
       setData(newData);
       setEditingCell(null);
     }
   };
 
-  const handleKeyDown = (e) => {
+  const startEditingHeader = (colIndex, value) => {
+    setEditingHeader(colIndex);
+    setHeaderEditValue(value || '');
+  };
+
+  const saveHeaderEdit = () => {
+    if (editingHeader !== null) {
+      const oldHeader = headers[editingHeader];
+      const newHeader = headerEditValue.trim() || oldHeader;
+      
+      let finalHeader = newHeader;
+      let counter = 1;
+      while (headers.includes(finalHeader) && finalHeader !== oldHeader) {
+        finalHeader = `${newHeader}_${counter}`;
+        counter++;
+      }
+
+      const newHeaders = [...headers];
+      newHeaders[editingHeader] = finalHeader;
+      
+      const newData = data.map(row => {
+        const newRow = { ...row };
+        newRow[finalHeader] = newRow[oldHeader];
+        delete newRow[oldHeader];
+        return newRow;
+      });
+
+      setHeaders(newHeaders);
+      setData(newData);
+      setEditingHeader(null);
+    }
+  };
+
+  const handleCellKeyDown = (e) => {
     if (e.key === 'Enter') saveEdit();
     if (e.key === 'Escape') setEditingCell(null);
+  };
+  
+  const handleHeaderKeyDown = (e) => {
+    if (e.key === 'Enter') saveHeaderEdit();
+    if (e.key === 'Escape') setEditingHeader(null);
+  };
+
+  const addRow = () => {
+    const newRow = {};
+    headers.forEach(h => { newRow[h] = ''; });
+    setData([...data, newRow]);
+    const newTotalPages = Math.ceil((data.length + 1) / rowsPerPage);
+    setPage(newTotalPages || 1);
+  };
+
+  const addColumn = () => {
+    const baseName = "New_Column";
+    let newColName = baseName;
+    let counter = 1;
+    while (headers.includes(newColName)) {
+      newColName = `${baseName}_${counter}`;
+      counter++;
+    }
+    setHeaders([...headers, newColName]);
+    const newData = data.map(row => ({ ...row, [newColName]: '' }));
+    setData(newData);
+  };
+
+  const deleteColumn = (colIndex) => {
+    const colName = headers[colIndex];
+    const newHeaders = headers.filter((_, idx) => idx !== colIndex);
+    const newData = data.map(row => {
+      const newRow = { ...row };
+      delete newRow[colName];
+      return newRow;
+    });
+    setHeaders(newHeaders);
+    setData(newData);
+    setEditingHeader(null);
   };
 
   const deleteRow = (globalRowIndex) => {
     const newData = data.filter((_, idx) => idx !== globalRowIndex);
     setData(newData);
-    // Adjust page if necessary
     const newTotalPages = Math.ceil(newData.length / rowsPerPage);
     if (page > newTotalPages && newTotalPages > 0) {
       setPage(newTotalPages);
+    }
+  };
+
+  const handleMouseDown = (rowIndex, colIndex, e) => {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    setSelection({ start: { row: rowIndex, col: colIndex }, end: { row: rowIndex, col: colIndex } });
+    if (editingCell && (editingCell.rowIndex !== rowIndex || editingCell.colIndex !== colIndex)) {
+       saveEdit();
+    }
+  };
+
+  const handleMouseEnter = (rowIndex, colIndex) => {
+    if (isDragging) {
+      setSelection(prev => ({ ...prev, end: { row: rowIndex, col: colIndex } }));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, []);
+
+  const getSelectedRange = () => {
+    if (!selection) return null;
+    const minRow = Math.min(selection.start.row, selection.end.row);
+    const maxRow = Math.max(selection.start.row, selection.end.row);
+    const minCol = Math.min(selection.start.col, selection.end.col);
+    const maxCol = Math.max(selection.start.col, selection.end.col);
+    return { minRow, maxRow, minCol, maxCol };
+  };
+
+  const isCellSelected = (rowIndex, colIndex) => {
+    const range = getSelectedRange();
+    if (!range) return false;
+    return rowIndex >= range.minRow && rowIndex <= range.maxRow && colIndex >= range.minCol && colIndex <= range.maxCol;
+  };
+
+  const handleGlobalKeyDown = (e) => {
+    if (editingCell || editingHeader !== null) return;
+    const range = getSelectedRange();
+    
+    if (range && (e.key === 'Delete' || e.key === 'Backspace')) {
+      const newData = [...data];
+      for (let r = range.minRow; r <= range.maxRow; r++) {
+        for (let c = range.minCol; c <= range.maxCol; c++) {
+          if (newData[r]) {
+            const colName = headers[c];
+            newData[r][colName] = '';
+          }
+        }
+      }
+      setData(newData);
+      e.preventDefault();
+    } else if (range && e.ctrlKey && e.key === 'c') {
+      let tsv = '';
+      for (let r = range.minRow; r <= range.maxRow; r++) {
+        let rowData = [];
+        for (let c = range.minCol; c <= range.maxCol; c++) {
+          if (data[r]) {
+            rowData.push(data[r][headers[c]] || '');
+          }
+        }
+        tsv += rowData.join('\t') + '\n';
+      }
+      navigator.clipboard.writeText(tsv);
+      e.preventDefault();
+    } else if (range && e.ctrlKey && e.key === 'v') {
+      navigator.clipboard.readText().then(text => {
+        const rows = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+        if (rows[rows.length - 1] === '') rows.pop();
+        
+        const newData = [...data];
+        let rIdx = range.minRow;
+        
+        rows.forEach(row => {
+          if (!newData[rIdx]) {
+             const newRow = {};
+             headers.forEach(h => { newRow[h] = ''; });
+             newData.push(newRow);
+          }
+          const cells = row.split('\t');
+          let cIdx = range.minCol;
+          cells.forEach(cellValue => {
+            if (cIdx < headers.length) {
+              newData[rIdx][headers[cIdx]] = cellValue;
+            }
+            cIdx++;
+          });
+          rIdx++;
+        });
+        setData(newData);
+      }).catch(err => console.error("Clipboard read error: ", err));
+      e.preventDefault();
     }
   };
 
@@ -88,16 +274,57 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
             </button>
           </div>
 
-          <div className="modal-content">
+          <div 
+            className="modal-content" 
+            ref={modalRef} 
+            tabIndex={0} 
+            onKeyDown={handleGlobalKeyDown}
+            style={{ outline: 'none' }}
+          >
             <div className="table-wrapper">
               <table className="csv-table">
                 <thead>
                   <tr>
                     <th className="action-col">Hành động</th>
                     <th className="index-col">#</th>
-                    {headers.map((col) => (
-                      <th key={col}>{col}</th>
+                    {headers.map((col, colIndex) => (
+                      <th key={colIndex} className="header-cell relative group" style={{ position: 'relative' }}>
+                        {editingHeader === colIndex ? (
+                          <input
+                            type="text"
+                            value={headerEditValue}
+                            onChange={(e) => setHeaderEditValue(e.target.value)}
+                            onBlur={saveHeaderEdit}
+                            onKeyDown={handleHeaderKeyDown}
+                            autoFocus
+                            className="header-input"
+                          />
+                        ) : (
+                          <div 
+                            className="header-content flex items-center justify-between gap-2 cursor-text" 
+                            onDoubleClick={() => startEditingHeader(colIndex, col)}
+                            title="Click đúp để sửa"
+                          >
+                            <span>{col}</span>
+                            <button 
+                              className="delete-col-btn opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+                              onClick={(e) => { e.stopPropagation(); deleteColumn(colIndex); }}
+                              title="Xóa cột"
+                              style={{ opacity: 0 }}
+                              onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                              onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </th>
                     ))}
+                    <th className="add-col-th" style={{ minWidth: '40px' }}>
+                       <button onClick={addColumn} className="add-btn text-cyan-400 hover:text-cyan-300 p-1 rounded hover:bg-white/5" title="Thêm cột">
+                         <Plus size={18} />
+                       </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -115,17 +342,25 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
                           </button>
                         </td>
                         <td className="index-col">{globalIndex + 1}</td>
-                        {headers.map((col) => {
+                        {headers.map((col, colIndex) => {
                           const isEditing =
                             editingCell?.rowIndex === globalIndex &&
-                            editingCell?.colName === col;
+                            editingCell?.colIndex === colIndex;
+                          const selected = isCellSelected(globalIndex, colIndex);
+                          
                           return (
                             <td
-                              key={col}
+                              key={colIndex}
                               onDoubleClick={() =>
-                                startEditing(localIndex, col, row[col])
+                                startEditing(globalIndex, colIndex, row[col])
                               }
-                              className={isEditing ? 'editing-td' : ''}
+                              onMouseDown={(e) => handleMouseDown(globalIndex, colIndex, e)}
+                              onMouseEnter={() => handleMouseEnter(globalIndex, colIndex)}
+                              className={`
+                                ${isEditing ? 'editing-td' : ''} 
+                                ${selected && !isEditing ? 'selected-td' : ''}
+                              `}
+                              style={{ userSelect: 'none' }}
                             >
                               {isEditing ? (
                                 <input
@@ -133,29 +368,36 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
                                   value={editValue}
                                   onChange={(e) => setEditValue(e.target.value)}
                                   onBlur={saveEdit}
-                                  onKeyDown={handleKeyDown}
+                                  onKeyDown={handleCellKeyDown}
                                   autoFocus
                                 />
                               ) : (
-                                <span className="cell-content">
+                                <span className="cell-content block min-h-[24px]">
                                   {row[col] || ''}
                                 </span>
                               )}
                             </td>
                           );
                         })}
+                        <td className="empty-cell"></td>
                       </tr>
                     );
                   })}
                   {currentData.length === 0 && (
                     <tr>
-                      <td colSpan={headers.length + 2} className="text-center p-4">
+                      <td colSpan={headers.length + 3} className="text-center p-4">
                         Không có dữ liệu
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
+            </div>
+            
+            <div className="p-4 border-t border-white/10 bg-black/20 flex gap-4">
+               <button onClick={addRow} className="btn-outline text-cyan-400 flex items-center gap-2 text-sm py-1.5 px-3">
+                 <Plus size={16} /> Thêm dòng mới
+               </button>
             </div>
           </div>
 
