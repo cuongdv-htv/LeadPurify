@@ -95,12 +95,12 @@ function App() {
     await axios.post(`http://localhost:3001/api/queue/${id}/${action}`);
   };
 
-  const handleBatchDownload = () => {
+  const handleBatchDownload = (type) => {
     const historyJobs = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status));
     let delay = 0;
     historyJobs.forEach(job => {
       if (job.downloadLinks) {
-        if (job.stats?.alive > 0 && job.downloadLinks.aliveFile) {
+        if (type === 'alive' && job.stats?.alive > 0 && job.downloadLinks.aliveFile) {
           setTimeout(() => {
             const a = document.createElement('a');
             a.href = job.downloadLinks.aliveFile;
@@ -111,7 +111,7 @@ function App() {
           }, delay);
           delay += 300;
         }
-        if (job.stats?.dead > 0 && job.downloadLinks.deadFile) {
+        if (type === 'dead' && job.stats?.dead > 0 && job.downloadLinks.deadFile) {
           setTimeout(() => {
             const a = document.createElement('a');
             a.href = job.downloadLinks.deadFile;
@@ -204,8 +204,11 @@ function App() {
                 </h2>
                 {activeTab === 'history' && queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length > 0 && (
                     <div style={{ display: 'flex', gap: '12px' }}>
-                        <button onClick={handleBatchDownload} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Download size={18} /> Tải toàn bộ kết quả
+                        <button onClick={() => handleBatchDownload('alive')} className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Download size={18} /> Tải Link Sống
+                        </button>
+                        <button onClick={() => handleBatchDownload('dead')} className="btn-outline" style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Download size={18} /> Tải Link Chết
                         </button>
                         <button onClick={handleClearHistory} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Trash2 size={18} /> Xóa lịch sử
