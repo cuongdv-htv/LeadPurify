@@ -19,12 +19,34 @@ const io = new Server(server, { cors: { origin: '*' } });
 const upload = multer({ dest: 'uploads/' });
 if (!fs.existsSync('outputs')) fs.mkdirSync('outputs');
 
+const QUEUE_FILE = path.join(__dirname, 'queue.json');
 let queue = [];
+if (fs.existsSync(QUEUE_FILE)) {
+    try {
+        queue = JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8'));
+        queue.forEach(job => {
+            if (job.status === 'RUNNING' || job.status === 'PAUSED') {
+                job.status = 'ERROR';
+                if (!job.logs) job.logs = [];
+                job.logs.push({ message: 'Tiến trình bị gián đoạn do server khởi động lại', type: 'error', timestamp: new Date().toISOString() });
+            }
+        });
+    } catch(e) {
+        queue = [];
+    }
+}
+
 let isWorkerRunning = false;
 
 io.on('connection', (socket) => {
   socket.emit('queue_update', queue);
 });
+
+function saveQueue() {
+    fs.writeFile(QUEUE_FILE, JSON.stringify(queue, null, 2), (err) => {
+        if(err) console.error('Lỗi lưu queue:', err);
+    });
+}
 
 function pushLog(job, message, type = 'info') {
   const log = { message, type, timestamp: new Date().toISOString() };
@@ -36,6 +58,7 @@ function pushLog(job, message, type = 'info') {
 
 function broadcastQueue() {
   io.emit('queue_update', queue);
+  saveQueue();
 }
 
 async function processQueue() {
@@ -182,14 +205,18 @@ async function runJob(job) {
             
             if (job.status !== 'REMOVED') {
                 const ts = new Date().getTime();
-                const aPath = path.join(__dirname, 'outputs', `alive_${ts}.csv`);
-                const dPath = path.join(__dirname, 'outputs', `dead_${ts}.csv`);
+                const baseName = job.filename.replace(/\.[^/.]+$/, "");
+                const aliveFilename = `${baseName}_alive_${ts}.csv`;
+                const deadFilename = `${baseName}_dead_${ts}.csv`;
+                
+                const aPath = path.join(__dirname, 'outputs', aliveFilename);
+                const dPath = path.join(__dirname, 'outputs', deadFilename);
                 fs.writeFileSync(aPath, Papa.unparse(aliveRows));
                 fs.writeFileSync(dPath, Papa.unparse(deadRows));
                 
                 job.downloadLinks = { 
-                    aliveFile: `http://localhost:3001/api/download/alive_${ts}.csv`, 
-                    deadFile: `http://localhost:3001/api/download/dead_${ts}.csv` 
+                    aliveFile: `http://localhost:3001/api/download/${encodeURIComponent(aliveFilename)}`, 
+                    deadFile: `http://localhost:3001/api/download/${encodeURIComponent(deadFilename)}` 
                 };
                 if (job.status !== 'CANCELED') job.status = 'COMPLETED';
                 if (job.lastStartedAt) {
