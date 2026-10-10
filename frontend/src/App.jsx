@@ -1,0 +1,234 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { io } from 'socket.io-client';
+import { motion, AnimatePresence } from 'framer-motion';
+import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock } from 'lucide-react';
+import './index.css';
+
+const socket = io('http://localhost:3001');
+
+const JobTimer = ({ job }) => {
+    const [elapsed, setElapsed] = useState(0);
+
+    useEffect(() => {
+        let interval;
+        const calculateElapsed = () => {
+            let total = job.accumulatedTime || 0;
+            if (job.status === 'RUNNING' && job.lastStartedAt) {
+                total += (Date.now() - job.lastStartedAt);
+            }
+            setElapsed(Math.floor(total / 1000));
+        };
+
+        calculateElapsed();
+
+        if (job.status === 'RUNNING') {
+            interval = setInterval(calculateElapsed, 1000);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [job.status, job.accumulatedTime, job.lastStartedAt]);
+
+    const formatTime = (seconds) => {
+        if (!seconds || seconds < 0) return '00:00';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        if (h > 0) return `${h}:${m}:${s}`;
+        return `${m}:${s}`;
+    }
+
+    return (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', color: 'var(--neon-cyan)', background: 'rgba(0,0,0,0.2)', padding: '2px 8px', borderRadius: '12px' }}>
+            <Clock size={14} /> {formatTime(elapsed)}
+        </span>
+    );
+};
+
+function App() {
+  const [queue, setQueue] = useState([]);
+  const [concurrency, setConcurrency] = useState(3);
+  const [headless, setHeadless] = useState(true);
+
+  useEffect(() => {
+    socket.on('queue_update', (data) => setQueue(data));
+    socket.on('job_log', ({ jobId, log }) => {
+      setQueue(prevQueue => prevQueue.map(job => {
+        if (job.id === jobId) {
+          const newLogs = [...(job.logs || []), log].slice(-50);
+          return { ...job, logs: newLogs };
+        }
+        return job;
+      }));
+    });
+    
+    axios.get('http://localhost:3001/api/queue').then(res => setQueue(res.data));
+
+    return () => {
+      socket.off('queue_update');
+      socket.off('job_log');
+    };
+  }, []);
+
+  const handleFileUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append('file', files[i]);
+        formData.append('concurrency', concurrency);
+        formData.append('headless', headless);
+        try {
+          await axios.post('http://localhost:3001/api/upload', formData);
+        } catch(err) {
+          console.error(err);
+        }
+    }
+    e.target.value = ''; 
+  };
+
+  const jobAction = async (id, action) => {
+    await axios.post(`http://localhost:3001/api/queue/${id}/${action}`);
+  };
+
+  return (
+    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
+      <header className="text-center mb-4">
+        <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <h1 style={{ fontSize: '3rem', margin: '0 0 10px 0' }} className="neon-text-cyan">
+            Lead<span className="neon-text-purple">Purify</span>
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>
+            Quản lý Hàng đợi (Queue) Kiểm tra Link Facebook
+          </p>
+        </motion.div>
+      </header>
+
+      <div className="flex gap-4 flex-col" style={{ marginTop: '40px' }}>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              className="glass-panel p-6 flex flex-col items-center justify-center"
+              style={{ borderStyle: 'dashed', borderWidth: '2px', cursor: 'pointer', minHeight: '220px' }}
+              onClick={() => document.getElementById('multiFileUpload').click()}
+            >
+              <UploadCloud size={48} color="var(--neon-cyan)" style={{ marginBottom: '16px' }} />
+              <h3 style={{ margin: 0, fontSize: '1.2rem', textAlign: 'center' }}>
+                Kéo thả nhiều file CSV vào đây
+              </h3>
+              <input id="multiFileUpload" type="file" accept=".csv" multiple style={{ display: 'none' }} onChange={handleFileUpload} />
+            </motion.div>
+
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="glass-panel p-6 flex-col gap-4">
+              <h3 style={{ margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Settings size={20} /> Cấu hình Quét mặc định
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)' }}>
+                    Luồng (Concurrency): <b>{concurrency}</b>
+                  </label>
+                  <input type="range" min="1" max="5" value={concurrency} onChange={(e) => setConcurrency(e.target.value)} style={{ width: '100%', accentColor: 'var(--neon-purple)' }}/>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)' }}>
+                    Giao diện ngầm (Headless):
+                  </label>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className={`btn-outline ${headless ? 'neon-text-cyan' : ''}`} style={{ borderColor: headless ? 'var(--neon-cyan)' : '', padding: '6px 12px' }} onClick={() => setHeadless(true)}>Bật</button>
+                    <button className={`btn-outline ${!headless ? 'neon-text-purple' : ''}`} style={{ borderColor: !headless ? 'var(--neon-purple)' : '', padding: '6px 12px' }} onClick={() => setHeadless(false)}>Tắt</button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+        </div>
+
+        <div style={{ marginTop: '32px' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }} className="neon-text-cyan">
+               Hàng đợi tiến trình 
+               <span style={{ background: 'var(--neon-purple)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '1rem' }}>{queue.length}</span>
+            </h2>
+            <AnimatePresence>
+                {queue.map(job => {
+                    const percent = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
+                    return (
+                        <motion.div key={job.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, height: 0 }} className="glass-panel p-6" style={{ marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
+                            {job.status === 'RUNNING' && (
+                                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--neon-cyan)', boxShadow: '0 0 10px var(--neon-cyan)' }} />
+                            )}
+                            
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        {job.filename}
+                                        <span style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)' }}>
+                                            {job.status}
+                                        </span>
+                                        <JobTimer job={job} />
+                                    </h3>
+                                    <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                        Đã quét: {job.completed}/{job.total} (Luồng: {job.concurrency})
+                                    </p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {job.status === 'RUNNING' && <button onClick={() => jobAction(job.id, 'pause')} className="btn-outline" style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '6px 12px' }} title="Tạm dừng"><Pause size={16}/></button>}
+                                    {job.status === 'PAUSED' && <button onClick={() => jobAction(job.id, 'resume')} className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '6px 12px' }} title="Tiếp tục"><Play size={16}/></button>}
+                                    {(job.status === 'RUNNING' || job.status === 'PAUSED') && <button onClick={() => jobAction(job.id, 'cancel')} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px' }} title="Hủy bỏ"><Square size={16}/></button>}
+                                    {job.status === 'PENDING' && <button onClick={() => jobAction(job.id, 'force')} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '6px 12px' }} title="Ưu tiên chạy ngay"><ArrowUpCircle size={16}/></button>}
+                                    {['PENDING', 'CANCELED', 'COMPLETED', 'ERROR'].includes(job.status) && <button onClick={() => jobAction(job.id, 'remove')} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px' }} title="Xóa khỏi danh sách"><Trash2 size={16}/></button>}
+                                </div>
+                            </div>
+
+                            <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', marginBottom: '16px' }}>
+                                <div style={{ height: '100%', width: `${percent}%`, background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))', transition: 'width 0.3s ease' }} />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '24px', marginBottom: '16px', fontSize: '0.95rem' }}>
+                                <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16}/> Sống: {job.stats?.alive || 0}</span>
+                                <span style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}><XCircle size={16}/> Chết: {job.stats?.dead || 0}</span>
+                                <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={16}/> Lỗi: {job.stats?.error || 0}</span>
+                            </div>
+
+                            {job.downloadLinks && (
+                                <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                                    <a href={job.downloadLinks.aliveFile} download className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '6px 12px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Tải File Link Sống</a>
+                                    <a href={job.downloadLinks.deadFile} download className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Tải File Link Chết</a>
+                                </div>
+                            )}
+
+                            {(job.status === 'RUNNING' || job.status === 'PAUSED' || job.logs?.length > 0) && (
+                                <div className="log-container" style={{ maxHeight: '120px', background: 'rgba(0,0,0,0.3)', border: 'none' }}>
+                                    {job.logs?.map((log, idx) => {
+                                        let color = 'var(--text-main)';
+                                        if (log.type === 'error') color = '#ef4444';
+                                        if (log.type === 'success') color = '#10b981';
+                                        if (log.type === 'warning') color = '#f59e0b';
+                                        return (
+                                            <div key={idx} style={{ color, display: 'flex', gap: '8px', fontSize: '0.8rem', marginBottom: '4px' }}>
+                                                <span style={{ opacity: 0.5 }}>[{log.timestamp?.split('T')[1]?.substring(0,8)}]</span>
+                                                <span>{log.message}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </motion.div>
+                    );
+                })}
+            </AnimatePresence>
+            {queue.length === 0 && (
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', padding: '40px', border: '1px dashed var(--glass-border)', borderRadius: '16px' }}>
+                    Chưa có tiến trình nào trong hàng đợi.<br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!
+                </div>
+            )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
