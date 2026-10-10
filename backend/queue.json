@@ -1,0 +1,1815 @@
+[
+  {
+    "id": "a32ae4097f51d5e9",
+    "filename": "lead_lp_danang_afternoon_20261009_dead_1791628580210.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 0,
+      "dead": 6,
+      "error": 0
+    },
+    "completed": 6,
+    "total": 6,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: lead_lp_danang_afternoon_20261009_dead_1791628580210.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:21.438Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/tuannguyenart",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:22.587Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/ccbeautyspa.danang",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:22.590Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/anpilatesdanang",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:22.591Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/ccbeautyspa.danang",
+        "type": "error",
+        "timestamp": "2026-10-10T10:55:25.883Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/tuannguyenart",
+        "type": "error",
+        "timestamp": "2026-10-10T10:55:25.887Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/anpilatesdanang",
+        "type": "error",
+        "timestamp": "2026-10-10T10:55:25.952Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/angelspa.danangcity",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:26.138Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/duayogadanang",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:26.140Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/kientrucdo.danang",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:26.155Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/duayogadanang",
+        "type": "error",
+        "timestamp": "2026-10-10T10:55:28.779Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/angelspa.danangcity",
+        "type": "error",
+        "timestamp": "2026-10-10T10:55:28.848Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/kientrucdo.danang",
+        "type": "error",
+        "timestamp": "2026-10-10T10:55:28.970Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 0, Chết: 6",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:29.551Z"
+      }
+    ],
+    "filePath": "uploads\\2779f9f9b00054a6d5301c30ef272837",
+    "createdAt": 1791629721437,
+    "accumulatedTime": 8113,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/lead_lp_danang_afternoon_20261009_dead_1791628580210_alive_1791629729549.csv",
+      "deadFile": "http://localhost:3001/api/download/lead_lp_danang_afternoon_20261009_dead_1791628580210_dead_1791629729549.csv"
+    }
+  },
+  {
+    "id": "4d374f3f70e34e53",
+    "filename": "leads_all_muinhon_20261010_115013_alive_1791628608980.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 14,
+      "dead": 0,
+      "error": 0
+    },
+    "completed": 14,
+    "total": 14,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: leads_all_muinhon_20261010_115013_alive_1791628608980.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:29.552Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/noithattvt.vn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:30.603Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/caphevuongthanhcong",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:30.612Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/tuartwedding",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:30.633Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/tuartwedding",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:36.103Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/caphevuongthanhcong",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:36.254Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/noithattvt.vn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:36.316Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhakhoasaigoncantho",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:36.604Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhakhoacuongnhan",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:36.605Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/seoulcenterbienhoa",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:36.610Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhakhoacuongnhan",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:40.891Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhakhoasaigoncantho",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:40.966Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/seoulcenterbienhoa",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:41.193Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhatranglovetravel",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:41.550Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/tuart.dalat",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:41.551Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/letsflytravel.vn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:41.600Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhatranglovetravel",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:44.961Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/letsflytravel.vn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:45.172Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/tuart.dalat",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:45.305Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/ganhhaorestaurant",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:45.548Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhakhoahoasuvt",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:45.549Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/AmbassadorCruise",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:45.573Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/ganhhaorestaurant",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:48.989Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhakhoahoasuvt",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:49.478Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/AmbassadorCruise",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:49.965Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/hoianreverie",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:50.116Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/mercuryphuquoc",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:50.130Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/mercuryphuquoc",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:53.558Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/hoianreverie",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:54.564Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 14, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-10T10:55:55.326Z"
+      }
+    ],
+    "filePath": "uploads\\6665e7644ff22381ee898ae9e24a754b",
+    "createdAt": 1791629721455,
+    "accumulatedTime": 25774,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/leads_all_muinhon_20261010_115013_alive_1791628608980_alive_1791629755325.csv",
+      "deadFile": "http://localhost:3001/api/download/leads_all_muinhon_20261010_115013_alive_1791628608980_dead_1791629755325.csv"
+    }
+  },
+  {
+    "id": "5785ef05fccc514d",
+    "filename": "lead_lp_danang_afternoon_20261009_alive_1791628580210.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 8,
+      "dead": 0,
+      "error": 0
+    },
+    "completed": 8,
+    "total": 8,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: lead_lp_danang_afternoon_20261009_alive_1791628580210.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:55.327Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/dacsandananghanigo",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:56.536Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/Thepastrybox.vn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:56.537Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/amieplanner29",
+        "type": "info",
+        "timestamp": "2026-10-10T10:55:56.697Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/dacsandananghanigo",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:00.475Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/Thepastrybox.vn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:01.301Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:01.941Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/amieplanner29",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:01.955Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/trangtritieccuoidanang",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:02.294Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/lansanhoDN",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:02.294Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/Secret.love.floral",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:02.295Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:06.805Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/Secret.love.floral",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:06.827Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:08.876Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/trangtritieccuoidanang",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:08.884Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:09.050Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/lansanhoDN",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:09.086Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/MinHouseDaNang",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:09.394Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/HomestayDaNangRoseGarden",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:09.426Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/MinHouseDaNang",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:12.739Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/HomestayDaNangRoseGarden",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:13.113Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 8, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:13.790Z"
+      }
+    ],
+    "filePath": "uploads\\206563b80bf824d6b66245e6ab8cb56a",
+    "createdAt": 1791629721464,
+    "accumulatedTime": 18464,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/lead_lp_danang_afternoon_20261009_alive_1791628580210_alive_1791629773788.csv",
+      "deadFile": "http://localhost:3001/api/download/lead_lp_danang_afternoon_20261009_alive_1791628580210_dead_1791629773788.csv"
+    }
+  },
+  {
+    "id": "e0cf1f3e746239cf",
+    "filename": "leads_lp_hcm_ca_chieu_20261009_alive_1791628556373.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 8,
+      "dead": 0,
+      "error": 0
+    },
+    "completed": 8,
+    "total": 8,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: leads_lp_hcm_ca_chieu_20261009_alive_1791628556373.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:13.792Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/kisswe.vn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:14.951Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/NongTrangXanhGreenNoen",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:14.952Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/dianthusweddingdecor",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:14.992Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/NongTrangXanhGreenNoen",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:19.092Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/dianthusweddingdecor",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:19.848Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/kisswe.vn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:20.711Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/henygarden",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:21.296Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/paceycupcakes",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:21.325Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/BanhkemNgoNghinh102",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:21.326Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/paceycupcakes",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:24.879Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/henygarden",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:25.316Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:25.378Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:25.433Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/BanhkemNgoNghinh102",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:25.433Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/dulichcg",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:25.728Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/harucraftstudio",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:25.751Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/dulichcg",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:29.133Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/harucraftstudio",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:29.725Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 8, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:30.327Z"
+      }
+    ],
+    "filePath": "uploads\\b562c9fd77cd828aee7521660d9e7c59",
+    "createdAt": 1791629721474,
+    "accumulatedTime": 16535,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/leads_lp_hcm_ca_chieu_20261009_alive_1791628556373_alive_1791629790326.csv",
+      "deadFile": "http://localhost:3001/api/download/leads_lp_hcm_ca_chieu_20261009_alive_1791628556373_dead_1791629790326.csv"
+    }
+  },
+  {
+    "id": "9b198cd34267cfcc",
+    "filename": "leads_lp_hcm_ca_chieu_20261009_dead_1791628556373.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 0,
+      "dead": 2,
+      "error": 0
+    },
+    "completed": 2,
+    "total": 2,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: leads_lp_hcm_ca_chieu_20261009_dead_1791628556373.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:30.329Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/hienconcept",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:31.371Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/NicoleBridal.vn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:31.436Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/hienconcept",
+        "type": "error",
+        "timestamp": "2026-10-10T10:56:34.618Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/NicoleBridal.vn",
+        "type": "error",
+        "timestamp": "2026-10-10T10:56:34.711Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 0, Chết: 2",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:35.297Z"
+      }
+    ],
+    "filePath": "uploads\\713503d98cd0275592f3ccbc7eaf4d59",
+    "createdAt": 1791629721484,
+    "accumulatedTime": 4968,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/leads_lp_hcm_ca_chieu_20261009_dead_1791628556373_alive_1791629795296.csv",
+      "deadFile": "http://localhost:3001/api/download/leads_lp_hcm_ca_chieu_20261009_dead_1791628556373_dead_1791629795296.csv"
+    }
+  },
+  {
+    "id": "119eb0582d694292",
+    "filename": "lead_lp_da_nang_ca_chieu_20261009_alive_1791628539272.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 10,
+      "dead": 0,
+      "error": 0
+    },
+    "completed": 10,
+    "total": 10,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: lead_lp_da_nang_ca_chieu_20261009_alive_1791628539272.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:35.298Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/oticsaveallmoments",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:36.574Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/AmareStudioDN",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:36.575Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhakhoathammymetaldn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:36.722Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:44.575Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:44.820Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/oticsaveallmoments",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:44.820Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:47.210Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:47.219Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhakhoathammymetaldn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:47.220Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:47.511Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:47.593Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/AmareStudioDN",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:47.593Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/thiboutiquevilla",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:48.301Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/vungchill",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:48.314Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/tiembanhmuahedn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:48.318Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:54.475Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:54.533Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/tiembanhmuahedn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:54.535Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:54.575Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:54.585Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/vungchill",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:54.586Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:56:55.488Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:55.523Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/thiboutiquevilla",
+        "type": "success",
+        "timestamp": "2026-10-10T10:56:55.526Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/dacsandananghanigo",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:56.251Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/noithatnguyenhoangphat",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:56.253Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/danangeventpro",
+        "type": "info",
+        "timestamp": "2026-10-10T10:56:56.358Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:03.012Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:03.040Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/noithatnguyenhoangphat",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:03.040Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:03.810Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:03.840Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/danangeventpro",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:03.841Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:05.441Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:05.455Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/dacsandananghanigo",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:05.456Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/pinnguyenmakeup",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:05.996Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:11.678Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:11.699Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/pinnguyenmakeup",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:11.700Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 10, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:12.666Z"
+      }
+    ],
+    "filePath": "uploads\\d20d8d52b9de633ccc86a87d6f44ffd5",
+    "createdAt": 1791629721492,
+    "accumulatedTime": 37368,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/lead_lp_da_nang_ca_chieu_20261009_alive_1791628539272_alive_1791629832665.csv",
+      "deadFile": "http://localhost:3001/api/download/lead_lp_da_nang_ca_chieu_20261009_alive_1791628539272_dead_1791629832665.csv"
+    }
+  },
+  {
+    "id": "fb73b69670699dae",
+    "filename": "leads_lp_ha_noi_afternoon_alive_1791628519337.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 8,
+      "dead": 0,
+      "error": 0
+    },
+    "completed": 8,
+    "total": 8,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: leads_lp_ha_noi_afternoon_alive_1791628519337.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:12.669Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/sanweddingdecoration",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:14.262Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/TheChoaiVillaSocSon",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:14.263Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/banhkemmaki",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:14.478Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:22.908Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:23.752Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/sanweddingdecoration",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:23.754Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:26.088Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/TheChoaiVillaSocSon",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:26.110Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:26.575Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:26.651Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/banhkemmaki",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:26.652Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/venapilatesandwellness",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:27.512Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/MaryBridalWeddingDress",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:27.604Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/ceramicclubvn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:27.606Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:33.494Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:33.636Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/venapilatesandwellness",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:33.637Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:34.079Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:34.108Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/ceramicclubvn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:34.108Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:34.890Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:34.955Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/MaryBridalWeddingDress",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:34.956Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/leuphot",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:35.420Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/tiemhoacuame33VanCao",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:35.427Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:41.045Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:41.071Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/leuphot",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:41.072Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:41.176Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:41.211Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/tiemhoacuame33VanCao",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:41.212Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 8, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:42.051Z"
+      }
+    ],
+    "filePath": "uploads\\5a786196d7191737cba1ae49826a676e",
+    "createdAt": 1791629721502,
+    "accumulatedTime": 29383,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/leads_lp_ha_noi_afternoon_alive_1791628519337_alive_1791629862050.csv",
+      "deadFile": "http://localhost:3001/api/download/leads_lp_ha_noi_afternoon_alive_1791628519337_dead_1791629862050.csv"
+    }
+  },
+  {
+    "id": "35e71d8a917aeb22",
+    "filename": "leads_lp_ha_noi_ca_chieu_20261009_alive_1791628504231.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 8,
+      "dead": 0,
+      "error": 0
+    },
+    "completed": 8,
+    "total": 8,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: leads_lp_ha_noi_ca_chieu_20261009_alive_1791628504231.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:42.055Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/p/Yeen-Pilates-Wellness-61580546487048",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:43.281Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/linhvuweddingevents",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:43.282Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/ThammyDrTruongdentalclinnic",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:43.505Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:49.608Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:49.987Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/p/Yeen-Pilates-Wellness-61580546487048",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:49.987Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:54.634Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:56.660Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/linhvuweddingevents",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:56.660Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:57:58.460Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:58.479Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/ThammyDrTruongdentalclinnic",
+        "type": "success",
+        "timestamp": "2026-10-10T10:57:58.479Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/GreenWedding.Studio",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:58.965Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/banhkemmaki",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:58.968Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhachanmay",
+        "type": "info",
+        "timestamp": "2026-10-10T10:57:58.981Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:02.564Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:02.797Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/GreenWedding.Studio",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:02.797Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:06.790Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:06.823Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/banhkemmaki",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:06.824Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:07.538Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:07.553Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhachanmay",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:07.553Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/Haveustudio",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:07.847Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/thechipmunksocson",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:07.872Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:11.604Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:11.607Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/thechipmunksocson",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:11.607Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:13.937Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:13.984Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/Haveustudio",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:13.984Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 8, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:15.621Z"
+      }
+    ],
+    "filePath": "uploads\\6a5792cb506b87b636e644c2c213eb0a",
+    "createdAt": 1791629721510,
+    "accumulatedTime": 33568,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/leads_lp_ha_noi_ca_chieu_20261009_alive_1791628504231_alive_1791629895617.csv",
+      "deadFile": "http://localhost:3001/api/download/leads_lp_ha_noi_ca_chieu_20261009_alive_1791628504231_dead_1791629895617.csv"
+    }
+  },
+  {
+    "id": "eb453f722f18301a",
+    "filename": "leads_da_nang_chieu_alive_1791628489489.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 8,
+      "dead": 0,
+      "error": 0
+    },
+    "completed": 8,
+    "total": 8,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: leads_da_nang_chieu_alive_1791628489489.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:15.626Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/kimaystudio.dn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:17.085Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/vungchill",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:17.130Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/amieplanner29",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:17.175Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/vungchill",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:22.207Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/kimaystudio.dn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:22.313Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/amieplanner29",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:23.261Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/Anyogatherapy",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:24.158Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/phamdiep1992",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:24.196Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/hanvilladanang",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:24.315Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/Anyogatherapy",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:27.908Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/hanvilladanang",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:28.051Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/phamdiep1992",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:28.282Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/profile.php?id=61587348560728",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:28.524Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/dacsandananglamqua",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:28.548Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/dacsandananglamqua",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:31.770Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/profile.php?id=61587348560728",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:31.934Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 8, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:32.502Z"
+      }
+    ],
+    "filePath": "uploads\\87bd2d5295bfb7c16127c28e1d77fc94",
+    "createdAt": 1791629721519,
+    "accumulatedTime": 16878,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/leads_da_nang_chieu_alive_1791628489489_alive_1791629912500.csv",
+      "deadFile": "http://localhost:3001/api/download/leads_da_nang_chieu_alive_1791628489489_dead_1791629912500.csv"
+    }
+  },
+  {
+    "id": "1b6e7ab8160e8948",
+    "filename": "leads_lp_hcm_afternoon_alive_1791628474233.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 8,
+      "dead": 0,
+      "error": 0
+    },
+    "completed": 8,
+    "total": 8,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: leads_lp_hcm_afternoon_alive_1791628474233.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:32.506Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/dartchocolate",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:34.572Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/CherryFlowersWedding",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:34.573Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/kisswe.vn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:34.685Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:43.199Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:44.031Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/CherryFlowersWedding",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:44.032Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:44.914Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:44.921Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/dartchocolate",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:44.921Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/kisswe.vn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:45.672Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/harucraftshop",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:46.057Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/ansspavn",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:46.059Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/bopbihousehcm",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:46.132Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/bopbihousehcm",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:51.685Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:52.336Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:52.349Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/ansspavn",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:52.349Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:53.400Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:53.425Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/harucraftshop",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:53.426Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/SaigonPaddleStation",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:53.674Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/labellapilates2",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:53.679Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:57.813Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:57.819Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/SaigonPaddleStation",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:57.820Z"
+      },
+      {
+        "message": "Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...",
+        "type": "warning",
+        "timestamp": "2026-10-10T10:58:58.688Z"
+      },
+      {
+        "message": "✅ Cập nhật ảnh đại diện thành công",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:58.725Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/labellapilates2",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:58.725Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 8, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-10T10:58:59.775Z"
+      }
+    ],
+    "filePath": "uploads\\8cbc3a13f93ca0170d3107218d26758d",
+    "createdAt": 1791629721527,
+    "accumulatedTime": 27271,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/leads_lp_hcm_afternoon_alive_1791628474233_alive_1791629939772.csv",
+      "deadFile": "http://localhost:3001/api/download/leads_lp_hcm_afternoon_alive_1791628474233_dead_1791629939772.csv"
+    }
+  },
+  {
+    "id": "15209ceae2da781c",
+    "filename": "leads_lp_hcm_afternoon_dead_1791628474233.csv",
+    "status": "COMPLETED",
+    "concurrency": 3,
+    "headless": true,
+    "stats": {
+      "alive": 0,
+      "dead": 2,
+      "error": 0
+    },
+    "completed": 2,
+    "total": 2,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: leads_lp_hcm_afternoon_dead_1791628474233.csv",
+        "type": "info",
+        "timestamp": "2026-10-10T10:58:59.783Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/tiembanhdolcevita",
+        "type": "info",
+        "timestamp": "2026-10-10T10:59:02.278Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/NicoleBridalHCM",
+        "type": "info",
+        "timestamp": "2026-10-10T10:59:02.362Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/tiembanhdolcevita",
+        "type": "error",
+        "timestamp": "2026-10-10T10:59:06.720Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/NicoleBridalHCM",
+        "type": "error",
+        "timestamp": "2026-10-10T10:59:06.722Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 0, Chết: 2",
+        "type": "success",
+        "timestamp": "2026-10-10T10:59:07.691Z"
+      }
+    ],
+    "filePath": "uploads\\1a490621b6baec2c9b211b9a66a346b1",
+    "createdAt": 1791629721548,
+    "accumulatedTime": 7912,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/leads_lp_hcm_afternoon_dead_1791628474233_alive_1791629947689.csv",
+      "deadFile": "http://localhost:3001/api/download/leads_lp_hcm_afternoon_dead_1791628474233_dead_1791629947689.csv"
+    }
+  },
+  {
+    "id": "68a88adfc2236713",
+    "filename": "leads_all_muinhon_20261010_180859.csv",
+    "status": "COMPLETED",
+    "concurrency": 5,
+    "headless": false,
+    "stats": {
+      "alive": 105,
+      "dead": 375,
+      "error": 0
+    },
+    "completed": 480,
+    "total": 480,
+    "logs": [
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/trungluongcamping",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:18.089Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/comnhaxunau",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:18.111Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/muivirongphumy",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:18.125Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/haisanvibienquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:18.126Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/binhdinhtourtayson",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:20.837Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/trungluongcamping",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:20.944Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/comnhaxunau",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:20.957Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/haisanvibienquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:21.156Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/muivirongphumy",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:21.416Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/haisanhuongduongeogio",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:21.738Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/quancoxiquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:21.738Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/haisysquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:21.739Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/hoahoaquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:21.739Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/banhxeotognavy",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:21.740Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/haisysquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:24.481Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/haisanhuongduongeogio",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:24.481Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/hoahoaquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:24.825Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/quancoxiquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:24.855Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/banhxeotognavy",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:25.225Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/buncangoclien",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:25.553Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/labeachhousenhonly",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:25.555Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/mirabaixep",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:25.556Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/lifesabeachquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:25.558Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/havenvietnam",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:25.591Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/lifesabeachquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:28.265Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/labeachhousenhonly",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:28.310Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/buncangoclien",
+        "type": "success",
+        "timestamp": "2026-10-10T12:46:29.438Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/mirabaixep",
+        "type": "success",
+        "timestamp": "2026-10-10T12:46:29.748Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/havenvietnam",
+        "type": "success",
+        "timestamp": "2026-10-10T12:46:29.893Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/casamarinaresort",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:30.171Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/mochomestaynhonly",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:30.171Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhakhoaquocteachauquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:30.171Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/homestaylananhquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:30.172Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhakhoaxuanthuyquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:30.174Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/nhakhoaquocteachauquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:33.010Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/homestaylananhquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:33.012Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/casamarinaresort",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:33.013Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/mochomestaynhonly",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:33.225Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/nhakhoaxuanthuyquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:33.421Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nucuoidental.annhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:33.695Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/citydentalquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:33.695Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhakhoatamducquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:33.696Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhakhoasaigonquynhon",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:33.696Z"
+      },
+      {
+        "message": "⚡ Đang kiểm tra: https://facebook.com/nhakhoahoanhonsmile",
+        "type": "info",
+        "timestamp": "2026-10-10T12:46:33.696Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/nucuoidental.annhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:36.424Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/nhakhoatamducquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:36.526Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/nhakhoahoanhonsmile",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:36.526Z"
+      },
+      {
+        "message": "❌ DEAD: https://facebook.com/nhakhoasaigonquynhon",
+        "type": "error",
+        "timestamp": "2026-10-10T12:46:36.677Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/citydentalquynhon",
+        "type": "success",
+        "timestamp": "2026-10-10T12:46:37.369Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 105, Chết: 375",
+        "type": "success",
+        "timestamp": "2026-10-10T12:46:38.024Z"
+      }
+    ],
+    "filePath": "uploads\\084a414360dfa887c9e6da33a68f1e6e",
+    "createdAt": 1791635940552,
+    "accumulatedTime": 457469,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/leads_all_muinhon_20261010_180859_alive_1791636398014.csv",
+      "deadFile": "http://localhost:3001/api/download/leads_all_muinhon_20261010_180859_dead_1791636398014.csv"
+    }
+  }
+]
