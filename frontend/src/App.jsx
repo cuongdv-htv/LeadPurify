@@ -95,6 +95,37 @@ function App() {
     await axios.post(`http://localhost:3001/api/queue/${id}/${action}`);
   };
 
+  const handleBatchDownload = () => {
+    const historyJobs = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status));
+    let delay = 0;
+    historyJobs.forEach(job => {
+      if (job.downloadLinks) {
+        if (job.stats?.alive > 0 && job.downloadLinks.aliveFile) {
+          setTimeout(() => {
+            const a = document.createElement('a');
+            a.href = job.downloadLinks.aliveFile;
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }, delay);
+          delay += 300;
+        }
+        if (job.stats?.dead > 0 && job.downloadLinks.deadFile) {
+          setTimeout(() => {
+            const a = document.createElement('a');
+            a.href = job.downloadLinks.deadFile;
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }, delay);
+          delay += 300;
+        }
+      }
+    });
+  };
+
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
       <header className="text-center mb-4">
@@ -158,12 +189,19 @@ function App() {
         </div>
 
         <div style={{ marginTop: '32px' }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }} className={activeTab === 'queue' ? "neon-text-cyan" : "neon-text-purple"}>
-               {activeTab === 'queue' ? 'Hàng đợi tiến trình' : 'Lịch sử tiến trình'} 
-               <span style={{ background: activeTab === 'queue' ? 'var(--neon-purple)' : 'var(--neon-cyan)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '1rem' }}>
-                   {activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)).length : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length}
-               </span>
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }} className={activeTab === 'queue' ? "neon-text-cyan" : "neon-text-purple"}>
+                   {activeTab === 'queue' ? 'Hàng đợi tiến trình' : 'Lịch sử tiến trình'} 
+                   <span style={{ background: activeTab === 'queue' ? 'var(--neon-purple)' : 'var(--neon-cyan)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '1rem' }}>
+                       {activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)).length : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length}
+                   </span>
+                </h2>
+                {activeTab === 'history' && queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length > 0 && (
+                    <button onClick={handleBatchDownload} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Download size={18} /> Tải toàn bộ kết quả
+                    </button>
+                )}
+            </div>
             <AnimatePresence>
                 {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).map(job => {
                     const percent = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
