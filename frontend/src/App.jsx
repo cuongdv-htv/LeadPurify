@@ -256,7 +256,7 @@ function App() {
                 )}
             </div>
             <AnimatePresence>
-                {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).map(job => {
+                {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => b.createdAt - a.createdAt)).map(job => {
                     const percent = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
                     return (
                         <motion.div key={job.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, height: 0 }} className="glass-panel p-6" style={{ marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
