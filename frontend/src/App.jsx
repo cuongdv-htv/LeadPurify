@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock } from 'lucide-react';
+import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock, Eye } from 'lucide-react';
 import './index.css';
+import CsvEditorModal from './components/CsvEditorModal';
 
 const socket = io('http://localhost:3001');
 
@@ -52,6 +53,8 @@ function App() {
   const [concurrency, setConcurrency] = useState(3);
   const [headless, setHeadless] = useState(true);
   const [activeTab, setActiveTab] = useState('queue');
+  const [previewFile, setPreviewFile] = useState(null);
+  const [historyPreviewFile, setHistoryPreviewFile] = useState(null);
 
   useEffect(() => {
     socket.on('queue_update', (data) => setQueue(data));
@@ -73,22 +76,35 @@ function App() {
     };
   }, []);
 
+  const uploadFileDirectly = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('concurrency', concurrency);
+    formData.append('headless', headless);
+    try {
+      await axios.post('http://localhost:3001/api/upload', formData);
+    } catch(err) {
+      console.error(err);
+    }
+  };
+
   const handleFileUpload = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
-    for (let i = 0; i < files.length; i++) {
-        const formData = new FormData();
-        formData.append('file', files[i]);
-        formData.append('concurrency', concurrency);
-        formData.append('headless', headless);
-        try {
-          await axios.post('http://localhost:3001/api/upload', formData);
-        } catch(err) {
-          console.error(err);
+    if (files.length === 1) {
+        setPreviewFile(files[0]);
+    } else {
+        for (let i = 0; i < files.length; i++) {
+            await uploadFileDirectly(files[i]);
         }
     }
     e.target.value = ''; 
+  };
+
+  const handleConfirmUpload = async (newFile) => {
+    setPreviewFile(null);
+    await uploadFileDirectly(newFile);
   };
 
   const jobAction = async (id, action) => {
@@ -130,6 +146,29 @@ function App() {
     if (window.confirm('Bạn có chắc muốn xóa toàn bộ lịch sử tiến trình không?')) {
         await axios.post('http://localhost:3001/api/clear-history');
     }
+  };
+
+  const handlePreviewHistory = async (url, originalFilename) => {
+      try {
+          const res = await axios.get(url, { responseType: 'blob' });
+          const file = new File([res.data], originalFilename, { type: 'text/csv' });
+          setHistoryPreviewFile(file);
+      } catch (err) {
+          console.error("Lỗi khi lấy file lịch sử:", err);
+          alert("Không thể tải file để xem trước.");
+      }
+  };
+
+  const handleConfirmHistoryDownload = (editedFile) => {
+      const url = URL.createObjectURL(editedFile);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = editedFile.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setHistoryPreviewFile(null);
   };
 
   return (
@@ -259,8 +298,18 @@ function App() {
 
                             {job.downloadLinks && (
                                 <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-                                    <a href={job.downloadLinks.aliveFile} download className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '6px 12px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Tải File Link Sống</a>
-                                    <a href={job.downloadLinks.deadFile} download className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Tải File Link Chết</a>
+                                    {job.downloadLinks.aliveFile && (
+                                        <div style={{ display: 'flex' }}>
+                                            <button onClick={() => handlePreviewHistory(job.downloadLinks.aliveFile, `Alive_${job.filename}`)} className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '6px 12px', borderRight: 'none', borderRadius: '4px 0 0 4px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }} title="Xem trước"><Eye size={14}/></button>
+                                            <a href={job.downloadLinks.aliveFile} download className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '6px 12px', borderRadius: '0 4px 4px 0', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Link Sống</a>
+                                        </div>
+                                    )}
+                                    {job.downloadLinks.deadFile && (
+                                        <div style={{ display: 'flex' }}>
+                                            <button onClick={() => handlePreviewHistory(job.downloadLinks.deadFile, `Dead_${job.filename}`)} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px', borderRight: 'none', borderRadius: '4px 0 0 4px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }} title="Xem trước"><Eye size={14}/></button>
+                                            <a href={job.downloadLinks.deadFile} download className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px', borderRadius: '0 4px 4px 0', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Link Chết</a>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -291,6 +340,26 @@ function App() {
             )}
         </div>
       </div>
+
+      {/* CSV Preview Modal for Upload */}
+      {previewFile && (
+        <CsvEditorModal 
+           file={previewFile} 
+           onClose={() => setPreviewFile(null)} 
+           onConfirm={handleConfirmUpload} 
+           mode="upload"
+        />
+      )}
+
+      {/* CSV Preview Modal for History Download */}
+      {historyPreviewFile && (
+        <CsvEditorModal 
+           file={historyPreviewFile} 
+           onClose={() => setHistoryPreviewFile(null)} 
+           onConfirm={handleConfirmHistoryDownload} 
+           mode="download"
+        />
+      )}
     </div>
   );
 }
