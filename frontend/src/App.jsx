@@ -273,8 +273,13 @@ function App() {
                                         </span>
                                         <JobTimer job={job} />
                                     </h3>
-                                    <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                                        Đã quét: {job.completed}/{job.total} (Luồng: {job.concurrency})
+                                    <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <span>Đã quét: {job.completed}/{job.total} (Luồng: {job.concurrency})</span>
+                                        {job.createdAt && (
+                                            <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>
+                                                • Tạo lúc: {new Date(job.createdAt).toLocaleString('vi-VN')}
+                                            </span>
+                                        )}
                                     </p>
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px' }}>
