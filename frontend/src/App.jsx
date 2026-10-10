@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock, Eye, Calendar } from 'lucide-react';
+import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock, Eye, Calendar, Key, RefreshCw } from 'lucide-react';
 import './index.css';
 import CsvEditorModal from './components/CsvEditorModal';
 
@@ -55,6 +55,9 @@ function App() {
   const [activeTab, setActiveTab] = useState('queue');
   const [previewFile, setPreviewFile] = useState(null);
   const [historyPreviewFile, setHistoryPreviewFile] = useState(null);
+  const [apifyKeys, setApifyKeys] = useState([]);
+  const [apifyInput, setApifyInput] = useState('');
+  const [isCheckingKeys, setIsCheckingKeys] = useState(false);
 
   useEffect(() => {
     socket.on('queue_update', (data) => setQueue(data));
@@ -69,6 +72,10 @@ function App() {
     });
     
     axios.get('http://localhost:3001/api/queue').then(res => setQueue(res.data));
+    axios.get('http://localhost:3001/api/apify-keys').then(res => {
+        setApifyKeys(res.data);
+        setApifyInput(res.data.map(k => k.key).join('\n'));
+    });
 
     return () => {
       socket.off('queue_update');
@@ -182,8 +189,39 @@ function App() {
       setHistoryPreviewFile(null);
   };
 
+  const handleSaveApifyKeys = async () => {
+      const keysArray = apifyInput.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+      const newKeys = keysArray.map(key => {
+          const existing = apifyKeys.find(k => k.key === key);
+          return existing ? existing : { key, usage: 0, status: 'active' };
+      });
+      try {
+          await axios.post('http://localhost:3001/api/apify-keys', { keys: newKeys });
+          setApifyKeys(newKeys);
+          alert('Lưu API Keys thành công!');
+      } catch (e) {
+          alert('Lỗi khi lưu API Keys');
+      }
+  };
+
+  const handleCheckApifyKeys = async () => {
+      setIsCheckingKeys(true);
+      try {
+          const res = await axios.post('http://localhost:3001/api/apify-keys/check');
+          setApifyKeys(res.data);
+      } catch (e) {
+          alert('Lỗi khi kiểm tra trạng thái API Keys');
+      } finally {
+          setIsCheckingKeys(false);
+      }
+  };
+
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
+      <style>{`
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+      `}</style>
       <header className="text-center mb-4">
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <h1 style={{ fontSize: '3rem', margin: '0 0 10px 0' }} className="neon-text-cyan">
@@ -201,6 +239,9 @@ function App() {
         </button>
         <button className={`btn-outline ${activeTab === 'history' ? 'neon-text-purple' : ''}`} style={{ borderColor: activeTab === 'history' ? 'var(--neon-purple)' : 'var(--glass-border)', padding: '8px 24px', fontWeight: activeTab === 'history' ? 'bold' : 'normal' }} onClick={() => setActiveTab('history')}>
             Lịch sử
+        </button>
+        <button className={`btn-outline ${activeTab === 'api' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'api' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 24px', fontWeight: activeTab === 'api' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setActiveTab('api')}>
+            <Key size={16}/> Cấu hình API
         </button>
       </div>
 
@@ -359,10 +400,60 @@ function App() {
                     );
                 })}
             </AnimatePresence>
-            {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).length === 0 && (
+            {activeTab !== 'api' && (activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).length === 0 && (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', padding: '40px', border: '1px dashed var(--glass-border)', borderRadius: '16px' }}>
                     Chưa có tiến trình nào trong {activeTab === 'queue' ? 'hàng đợi' : 'lịch sử'}.{activeTab === 'queue' ? <><br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!</> : ''}
                 </div>
+            )}
+            
+            {activeTab === 'api' && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6">
+                    <h2 style={{ fontSize: '1.5rem', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '12px' }} className="neon-text-cyan">
+                        <Key size={24} /> Quản lý Apify API Keys
+                    </h2>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+                        Nhập các API Token của Apify (mỗi key một dòng). Hệ thống sẽ tự động xoay vòng khi mỗi key đạt 400 request hoặc bị lỗi giới hạn.
+                    </p>
+                    
+                    <div style={{ display: 'flex', gap: '24px' }}>
+                        <div style={{ flex: 1 }}>
+                            <textarea 
+                                value={apifyInput} 
+                                onChange={(e) => setApifyInput(e.target.value)} 
+                                placeholder="apify_api_...&#10;apify_api_..."
+                                style={{ width: '100%', height: '300px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', padding: '12px', fontFamily: 'monospace', resize: 'vertical' }}
+                            />
+                            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                                <button onClick={handleSaveApifyKeys} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '10px 24px', fontWeight: 'bold' }}>
+                                    Lưu Cấu Hình API
+                                </button>
+                                <button onClick={handleCheckApifyKeys} disabled={isCheckingKeys} className="btn-outline" style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '10px 24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', opacity: isCheckingKeys ? 0.6 : 1 }}>
+                                    <RefreshCw size={18} className={isCheckingKeys ? "spin" : ""} /> {isCheckingKeys ? "Đang kiểm tra..." : "Kiểm tra toàn bộ Keys"}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style={{ flex: 1, background: 'rgba(0,0,0,0.1)', borderRadius: '8px', padding: '16px', border: '1px solid var(--glass-border)' }}>
+                            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Trạng thái Keys hiện tại ({apifyKeys.length})</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+                                {apifyKeys.map((k, idx) => (
+                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
+                                        <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', opacity: 0.8 }}>
+                                            {k.key.substring(0, 15)}...
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Đã dùng: {k.usage || 0}/400</span>
+                                            <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '12px', background: k.status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: k.status === 'active' ? '#10b981' : '#ef4444' }}>
+                                                {k.status.toUpperCase()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                                {apifyKeys.length === 0 && <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Chưa có API Key nào</div>}
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
             )}
         </div>
       </div>

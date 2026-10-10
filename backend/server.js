@@ -632,6 +632,63 @@ app.post('/api/queue/:id/check-activity', (req, res) => {
   res.json({ success: true, jobId: job.id });
 });
 
+app.get('/api/apify-keys', (req, res) => {
+    try {
+        const keysPath = path.join(__dirname, 'apify_keys.json');
+        if (!fs.existsSync(keysPath)) return res.json([]);
+        const keys = JSON.parse(fs.readFileSync(keysPath, 'utf8'));
+        res.json(keys);
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/apify-keys', (req, res) => {
+    try {
+        const keysPath = path.join(__dirname, 'apify_keys.json');
+        const { keys } = req.body;
+        if (!Array.isArray(keys)) return res.status(400).json({ error: 'Dữ liệu không hợp lệ' });
+        fs.writeFileSync(keysPath, JSON.stringify(keys, null, 2));
+        res.json({ success: true });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/apify-keys/check', async (req, res) => {
+    try {
+        const keysPath = path.join(__dirname, 'apify_keys.json');
+        if (!fs.existsSync(keysPath)) return res.json([]);
+        let keys = JSON.parse(fs.readFileSync(keysPath, 'utf8'));
+        
+        const checkToken = (token) => {
+            return new Promise((resolve) => {
+                https.get(`https://api.apify.com/v2/users/me?token=${token}`, (resp) => {
+                    let data = '';
+                    resp.on('data', chunk => data += chunk);
+                    resp.on('end', () => resolve(resp.statusCode === 200));
+                }).on("error", () => resolve(false));
+            });
+        };
+
+        for (let k of keys) {
+            const isValid = await checkToken(k.key);
+            if (!isValid) {
+                k.status = 'expired';
+            } else if (k.usage >= 400) {
+                k.status = 'expired';
+            } else {
+                k.status = 'active';
+            }
+        }
+        
+        fs.writeFileSync(keysPath, JSON.stringify(keys, null, 2));
+        res.json(keys);
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/api/download/:filename', (req, res) => {
   const filePath = path.join(__dirname, 'outputs', req.params.filename);
   if (fs.existsSync(filePath)) res.download(filePath);
