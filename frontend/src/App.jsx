@@ -222,31 +222,31 @@ function App() {
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
       `}</style>
-      <header className="text-center mb-4">
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <h1 style={{ fontSize: '3rem', margin: '0 0 10px 0' }} className="neon-text-cyan">
+          <h1 style={{ fontSize: '2.5rem', margin: '0 0 5px 0' }} className="neon-text-cyan">
             Lead<span className="neon-text-purple">Purify</span>
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>
-            Quản lý Hàng đợi (Queue) Kiểm tra Link Facebook
+          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', margin: 0 }}>
+            Hệ thống tự động hóa
           </p>
         </motion.div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+            <button className={`btn-outline ${activeTab === 'queue' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'queue' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'queue' ? 'bold' : 'normal' }} onClick={() => setActiveTab('queue')}>
+                Hàng đợi
+            </button>
+            <button className={`btn-outline ${activeTab === 'history' ? 'neon-text-purple' : ''}`} style={{ borderColor: activeTab === 'history' ? 'var(--neon-purple)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'history' ? 'bold' : 'normal' }} onClick={() => setActiveTab('history')}>
+                Lịch sử
+            </button>
+            <button className={`btn-outline ${activeTab === 'api' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'api' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'api' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setActiveTab('api')}>
+                <Key size={16}/> API Keys
+            </button>
+        </div>
       </header>
-
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '24px' }}>
-        <button className={`btn-outline ${activeTab === 'queue' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'queue' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 24px', fontWeight: activeTab === 'queue' ? 'bold' : 'normal' }} onClick={() => setActiveTab('queue')}>
-            Đang chạy
-        </button>
-        <button className={`btn-outline ${activeTab === 'history' ? 'neon-text-purple' : ''}`} style={{ borderColor: activeTab === 'history' ? 'var(--neon-purple)' : 'var(--glass-border)', padding: '8px 24px', fontWeight: activeTab === 'history' ? 'bold' : 'normal' }} onClick={() => setActiveTab('history')}>
-            Lịch sử
-        </button>
-        <button className={`btn-outline ${activeTab === 'api' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'api' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 24px', fontWeight: activeTab === 'api' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setActiveTab('api')}>
-            <Key size={16}/> Cấu hình API
-        </button>
-      </div>
 
       <div className="flex gap-4 flex-col" style={{ marginTop: '20px' }}>
         
+        {activeTab !== 'api' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -284,8 +284,10 @@ function App() {
               </div>
             </motion.div>
         </div>
+        )}
 
-        <div style={{ marginTop: '32px' }}>
+        <div style={{ marginTop: activeTab !== 'api' ? '32px' : '0' }}>
+            {activeTab !== 'api' && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }} className={activeTab === 'queue' ? "neon-text-cyan" : "neon-text-purple"}>
                    {activeTab === 'queue' ? 'Hàng đợi tiến trình' : 'Lịch sử tiến trình'} 
@@ -307,6 +309,9 @@ function App() {
                     </div>
                 )}
             </div>
+            )}
+            
+            {activeTab !== 'api' && (
             <AnimatePresence>
                 {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => b.createdAt - a.createdAt)).map(job => {
                     const percent = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
@@ -400,6 +405,8 @@ function App() {
                     );
                 })}
             </AnimatePresence>
+            )}
+            
             {activeTab !== 'api' && (activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).length === 0 && (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', padding: '40px', border: '1px dashed var(--glass-border)', borderRadius: '16px' }}>
                     Chưa có tiến trình nào trong {activeTab === 'queue' ? 'hàng đợi' : 'lịch sử'}.{activeTab === 'queue' ? <><br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!</> : ''}
