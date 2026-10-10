@@ -115,6 +115,8 @@ async function runJob(job) {
           }
           if (!fbCol) throw new Error('Không tìm thấy cột chứa link Facebook');
 
+          let imgCol = Object.keys(rows[0]).find(c => c.toLowerCase().includes('image') || c.toLowerCase().includes('avatar') || c.toLowerCase().includes('ảnh') || c.toLowerCase().includes('pic'));
+
           job.total = rows.length;
           broadcastQueue();
           
@@ -182,6 +184,38 @@ async function runJob(job) {
                     job.stats.dead++;
                     pushLog(job, `❌ DEAD: ${fullUrl}`, 'error');
                   } else {
+                    let imageWorks = false;
+                    let currentImgUrl = imgCol ? row[imgCol] : null;
+                    
+                    if (currentImgUrl) {
+                        const imgPage = await browser.newPage();
+                        const imgRes = await imgPage.goto(currentImgUrl, { timeout: 15000 }).catch(() => null);
+                        if (imgRes && imgRes.status() === 200) {
+                            const ct = imgRes.headers()['content-type'];
+                            if (ct && ct.startsWith('image/')) {
+                                imageWorks = true;
+                            }
+                        }
+                        await imgPage.close();
+                    }
+                    
+                    if (!imageWorks) {
+                        pushLog(job, `Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...`, 'warning');
+                        const newAvatar = await page.evaluate(() => {
+                            const meta = document.querySelector('meta[property="og:image"]');
+                            if (meta && meta.content) return meta.content;
+                            const svgImg = document.querySelector('svg[role="img"] image');
+                            if (svgImg) return svgImg.getAttribute('xlink:href') || svgImg.getAttribute('href');
+                            return null;
+                        });
+                        
+                        if (newAvatar) {
+                            if (!imgCol) imgCol = 'Avatar';
+                            row[imgCol] = newAvatar;
+                            pushLog(job, `✅ Cập nhật ảnh đại diện thành công`, 'success');
+                        }
+                    }
+
                     aliveRows.push(row);
                     job.stats.alive++;
                     pushLog(job, `✅ ALIVE: ${fullUrl}`, 'success');
