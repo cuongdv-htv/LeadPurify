@@ -2,50 +2,71 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock, Eye, Calendar, Key, RefreshCw, Info } from 'lucide-react';
+import { 
+  UploadCloud, 
+  Play, 
+  Settings, 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle, 
+  Download, 
+  Pause, 
+  Square, 
+  Trash2, 
+  ArrowUpCircle, 
+  Clock, 
+  Eye, 
+  Key, 
+  RefreshCw, 
+  Info,
+  Layers,
+  Sliders,
+  Sparkles,
+  FileSpreadsheet
+} from 'lucide-react';
 import './index.css';
 import CsvEditorModal from './components/CsvEditorModal';
 
 const socket = io('http://localhost:3001');
 
 const JobTimer = ({ job }) => {
-    const [elapsed, setElapsed] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
 
-    useEffect(() => {
-        let interval;
-        const calculateElapsed = () => {
-            let total = job.accumulatedTime || 0;
-            if (job.status === 'RUNNING' && job.lastStartedAt) {
-                total += (Date.now() - job.lastStartedAt);
-            }
-            setElapsed(Math.floor(total / 1000));
-        };
+  useEffect(() => {
+    let interval;
+    const calculateElapsed = () => {
+      let total = job.accumulatedTime || 0;
+      if (job.status === 'RUNNING' && job.lastStartedAt) {
+        total += (Date.now() - job.lastStartedAt);
+      }
+      setElapsed(Math.floor(total / 1000));
+    };
 
-        calculateElapsed();
+    calculateElapsed();
 
-        if (job.status === 'RUNNING') {
-            interval = setInterval(calculateElapsed, 1000);
-        }
-
-        return () => {
-            if (interval) clearInterval(interval);
-        };
-    }, [job.status, job.accumulatedTime, job.lastStartedAt]);
-
-    const formatTime = (seconds) => {
-        if (!seconds || seconds < 0) return '00:00';
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-        const s = (seconds % 60).toString().padStart(2, '0');
-        if (h > 0) return `${h}:${m}:${s}`;
-        return `${m}:${s}`;
+    if (job.status === 'RUNNING') {
+      interval = setInterval(calculateElapsed, 1000);
     }
 
-    return (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', color: 'var(--neon-cyan)', background: 'rgba(0,0,0,0.2)', padding: '2px 8px', borderRadius: '12px' }}>
-            <Clock size={14} /> {formatTime(elapsed)}
-        </span>
-    );
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [job.status, job.accumulatedTime, job.lastStartedAt]);
+
+  const formatTime = (seconds) => {
+    if (!seconds || seconds < 0) return '00:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    if (h > 0) return `${h}:${m}:${s}`;
+    return `${m}:${s}`;
+  };
+
+  return (
+    <span className="liquid-badge" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>
+      <Clock size={13} style={{ color: 'var(--color-accent)' }} /> {formatTime(elapsed)}
+    </span>
+  );
 };
 
 function App() {
@@ -79,12 +100,12 @@ function App() {
       }));
     });
     
-    axios.get('http://localhost:3001/api/queue').then(res => setQueue(res.data));
+    axios.get('http://localhost:3001/api/queue').then(res => setQueue(res.data)).catch(console.error);
     axios.get('http://localhost:3001/api/apify-keys').then(res => {
-        setApifyKeys(res.data);
-        setApifyInput(res.data.map(k => k.key).join('\n'));
-    });
-    axios.get('http://localhost:3001/api/config').then(res => setApifyConfig(res.data));
+      setApifyKeys(res.data);
+      setApifyInput(res.data.map(k => k.key).join('\n'));
+    }).catch(console.error);
+    axios.get('http://localhost:3001/api/config').then(res => setApifyConfig(res.data)).catch(console.error);
 
     return () => {
       socket.off('queue_update');
@@ -114,11 +135,11 @@ function App() {
     if (!files || files.length === 0) return;
     
     if (files.length === 1) {
-        setPreviewFile(files[0]);
+      setPreviewFile(files[0]);
     } else {
-        for (let i = 0; i < files.length; i++) {
-            await uploadFileDirectly(files[i]);
-        }
+      for (let i = 0; i < files.length; i++) {
+        await uploadFileDirectly(files[i]);
+      }
     }
     e.target.value = ''; 
   };
@@ -165,16 +186,16 @@ function App() {
 
   const handleClearHistory = async () => {
     if (window.confirm('Bạn có chắc muốn xóa toàn bộ lịch sử tiến trình không?')) {
-        await axios.post('http://localhost:3001/api/clear-history');
+      await axios.post('http://localhost:3001/api/clear-history');
     }
   };
 
   const handleFixAvatar = async (jobId) => {
     try {
-        await axios.post(`http://localhost:3001/api/queue/${jobId}/fix-avatar`);
-        setActiveTab('queue');
+      await axios.post(`http://localhost:3001/api/queue/${jobId}/fix-avatar`);
+      setActiveTab('queue');
     } catch (e) {
-        alert(e.response?.data?.error || 'Có lỗi xảy ra');
+      alert(e.response?.data?.error || 'Có lỗi xảy ra');
     }
   };
 
@@ -206,429 +227,700 @@ function App() {
   };
 
   const handlePreviewHistory = async (url, originalFilename) => {
-      try {
-          const res = await axios.get(url, { responseType: 'blob' });
-          const file = new File([res.data], originalFilename, { type: 'text/csv' });
-          setHistoryPreviewFile(file);
-      } catch (err) {
-          console.error("Lỗi khi lấy file lịch sử:", err);
-          alert("Không thể tải file để xem trước.");
-      }
+    try {
+      const res = await axios.get(url, { responseType: 'blob' });
+      const file = new File([res.data], originalFilename, { type: 'text/csv' });
+      setHistoryPreviewFile(file);
+    } catch (err) {
+      console.error("Lỗi khi lấy file lịch sử:", err);
+      alert("Không thể tải file để xem trước.");
+    }
   };
 
   const handleConfirmHistoryDownload = (editedFile) => {
-      const url = URL.createObjectURL(editedFile);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = editedFile.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      setHistoryPreviewFile(null);
+    const url = URL.createObjectURL(editedFile);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = editedFile.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setHistoryPreviewFile(null);
   };
 
   const handleSaveApifyKeys = async () => {
-      const keysArray = apifyInput.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-      const newKeys = keysArray.map(key => {
-          const existing = apifyKeys.find(k => k.key === key);
-          return existing ? existing : { key, usage: 0, status: 'active' };
-      });
-      try {
-          await axios.post('http://localhost:3001/api/apify-keys', { keys: newKeys });
-          setApifyKeys(newKeys);
-          alert('Lưu API Keys thành công!');
-      } catch (e) {
-          alert('Lỗi khi lưu API Keys');
-      }
+    const keysArray = apifyInput.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+    const newKeys = keysArray.map(key => {
+      const existing = apifyKeys.find(k => k.key === key);
+      return existing ? existing : { key, usage: 0, status: 'active' };
+    });
+    try {
+      await axios.post('http://localhost:3001/api/apify-keys', { keys: newKeys });
+      setApifyKeys(newKeys);
+      alert('Lưu API Keys thành công!');
+    } catch (e) {
+      alert('Lỗi khi lưu API Keys');
+    }
   };
 
   const handleSaveApifyConfig = async () => {
-      try {
-          const res = await axios.post('http://localhost:3001/api/config', apifyConfig);
-          setApifyConfig(res.data.config);
-          alert('Lưu Cấu Hình thành công!');
-      } catch (e) {
-          alert('Lỗi khi lưu Cấu Hình');
-      }
+    try {
+      const res = await axios.post('http://localhost:3001/api/config', apifyConfig);
+      setApifyConfig(res.data.config);
+      alert('Lưu cấu hình thành công!');
+    } catch (e) {
+      alert('Lỗi khi lưu cấu hình');
+    }
   };
 
   const handleCheckApifyKeys = async () => {
-      setIsCheckingKeys(true);
-      try {
-          const res = await axios.post('http://localhost:3001/api/apify-keys/check');
-          setApifyKeys(res.data);
-      } catch (e) {
-          alert('Lỗi khi kiểm tra trạng thái API Keys');
-      } finally {
-          setIsCheckingKeys(false);
-      }
+    setIsCheckingKeys(true);
+    try {
+      const res = await axios.post('http://localhost:3001/api/apify-keys/check');
+      setApifyKeys(res.data);
+    } catch (e) {
+      alert('Lỗi khi kiểm tra trạng thái API Keys');
+    } finally {
+      setIsCheckingKeys(false);
+    }
   };
 
+  const queueItems = queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status));
+  const historyItems = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
-      <style>{`
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-      `}</style>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <h1 style={{ fontSize: '2.5rem', margin: '0 0 5px 0' }} className="neon-text-cyan">
-            Lead<span className="neon-text-purple">Purify</span>
+    <div className="app-layout" style={{ minHeight: '100dvh' }}>
+      {/* Liquid Glass Header */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <motion.div initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.48 }}>
+          <h1 className="hero-title" style={{ margin: '0 0 0.25rem 0' }}>
+            Lead<span className="accent-mark">Purify</span>
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', margin: 0 }}>
-            Hệ thống tự động hóa
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9375rem', margin: 0, letterSpacing: '0.01em' }}>
+            Hệ thống xác thực liên kết và làm sạch dữ liệu tự động
           </p>
         </motion.div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-            <button className={`btn-outline ${activeTab === 'queue' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'queue' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'queue' ? 'bold' : 'normal' }} onClick={() => setActiveTab('queue')}>
-                Hàng đợi
-            </button>
-            <button className={`btn-outline ${activeTab === 'history' ? 'neon-text-purple' : ''}`} style={{ borderColor: activeTab === 'history' ? 'var(--neon-purple)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'history' ? 'bold' : 'normal' }} onClick={() => setActiveTab('history')}>
-                Lịch sử
-            </button>
-            <button className={`btn-outline ${activeTab === 'api' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'api' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'api' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setActiveTab('api')}>
-                <Key size={16}/> API Keys
-            </button>
-        </div>
+
+        {/* Floating Navigation Pill */}
+        <nav className="liquid-nav">
+          <button 
+            className={`liquid-nav-btn ${activeTab === 'queue' ? 'active' : ''}`}
+            onClick={() => setActiveTab('queue')}
+          >
+            <Layers size={16} />
+            Hàng đợi
+            {queueItems.length > 0 && (
+              <span className="liquid-badge" style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#ffffff', padding: '1px 6px' }}>
+                {queueItems.length}
+              </span>
+            )}
+          </button>
+          
+          <button 
+            className={`liquid-nav-btn ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            <Clock size={16} />
+            Lịch sử
+            {historyItems.length > 0 && (
+              <span className="liquid-badge" style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#ffffff', padding: '1px 6px' }}>
+                {historyItems.length}
+              </span>
+            )}
+          </button>
+
+          <button 
+            className={`liquid-nav-btn ${activeTab === 'api' ? 'active' : ''}`}
+            onClick={() => setActiveTab('api')}
+          >
+            <Key size={16} />
+            API Keys
+          </button>
+        </nav>
       </header>
 
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '24px', padding: '16px', background: 'rgba(0, 240, 255, 0.05)', border: '1px solid var(--neon-cyan)', borderRadius: '8px', color: '#e2e8f0', display: 'flex', alignItems: 'flex-start', gap: '12px', boxShadow: '0 0 10px rgba(0,240,255,0.1)' }}>
-        <Info size={24} color="var(--neon-cyan)" style={{ flexShrink: 0 }} />
-        <div>
-          <h4 style={{ margin: '0 0 8px 0', color: 'var(--neon-cyan)', fontSize: '1.1rem' }}>Hướng dẫn sử dụng nhanh LeadPurify</h4>
-          <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--text-muted)' }}>
-            1. <b>Hàng đợi:</b> Kéo thả file CSV chứa danh sách link vào khu vực bên dưới để hệ thống tự động kiểm tra trạng thái sống/chết của các link.<br/>
-            2. <b>Lịch sử:</b> Xem kết quả kiểm tra trạng thái và tải về các file dữ liệu (Sống/Chết/Lỗi).<br/>
-            3. <b>Kiểm tra hoạt động:</b> Từ các file "Sống" ở tab Lịch sử, bạn có thể chạy "Kiểm tra 6 tháng" để xem trang/group có hoạt động gần đây hay không (chức năng này yêu cầu cấu hình Apify Key).
+      {/* Liquid Glass Quick Guide Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.48 }}
+        className="liquid-guide-banner"
+      >
+        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(0, 102, 255, 0.15)', border: '1px solid rgba(0, 102, 255, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Info size={18} style={{ color: '#38bdf8' }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <h4 style={{ margin: '0 0 0.375rem 0', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 600 }}>
+            Quy trình làm sạch dữ liệu LeadPurify
+          </h4>
+          <p style={{ margin: 0, fontSize: '0.875rem', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
+            1. <b>Hàng đợi:</b> Kéo thả tệp CSV chứa danh sách link để hệ thống tự động kiểm tra trạng thái hoạt động.<br/>
+            2. <b>Lịch sử:</b> Kiểm tra tỷ lệ sống/chết và tải xuống danh sách kết quả đã phân loại (Sống / Chết / Lỗi).<br/>
+            3. <b>Kiểm tra hoạt động:</b> Từ các tệp "Sống", bạn có thể quét dữ liệu bài đăng gần nhất (Apify API) để kiểm tra mức độ tương tác.
           </p>
         </div>
       </motion.div>
 
-      <div className="flex gap-4 flex-col" style={{ marginTop: '20px' }}>
+      {/* Main Workspace Body */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         
+        {/* Upload & Scanner Controls */}
         {activeTab !== 'api' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="grid-2col">
+            {/* Liquid Upload Zone */}
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              className="glass-panel p-6 flex flex-col items-center justify-center"
-              style={{ borderStyle: 'dashed', borderWidth: '2px', cursor: 'pointer', minHeight: '220px' }}
+              initial={{ scale: 0.98, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.45 }}
+              className="upload-dropzone"
               onClick={() => document.getElementById('multiFileUpload').click()}
             >
-              <UploadCloud size={48} color="var(--neon-cyan)" style={{ marginBottom: '16px' }} />
-              <h3 style={{ margin: 0, fontSize: '1.2rem', textAlign: 'center' }}>
-                Kéo thả nhiều file CSV vào đây
+              <div className="upload-icon-container">
+                <UploadCloud size={28} />
+              </div>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem', fontWeight: 600, textAlign: 'center' }}>
+                Kéo thả các tệp CSV vào đây
               </h3>
-              <input id="multiFileUpload" type="file" accept=".csv" multiple style={{ display: 'none' }} onChange={handleFileUpload} />
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                hoặc nhấp chuột để chọn tệp từ máy tính (hỗ trợ chọn nhiều tệp)
+              </p>
+              <input 
+                id="multiFileUpload" 
+                type="file" 
+                accept=".csv" 
+                multiple 
+                style={{ display: 'none' }} 
+                onChange={handleFileUpload} 
+              />
             </motion.div>
 
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="glass-panel p-6 flex-col gap-4">
-              <h3 style={{ margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Settings size={20} /> Cấu hình Quét mặc định
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                   <input type="checkbox" checked={jobOptions.checkAlive} onChange={e => setJobOptions({...jobOptions, checkAlive: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--neon-cyan)' }} />
-                   Kiểm tra link sống chết
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                   <input type="checkbox" checked={jobOptions.checkAliveApify} onChange={e => setJobOptions({...jobOptions, checkAliveApify: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--neon-cyan)' }} />
-                   Kiểm tra link sống chết bằng Apify
-                </label>
-                {jobOptions.checkAliveApify && (
-                    <div style={{ paddingLeft: '26px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Số tháng hoạt động:</span>
-                        <input type="number" min="1" value={jobOptions.monthsToCheck} onChange={e => setJobOptions({...jobOptions, monthsToCheck: e.target.value})} style={{ width: '60px', padding: '4px', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', color: 'white', borderRadius: '4px' }} />
-                    </div>
-                )}
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                   <input type="checkbox" checked={jobOptions.checkAvatar} onChange={e => setJobOptions({...jobOptions, checkAvatar: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--neon-cyan)' }} />
-                   Kiểm tra link ảnh avatar và sửa
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                   <input type="checkbox" checked={jobOptions.checkAvatarApify} onChange={e => setJobOptions({...jobOptions, checkAvatarApify: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--neon-cyan)' }} />
-                   Kiểm tra link ảnh avatar và sửa bằng Apify
+            {/* Scan Configuration Card */}
+            <motion.div 
+              initial={{ y: 16, opacity: 0 }} 
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.48 }}
+              className="liquid-card"
+              style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--glass-border-subtle)', paddingBottom: '0.75rem' }}>
+                <Sliders size={18} style={{ color: 'var(--color-accent)' }} />
+                <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>Cấu hình quét mặc định</h3>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                <label className="liquid-checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    className="liquid-checkbox"
+                    checked={jobOptions.checkAlive} 
+                    onChange={e => setJobOptions({...jobOptions, checkAlive: e.target.checked})} 
+                  />
+                  <span>Kiểm tra link sống / chết</span>
                 </label>
 
-                <div style={{ marginTop: '8px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)' }}>
-                    Luồng (Concurrency): <b>{concurrency}</b>
-                  </label>
-                  <input type="range" min="1" max="5" value={concurrency} onChange={(e) => setConcurrency(e.target.value)} style={{ width: '100%', accentColor: 'var(--neon-purple)' }}/>
+                <label className="liquid-checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    className="liquid-checkbox"
+                    checked={jobOptions.checkAliveApify} 
+                    onChange={e => setJobOptions({...jobOptions, checkAliveApify: e.target.checked})} 
+                  />
+                  <span>Kiểm tra link sống / chết bằng Apify</span>
+                </label>
+
+                {jobOptions.checkAliveApify && (
+                  <div style={{ paddingLeft: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Số tháng hoạt động:</span>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      value={jobOptions.monthsToCheck} 
+                      onChange={e => setJobOptions({...jobOptions, monthsToCheck: e.target.value})} 
+                      className="liquid-input"
+                      style={{ width: '70px', padding: '0.35rem 0.5rem', textAlign: 'center' }} 
+                    />
+                  </div>
+                )}
+
+                <label className="liquid-checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    className="liquid-checkbox"
+                    checked={jobOptions.checkAvatar} 
+                    onChange={e => setJobOptions({...jobOptions, checkAvatar: e.target.checked})} 
+                  />
+                  <span>Kiểm tra link ảnh avatar và sửa lỗi</span>
+                </label>
+
+                <label className="liquid-checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    className="liquid-checkbox"
+                    checked={jobOptions.checkAvatarApify} 
+                    onChange={e => setJobOptions({...jobOptions, checkAvatarApify: e.target.checked})} 
+                  />
+                  <span>Kiểm tra link ảnh avatar và sửa bằng Apify</span>
+                </label>
+
+                {/* Concurrency Range */}
+                <div style={{ marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--glass-border-subtle)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span className="liquid-label" style={{ margin: 0 }}>Số luồng xử lý song song:</span>
+                    <span className="liquid-badge" style={{ fontFamily: 'var(--font-mono)' }}>{concurrency} luồng</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="5" 
+                    value={concurrency} 
+                    onChange={(e) => setConcurrency(e.target.value)} 
+                    className="liquid-range"
+                  />
                 </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)' }}>
-                    Giao diện ngầm (Headless):
-                  </label>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <button className={`btn-outline ${headless ? 'neon-text-cyan' : ''}`} style={{ borderColor: headless ? 'var(--neon-cyan)' : '', padding: '6px 12px' }} onClick={() => setHeadless(true)}>Bật</button>
-                    <button className={`btn-outline ${!headless ? 'neon-text-purple' : ''}`} style={{ borderColor: !headless ? 'var(--neon-purple)' : '', padding: '6px 12px' }} onClick={() => setHeadless(false)}>Tắt</button>
+
+                {/* Headless Toggle */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.25rem' }}>
+                  <span className="liquid-label" style={{ margin: 0 }}>Chế độ chạy ẩn (Headless):</span>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      className={`btn-outline ${headless ? 'btn-outline-accent' : ''}`} 
+                      style={{ padding: '0.35rem 0.85rem', fontSize: '0.8125rem' }} 
+                      onClick={() => setHeadless(true)}
+                    >
+                      Bật
+                    </button>
+                    <button 
+                      className={`btn-outline ${!headless ? 'btn-outline-warning' : ''}`} 
+                      style={{ padding: '0.35rem 0.85rem', fontSize: '0.8125rem' }} 
+                      onClick={() => setHeadless(false)}
+                    >
+                      Tắt
+                    </button>
                   </div>
                 </div>
               </div>
             </motion.div>
-        </div>
+          </div>
         )}
 
-        <div style={{ marginTop: activeTab !== 'api' ? '32px' : '0' }}>
-            {activeTab !== 'api' && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }} className={activeTab === 'queue' ? "neon-text-cyan" : "neon-text-purple"}>
-                   {activeTab === 'queue' ? 'Hàng đợi tiến trình' : 'Lịch sử tiến trình'} 
-                   <span style={{ background: activeTab === 'queue' ? 'var(--neon-purple)' : 'var(--neon-cyan)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '1rem' }}>
-                       {activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)).length : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length}
-                   </span>
+        {/* Queue & History List View */}
+        {activeTab !== 'api' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <h2 style={{ fontSize: '1.375rem', margin: 0, fontWeight: 600 }}>
+                  {activeTab === 'queue' ? 'Hàng đợi tiến trình' : 'Lịch sử tiến trình'}
                 </h2>
-                {activeTab === 'history' && queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length > 0 && (
-                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                        <button 
-                            onClick={handleBatchFixAvatar} 
-                            className="btn-outline" 
-                            style={{ 
-                                borderColor: 'var(--neon-cyan)', 
-                                color: 'var(--neon-cyan)', 
-                                padding: '8px 16px', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '8px',
-                                opacity: queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length === 0 ? 0.6 : 1
-                            }}
-                            title="Đưa các tiến trình trong lịch sử chưa sửa ảnh bằng Apify vào hàng đợi"
-                        >
-                            <RefreshCw size={18} /> Chạy sửa ảnh bằng Apify hàng loạt ({queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length})
-                        </button>
-                        <button onClick={() => handleBatchDownload('alive')} className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Download size={18} /> Tải Link Sống
-                        </button>
-                        <button onClick={() => handleBatchDownload('dead')} className="btn-outline" style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Download size={18} /> Tải Link Chết
-                        </button>
-                        <button onClick={handleClearHistory} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Trash2 size={18} /> Xóa lịch sử
-                        </button>
-                    </div>
-                )}
-            </div>
-            )}
-            {activeTab !== 'api' && (
-            <AnimatePresence>
-                {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => b.createdAt - a.createdAt)).map(job => {
-                    const percent = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
-                    return (
-                        <motion.div key={job.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, height: 0 }} className="glass-panel p-6" style={{ marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
-                            {job.status === 'RUNNING' && (
-                                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--neon-cyan)', boxShadow: '0 0 10px var(--neon-cyan)' }} />
-                            )}
-                            
-                            <div className="flex justify-between items-center mb-4">
-                                <div>
-                                    <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                                        {job.filename}
-                                        <span style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)' }}>
-                                            {job.status}
-                                        </span>
-                                        <JobTimer job={job} />
-                                        {job.checkAvatarApify && activeTab === 'history' && (
-                                            <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }} title="Tiến trình này đã trích xuất/sửa link ảnh Avatar thông qua Apify API">
-                                                <CheckCircle size={12}/> Đã sửa ảnh bằng Apify
-                                            </span>
-                                        )}
-                                    </h3>
-                                    <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <span>Đã quét: {job.completed}/{job.total} (Luồng: {job.concurrency})</span>
-                                        {job.createdAt && (
-                                            <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>
-                                                • Tạo lúc: {new Date(job.createdAt).toLocaleString('vi-VN')}
-                                            </span>
-                                        )}
-                                    </p>
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    {job.status === 'RUNNING' && <button onClick={() => jobAction(job.id, 'pause')} className="btn-outline" style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '6px 12px' }} title="Tạm dừng"><Pause size={16}/></button>}
-                                    {job.status === 'PAUSED' && <button onClick={() => jobAction(job.id, 'resume')} className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '6px 12px' }} title="Tiếp tục"><Play size={16}/></button>}
-                                    {(job.status === 'RUNNING' || job.status === 'PAUSED') && <button onClick={() => jobAction(job.id, 'cancel')} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px' }} title="Hủy bỏ"><Square size={16}/></button>}
-                                    {job.status === 'PENDING' && <button onClick={() => jobAction(job.id, 'force')} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '6px 12px' }} title="Ưu tiên chạy ngay"><ArrowUpCircle size={16}/></button>}
-                                    {['PENDING', 'CANCELED', 'COMPLETED', 'ERROR'].includes(job.status) && <button onClick={() => jobAction(job.id, 'remove')} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px' }} title="Xóa khỏi danh sách"><Trash2 size={16}/></button>}
-                                </div>
-                            </div>
+                <span className="liquid-badge" style={{ background: activeTab === 'queue' ? 'rgba(0, 102, 255, 0.15)' : 'rgba(168, 85, 247, 0.15)', color: activeTab === 'queue' ? '#38bdf8' : '#c084fc' }}>
+                  {activeTab === 'queue' ? queueItems.length : historyItems.length} tiến trình
+                </span>
+              </div>
 
-                            <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', marginBottom: '16px' }}>
-                                <div style={{ height: '100%', width: `${percent}%`, background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))', transition: 'width 0.3s ease' }} />
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '24px', marginBottom: '16px', fontSize: '0.95rem' }}>
-                                <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16}/> Sống: {job.stats?.alive || 0}</span>
-                                <span style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}><XCircle size={16}/> Chết: {job.stats?.dead || 0}</span>
-                                <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={16}/> Lỗi: {job.stats?.error || 0}</span>
-                            </div>
-
-                            {job.downloadLinks && (
-                                <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-                                    {job.downloadLinks.aliveFile && (
-                                        <div style={{ display: 'flex' }}>
-                                            <button onClick={() => handlePreviewHistory(job.downloadLinks.aliveFile, `Alive_${job.filename}`)} className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '6px 12px', borderRight: 'none', borderRadius: '4px 0 0 4px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }} title="Xem trước"><Eye size={14}/></button>
-                                            <a href={job.downloadLinks.aliveFile} download className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '6px 12px', borderRadius: '0 4px 4px 0', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Link Sống</a>
-                                        </div>
-                                    )}
-                                    {job.downloadLinks.deadFile && (
-                                        <div style={{ display: 'flex' }}>
-                                            <button onClick={() => handlePreviewHistory(job.downloadLinks.deadFile, `Dead_${job.filename}`)} className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px', borderRight: 'none', borderRadius: '4px 0 0 4px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }} title="Xem trước"><Eye size={14}/></button>
-                                            <a href={job.downloadLinks.deadFile} download className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px', borderRadius: '0 4px 4px 0', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Link Chết</a>
-                                        </div>
-                                    )}
-                                     {job.downloadLinks.checkedFile && (
-                                        <div style={{ display: 'flex' }}>
-                                            <a href={job.downloadLinks.checkedFile} download className="btn-outline" style={{ borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', padding: '6px 12px', borderRadius: '4px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Tải kết quả</a>
-                                        </div>
-                                    )}
-                                    {activeTab === 'history' && !job.checkAvatarApify && (job.status === 'COMPLETED' || job.status === 'ERROR') && (
-                                        <button onClick={() => handleFixAvatar(job.id)} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '6px 12px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}>
-                                            <RefreshCw size={14} /> Chạy sửa ảnh bằng Apify
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-
-                            {(job.status === 'RUNNING' || job.status === 'PAUSED' || job.logs?.length > 0) && (
-                                <div className="log-container" style={{ maxHeight: '120px', background: 'rgba(0,0,0,0.3)', border: 'none' }}>
-                                    {job.logs?.map((log, idx) => {
-                                        let color = 'var(--text-main)';
-                                        if (log.type === 'error') color = '#ef4444';
-                                        if (log.type === 'success') color = '#10b981';
-                                        if (log.type === 'warning') color = '#f59e0b';
-                                        return (
-                                            <div key={idx} style={{ color, display: 'flex', gap: '8px', fontSize: '0.8rem', marginBottom: '4px' }}>
-                                                <span style={{ opacity: 0.5 }}>[{log.timestamp?.split('T')[1]?.substring(0,8)}]</span>
-                                                <span>{log.message}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </motion.div>
-                    );
-                })}
-            </AnimatePresence>
-            )}
-            
-            {activeTab !== 'api' && (activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).length === 0 && (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', padding: '40px', border: '1px dashed var(--glass-border)', borderRadius: '16px' }}>
-                    Chưa có tiến trình nào trong {activeTab === 'queue' ? 'hàng đợi' : 'lịch sử'}.{activeTab === 'queue' ? <><br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!</> : ''}
+              {/* History Actions Toolbar */}
+              {activeTab === 'history' && historyItems.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button 
+                    onClick={handleBatchFixAvatar} 
+                    className="btn-outline btn-outline-accent" 
+                    style={{ 
+                      opacity: queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length === 0 ? 0.5 : 1
+                    }}
+                    title="Đưa các tiến trình trong lịch sử chưa sửa ảnh bằng Apify vào hàng đợi"
+                  >
+                    <RefreshCw size={15} /> 
+                    Sửa ảnh Apify hàng loạt ({queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length})
+                  </button>
+                  
+                  <button onClick={() => handleBatchDownload('alive')} className="btn-outline btn-outline-success">
+                    <Download size={15} /> Tải Link Sống
+                  </button>
+                  
+                  <button onClick={() => handleBatchDownload('dead')} className="btn-outline btn-outline-warning">
+                    <Download size={15} /> Tải Link Chết
+                  </button>
+                  
+                  <button onClick={handleClearHistory} className="btn-outline btn-outline-danger">
+                    <Trash2 size={15} /> Xóa lịch sử
+                  </button>
                 </div>
-            )}
-            
-            {activeTab === 'api' && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6">
-                    <h2 style={{ fontSize: '1.5rem', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '12px' }} className="neon-text-cyan">
-                        <Key size={24} /> Quản lý Apify API Keys
-                    </h2>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
-                        Nhập các API Token của Apify (mỗi key một dòng). Hệ thống sẽ tự động xoay vòng khi mỗi key đạt 400 request hoặc bị lỗi giới hạn.
-                    </p>
-                    
-                    <div style={{ display: 'flex', gap: '24px' }}>
-                        <div style={{ flex: 1 }}>
-                            <textarea 
-                                value={apifyInput} 
-                                onChange={(e) => setApifyInput(e.target.value)} 
-                                placeholder="apify_api_...&#10;apify_api_..."
-                                style={{ width: '100%', height: '300px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', padding: '12px', fontFamily: 'monospace', resize: 'vertical' }}
-                            />
-                            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                                <button onClick={handleSaveApifyKeys} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '10px 24px', fontWeight: 'bold' }}>
-                                    Lưu Cấu Hình API
-                                </button>
-                                <button onClick={handleCheckApifyKeys} disabled={isCheckingKeys} className="btn-outline" style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '10px 24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', opacity: isCheckingKeys ? 0.6 : 1 }}>
-                                    <RefreshCw size={18} className={isCheckingKeys ? "spin" : ""} /> {isCheckingKeys ? "Đang kiểm tra..." : "Kiểm tra toàn bộ Keys"}
-                                </button>
-                            </div>
+              )}
+            </div>
+
+            {/* Job Items List */}
+            <AnimatePresence>
+              {(activeTab === 'queue' ? queueItems : historyItems).map(job => {
+                const percent = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
+                const isRunning = job.status === 'RUNNING';
+
+                return (
+                  <motion.div 
+                    key={job.id} 
+                    initial={{ opacity: 0, y: 16 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    exit={{ opacity: 0, height: 0, overflow: 'hidden' }} 
+                    transition={{ duration: 0.48, ease: [0.16, 1, 0.3, 1] }}
+                    className={`liquid-card ${isRunning ? 'liquid-card-highlight' : ''}`}
+                    style={{ padding: '1.5rem', marginBottom: '1.25rem', overflow: 'hidden' }}
+                  >
+                    {/* Top Job Details & Actions */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                      <div style={{ flex: 1, minWidth: '260px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap', marginBottom: '0.375rem' }}>
+                          <FileSpreadsheet size={18} style={{ color: 'var(--color-accent)' }} />
+                          <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>
+                            {job.filename}
+                          </h3>
+                          
+                          {/* Status Badge */}
+                          <span className={`liquid-badge ${
+                            job.status === 'COMPLETED' ? 'liquid-badge-success' :
+                            job.status === 'RUNNING' ? 'liquid-badge-accent' :
+                            job.status === 'PAUSED' ? 'liquid-badge-warning' :
+                            job.status === 'ERROR' || job.status === 'CANCELED' ? 'liquid-badge-danger' : ''
+                          }`}>
+                            {job.status}
+                          </span>
+
+                          <JobTimer job={job} />
+
+                          {job.checkAvatarApify && activeTab === 'history' && (
+                            <span className="liquid-badge liquid-badge-success" title="Đã trích xuất & sửa link avatar từ Apify">
+                              <CheckCircle size={12} /> Đã sửa ảnh Apify
+                            </span>
+                          )}
                         </div>
-                        
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                            <div style={{ background: 'rgba(0,0,0,0.1)', borderRadius: '8px', padding: '16px', border: '1px solid var(--glass-border)' }}>
-                                <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Cấu hình Nâng cao</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Số request tối đa mỗi Key (xoay vòng)</label>
-                                        <input 
-                                            type="number" 
-                                            value={apifyConfig.maxUsagePerKey} 
-                                            onChange={(e) => setApifyConfig({...apifyConfig, maxUsagePerKey: parseInt(e.target.value) || 0})}
-                                            className="glass-input" 
-                                            style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '4px' }} 
-                                        />
-                                    </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Min Delay (ms)</label>
-                                            <input 
-                                                type="number" 
-                                                value={apifyConfig.minDelay} 
-                                                onChange={(e) => setApifyConfig({...apifyConfig, minDelay: parseInt(e.target.value) || 0})}
-                                                className="glass-input" 
-                                                style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '4px' }} 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Max Delay (ms)</label>
-                                            <input 
-                                                type="number" 
-                                                value={apifyConfig.maxDelay} 
-                                                onChange={(e) => setApifyConfig({...apifyConfig, maxDelay: parseInt(e.target.value) || 0})}
-                                                className="glass-input" 
-                                                style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '4px' }} 
-                                            />
-                                        </div>
-                                    </div>
-                                    <button onClick={handleSaveApifyConfig} className="btn-outline" style={{ borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', padding: '8px 16px', fontWeight: 'bold', marginTop: '8px' }}>
-                                        Lưu Cấu Hình Nâng Cao
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div style={{ background: 'rgba(0,0,0,0.1)', borderRadius: '8px', padding: '16px', border: '1px solid var(--glass-border)' }}>
-                                <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Trạng thái Keys hiện tại ({apifyKeys.length})</h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
-                                    {apifyKeys.map((k, idx) => (
-                                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
-                                            <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', opacity: 0.8 }}>
-                                                {k.key.substring(0, 15)}...
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Đã dùng: {k.usage || 0}/{apifyConfig.maxUsagePerKey}</span>
-                                                <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '12px', background: k.status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: k.status === 'active' ? '#10b981' : '#ef4444' }}>
-                                                    {k.status.toUpperCase()}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {apifyKeys.length === 0 && <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Chưa có API Key nào</div>}
-                                </div>
-                            </div>
-                        </div>
+
+                        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.84375rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          <span>Đã xử lý: <b>{job.completed}</b> / {job.total} (Luồng: {job.concurrency})</span>
+                          {job.createdAt && (
+                            <span style={{ opacity: 0.75 }}>
+                              • Tạo lúc: {new Date(job.createdAt).toLocaleString('vi-VN')}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+
+                      {/* Tactical Action Buttons */}
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {job.status === 'RUNNING' && (
+                          <button onClick={() => jobAction(job.id, 'pause')} className="btn-outline btn-outline-warning btn-icon" title="Tạm dừng">
+                            <Pause size={15} />
+                          </button>
+                        )}
+                        {job.status === 'PAUSED' && (
+                          <button onClick={() => jobAction(job.id, 'resume')} className="btn-outline btn-outline-success btn-icon" title="Tiếp tục">
+                            <Play size={15} />
+                          </button>
+                        )}
+                        {(job.status === 'RUNNING' || job.status === 'PAUSED') && (
+                          <button onClick={() => jobAction(job.id, 'cancel')} className="btn-outline btn-outline-danger btn-icon" title="Hủy bỏ">
+                            <Square size={15} />
+                          </button>
+                        )}
+                        {job.status === 'PENDING' && (
+                          <button onClick={() => jobAction(job.id, 'force')} className="btn-outline btn-outline-accent btn-icon" title="Ưu tiên chạy ngay">
+                            <ArrowUpCircle size={15} />
+                          </button>
+                        )}
+                        {['PENDING', 'CANCELED', 'COMPLETED', 'ERROR'].includes(job.status) && (
+                          <button onClick={() => jobAction(job.id, 'remove')} className="btn-outline btn-outline-danger btn-icon" title="Xóa khỏi danh sách">
+                            <Trash2 size={15} />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                </motion.div>
+
+                    {/* Progress Track */}
+                    <div className="liquid-progress-track" style={{ marginBottom: '1rem' }}>
+                      <div 
+                        className="liquid-progress-fill" 
+                        style={{ width: `${percent}%` }} 
+                      />
+                    </div>
+
+                    {/* Results Counter Pills */}
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap', fontSize: '0.875rem' }}>
+                      <span className="liquid-badge liquid-badge-success">
+                        <CheckCircle size={14} /> Sống: {job.stats?.alive || 0}
+                      </span>
+                      <span className="liquid-badge liquid-badge-danger">
+                        <XCircle size={14} /> Chết: {job.stats?.dead || 0}
+                      </span>
+                      <span className="liquid-badge liquid-badge-warning">
+                        <AlertTriangle size={14} /> Lỗi: {job.stats?.error || 0}
+                      </span>
+                    </div>
+
+                    {/* Download & File Action Triggers */}
+                    {job.downloadLinks && (
+                      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                        {job.downloadLinks.aliveFile && (
+                          <div style={{ display: 'flex' }}>
+                            <button 
+                              onClick={() => handlePreviewHistory(job.downloadLinks.aliveFile, `Alive_${job.filename}`)} 
+                              className="btn-outline btn-outline-success" 
+                              style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none', padding: '0.45rem 0.75rem' }} 
+                              title="Xem trước danh sách link sống"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            <a 
+                              href={job.downloadLinks.aliveFile} 
+                              download 
+                              className="btn-outline btn-outline-success" 
+                              style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, padding: '0.45rem 0.85rem' }}
+                            >
+                              <Download size={14} /> Tải Link Sống
+                            </a>
+                          </div>
+                        )}
+
+                        {job.downloadLinks.deadFile && (
+                          <div style={{ display: 'flex' }}>
+                            <button 
+                              onClick={() => handlePreviewHistory(job.downloadLinks.deadFile, `Dead_${job.filename}`)} 
+                              className="btn-outline btn-outline-danger" 
+                              style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none', padding: '0.45rem 0.75rem' }} 
+                              title="Xem trước danh sách link chết"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            <a 
+                              href={job.downloadLinks.deadFile} 
+                              download 
+                              className="btn-outline btn-outline-danger" 
+                              style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, padding: '0.45rem 0.85rem' }}
+                            >
+                              <Download size={14} /> Tải Link Chết
+                            </a>
+                          </div>
+                        )}
+
+                        {job.downloadLinks.checkedFile && (
+                          <a 
+                            href={job.downloadLinks.checkedFile} 
+                            download 
+                            className="btn-outline btn-outline-accent" 
+                            style={{ padding: '0.45rem 0.85rem' }}
+                          >
+                            <Download size={14} /> Tải kết quả hoạt động
+                          </a>
+                        )}
+
+                        {activeTab === 'history' && !job.checkAvatarApify && (job.status === 'COMPLETED' || job.status === 'ERROR') && (
+                          <button 
+                            onClick={() => handleFixAvatar(job.id)} 
+                            className="btn-outline btn-outline-accent"
+                            style={{ padding: '0.45rem 0.85rem' }}
+                          >
+                            <RefreshCw size={14} /> Sửa ảnh bằng Apify
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Console / Terminal Log Stream */}
+                    {(job.status === 'RUNNING' || job.status === 'PAUSED' || job.logs?.length > 0) && (
+                      <div className="log-container">
+                        {job.logs?.map((log, idx) => {
+                          let color = 'var(--text-secondary)';
+                          if (log.type === 'error') color = 'var(--status-dead)';
+                          if (log.type === 'success') color = 'var(--status-alive)';
+                          if (log.type === 'warning') color = 'var(--status-warning)';
+                          return (
+                            <div key={idx} style={{ color, display: 'flex', gap: '0.625rem', marginBottom: '0.25rem' }}>
+                              <span style={{ opacity: 0.5, flexShrink: 0 }}>[{log.timestamp?.split('T')[1]?.substring(0,8)}]</span>
+                              <span style={{ wordBreak: 'break-all' }}>{log.message}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+
+            {/* Empty State */}
+            {(activeTab === 'queue' ? queueItems : historyItems).length === 0 && (
+              <div className="liquid-empty-state">
+                <FileSpreadsheet className="liquid-empty-icon" />
+                <h3 style={{ margin: 0, fontSize: '1.125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  Chưa có tiến trình nào trong {activeTab === 'queue' ? 'hàng đợi' : 'lịch sử'}
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.875rem' }}>
+                  {activeTab === 'queue' 
+                    ? 'Hãy kéo thả tệp CSV vào khu vực bên trên để bắt đầu quét dữ liệu.' 
+                    : 'Các tiến trình sau khi hoàn thành sẽ được lưu giữ tại đây.'}
+                </p>
+              </div>
             )}
-        </div>
+          </div>
+        )}
+
+        {/* API Keys & Configuration Tab */}
+        {activeTab === 'api' && (
+          <motion.div 
+            initial={{ opacity: 0, y: 16 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.48 }}
+            className="liquid-card"
+            style={{ padding: '2rem' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <Key size={22} style={{ color: 'var(--color-accent)' }} />
+              <h2 style={{ fontSize: '1.375rem', margin: 0, fontWeight: 600 }}>
+                Quản lý Apify API Keys
+              </h2>
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9375rem', marginBottom: '2rem' }}>
+              Nhập danh sách API Token của Apify (mỗi token trên một dòng riêng). Hệ thống sẽ tự động luân phiên xoay vòng khi token đạt ngưỡng request tối đa hoặc gặp giới hạn định ngạch.
+            </p>
+
+            <div className="grid-2col" style={{ alignItems: 'start' }}>
+              {/* Left Column: API Keys Input */}
+              <div>
+                <label className="liquid-label">Danh sách API Tokens (Apify)</label>
+                <textarea 
+                  value={apifyInput} 
+                  onChange={(e) => setApifyInput(e.target.value)} 
+                  placeholder="apify_api_token_1&#10;apify_api_token_2"
+                  className="liquid-textarea font-mono"
+                  style={{ height: '320px', resize: 'vertical' }}
+                />
+                
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+                  <button onClick={handleSaveApifyKeys} className="btn-primary">
+                    Lưu danh sách Keys
+                  </button>
+                  <button 
+                    onClick={handleCheckApifyKeys} 
+                    disabled={isCheckingKeys} 
+                    className="btn-outline btn-outline-warning"
+                  >
+                    <RefreshCw size={16} className={isCheckingKeys ? "spin" : ""} /> 
+                    {isCheckingKeys ? "Đang kiểm tra..." : "Kiểm tra toàn bộ Keys"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column: Advanced Settings & Key Status */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* Advanced Settings */}
+                <div className="liquid-card" style={{ padding: '1.5rem', background: 'rgba(255, 255, 255, 0.02)' }}>
+                  <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.0625rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Settings size={17} style={{ color: 'var(--color-accent)' }} /> Cấu hình xoay vòng & độ trễ
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div>
+                      <label className="liquid-label">Số request tối đa mỗi Key (xoay vòng)</label>
+                      <input 
+                        type="number" 
+                        value={apifyConfig.maxUsagePerKey} 
+                        onChange={(e) => setApifyConfig({...apifyConfig, maxUsagePerKey: parseInt(e.target.value) || 0})}
+                        className="liquid-input" 
+                      />
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div>
+                        <label className="liquid-label">Độ trễ tối thiểu (ms)</label>
+                        <input 
+                          type="number" 
+                          value={apifyConfig.minDelay} 
+                          onChange={(e) => setApifyConfig({...apifyConfig, minDelay: parseInt(e.target.value) || 0})}
+                          className="liquid-input" 
+                        />
+                      </div>
+                      <div>
+                        <label className="liquid-label">Độ trễ tối đa (ms)</label>
+                        <input 
+                          type="number" 
+                          value={apifyConfig.maxDelay} 
+                          onChange={(e) => setApifyConfig({...apifyConfig, maxDelay: parseInt(e.target.value) || 0})}
+                          className="liquid-input" 
+                        />
+                      </div>
+                    </div>
+
+                    <button onClick={handleSaveApifyConfig} className="btn-outline btn-outline-accent" style={{ marginTop: '0.5rem' }}>
+                      Lưu cấu hình nâng cao
+                    </button>
+                  </div>
+                </div>
+
+                {/* Key Status List */}
+                <div className="liquid-card" style={{ padding: '1.5rem', background: 'rgba(255, 255, 255, 0.02)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.0625rem', fontWeight: 600 }}>
+                      Trạng thái Keys hiện tại
+                    </h3>
+                    <span className="liquid-badge">
+                      {apifyKeys.length} keys
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', maxHeight: '220px', overflowY: 'auto' }}>
+                    {apifyKeys.map((k, idx) => (
+                      <div 
+                        key={idx} 
+                        style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center', 
+                          padding: '0.625rem 0.875rem', 
+                          background: 'rgba(255, 255, 255, 0.03)', 
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--glass-border-subtle)'
+                        }}
+                      >
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', opacity: 0.85 }}>
+                          {k.key ? `${k.key.substring(0, 14)}...` : 'Unknown Key'}
+                        </span>
+                        
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Đã dùng: {k.usage || 0}/{apifyConfig.maxUsagePerKey}
+                          </span>
+                          <span className={`liquid-badge ${k.status === 'active' ? 'liquid-badge-success' : 'liquid-badge-danger'}`}>
+                            {k.status?.toUpperCase() || 'ACTIVE'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {apifyKeys.length === 0 && (
+                      <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1.5rem' }}>
+                        Chưa có API Key nào được thiết lập
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* CSV Preview Modal for Upload */}
       {previewFile && (
         <CsvEditorModal 
-           file={previewFile} 
-           onClose={() => setPreviewFile(null)} 
-           onConfirm={handleConfirmUpload} 
-           mode="upload"
+          file={previewFile} 
+          onClose={() => setPreviewFile(null)} 
+          onConfirm={handleConfirmUpload} 
+          mode="upload"
         />
       )}
 
       {/* CSV Preview Modal for History Download */}
       {historyPreviewFile && (
         <CsvEditorModal 
-           file={historyPreviewFile} 
-           onClose={() => setHistoryPreviewFile(null)} 
-           onConfirm={handleConfirmHistoryDownload} 
-           mode="download"
+          file={historyPreviewFile} 
+          onClose={() => setHistoryPreviewFile(null)} 
+          onConfirm={handleConfirmHistoryDownload} 
+          mode="download"
         />
       )}
     </div>
