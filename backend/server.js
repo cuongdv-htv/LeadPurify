@@ -39,12 +39,21 @@ function callApify(url, token) {
     });
 }
 
+function getConfig() {
+    try {
+        const configPath = path.join(__dirname, 'config.json');
+        if (!fs.existsSync(configPath)) return { maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000 };
+        return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch(e) { return { maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000 }; }
+}
+
 function getApifyKey() {
     try {
+        const config = getConfig();
         const keysPath = path.join(__dirname, 'apify_keys.json');
         if (!fs.existsSync(keysPath)) return null;
         let keys = JSON.parse(fs.readFileSync(keysPath, 'utf8'));
-        const activeKey = keys.find(k => k.status === 'active' && k.usage < 400);
+        const activeKey = keys.find(k => k.status === 'active' && k.usage < config.maxUsagePerKey);
         return activeKey ? activeKey.key : null;
     } catch(e) { return null; }
 }
@@ -573,6 +582,7 @@ app.post('/api/queue/:id/check-activity', (req, res) => {
   
   const filename = historyJob.downloadLinks.aliveFile.split('/').pop();
   const filePath = path.join(__dirname, 'outputs', decodeURIComponent(filename));
+  const config = getConfig();
   
   const job = {
     id: crypto.randomBytes(8).toString('hex'),
@@ -581,8 +591,8 @@ app.post('/api/queue/:id/check-activity', (req, res) => {
     status: 'PENDING',
     concurrency: 1, // Chạy 1 luồng để xoay vòng API an toàn
     headless: true,
-    minDelay: parseInt(req.body.minDelay) || 2000,
-    maxDelay: parseInt(req.body.maxDelay) || 5000,
+    minDelay: config.minDelay,
+    maxDelay: config.maxDelay,
     stats: { alive: 0, dead: 0, error: 0 },
     completed: 0,
     total: 0,
@@ -634,6 +644,25 @@ app.post('/api/queue/:id/:action', (req, res) => {
   
   broadcastQueue();
   res.json({ success: true });
+});
+
+app.get('/api/config', (req, res) => {
+    res.json(getConfig());
+});
+
+app.post('/api/config', (req, res) => {
+    try {
+        const configPath = path.join(__dirname, 'config.json');
+        const newConfig = {
+            maxUsagePerKey: parseInt(req.body.maxUsagePerKey) || 400,
+            minDelay: parseInt(req.body.minDelay) || 2000,
+            maxDelay: parseInt(req.body.maxDelay) || 5000
+        };
+        fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
+        res.json({ success: true, config: newConfig });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.get('/api/apify-keys', (req, res) => {

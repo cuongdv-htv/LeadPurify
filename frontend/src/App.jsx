@@ -58,6 +58,7 @@ function App() {
   const [apifyKeys, setApifyKeys] = useState([]);
   const [apifyInput, setApifyInput] = useState('');
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
+  const [apifyConfig, setApifyConfig] = useState({ maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000 });
 
   useEffect(() => {
     socket.on('queue_update', (data) => setQueue(data));
@@ -76,6 +77,7 @@ function App() {
         setApifyKeys(res.data);
         setApifyInput(res.data.map(k => k.key).join('\n'));
     });
+    axios.get('http://localhost:3001/api/config').then(res => setApifyConfig(res.data));
 
     return () => {
       socket.off('queue_update');
@@ -158,7 +160,7 @@ function App() {
   const handleCheckActivity = async (jobId) => {
     if (window.confirm('Bạn có chắc muốn chạy kiểm tra bài viết 6 tháng cho file này? Việc này sẽ gọi API Apify và tốn thời gian.')) {
         try {
-            await axios.post(`http://localhost:3001/api/queue/${jobId}/check-activity`, { minDelay: 2000, maxDelay: 5000 });
+            await axios.post(`http://localhost:3001/api/queue/${jobId}/check-activity`);
             setActiveTab('check6m');
         } catch (e) {
             alert(e.response?.data?.error || 'Có lỗi xảy ra');
@@ -201,6 +203,16 @@ function App() {
           alert('Lưu API Keys thành công!');
       } catch (e) {
           alert('Lỗi khi lưu API Keys');
+      }
+  };
+
+  const handleSaveApifyConfig = async () => {
+      try {
+          const res = await axios.post('http://localhost:3001/api/config', apifyConfig);
+          setApifyConfig(res.data.config);
+          alert('Lưu Cấu Hình thành công!');
+      } catch (e) {
+          alert('Lỗi khi lưu Cấu Hình');
       }
   };
 
@@ -443,23 +455,66 @@ function App() {
                             </div>
                         </div>
                         
-                        <div style={{ flex: 1, background: 'rgba(0,0,0,0.1)', borderRadius: '8px', padding: '16px', border: '1px solid var(--glass-border)' }}>
-                            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Trạng thái Keys hiện tại ({apifyKeys.length})</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
-                                {apifyKeys.map((k, idx) => (
-                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
-                                        <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', opacity: 0.8 }}>
-                                            {k.key.substring(0, 15)}...
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            <div style={{ background: 'rgba(0,0,0,0.1)', borderRadius: '8px', padding: '16px', border: '1px solid var(--glass-border)' }}>
+                                <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Cấu hình Nâng cao</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Số request tối đa mỗi Key (xoay vòng)</label>
+                                        <input 
+                                            type="number" 
+                                            value={apifyConfig.maxUsagePerKey} 
+                                            onChange={(e) => setApifyConfig({...apifyConfig, maxUsagePerKey: parseInt(e.target.value) || 0})}
+                                            className="glass-input" 
+                                            style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '4px' }} 
+                                        />
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Min Delay (ms)</label>
+                                            <input 
+                                                type="number" 
+                                                value={apifyConfig.minDelay} 
+                                                onChange={(e) => setApifyConfig({...apifyConfig, minDelay: parseInt(e.target.value) || 0})}
+                                                className="glass-input" 
+                                                style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '4px' }} 
+                                            />
                                         </div>
-                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Đã dùng: {k.usage || 0}/400</span>
-                                            <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '12px', background: k.status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: k.status === 'active' ? '#10b981' : '#ef4444' }}>
-                                                {k.status.toUpperCase()}
-                                            </span>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Max Delay (ms)</label>
+                                            <input 
+                                                type="number" 
+                                                value={apifyConfig.maxDelay} 
+                                                onChange={(e) => setApifyConfig({...apifyConfig, maxDelay: parseInt(e.target.value) || 0})}
+                                                className="glass-input" 
+                                                style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '4px' }} 
+                                            />
                                         </div>
                                     </div>
-                                ))}
-                                {apifyKeys.length === 0 && <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Chưa có API Key nào</div>}
+                                    <button onClick={handleSaveApifyConfig} className="btn-outline" style={{ borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', padding: '8px 16px', fontWeight: 'bold', marginTop: '8px' }}>
+                                        Lưu Cấu Hình Nâng Cao
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div style={{ background: 'rgba(0,0,0,0.1)', borderRadius: '8px', padding: '16px', border: '1px solid var(--glass-border)' }}>
+                                <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Trạng thái Keys hiện tại ({apifyKeys.length})</h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                                    {apifyKeys.map((k, idx) => (
+                                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
+                                            <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', opacity: 0.8 }}>
+                                                {k.key.substring(0, 15)}...
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Đã dùng: {k.usage || 0}/{apifyConfig.maxUsagePerKey}</span>
+                                                <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '12px', background: k.status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: k.status === 'active' ? '#10b981' : '#ef4444' }}>
+                                                    {k.status.toUpperCase()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {apifyKeys.length === 0 && <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Chưa có API Key nào</div>}
+                                </div>
                             </div>
                         </div>
                     </div>
