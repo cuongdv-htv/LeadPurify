@@ -22,7 +22,8 @@ import {
   Layers,
   Sliders,
   FileSpreadsheet,
-  RotateCcw
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 import './index.css';
 import CsvEditorModal from './components/CsvEditorModal';
