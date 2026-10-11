@@ -71,6 +71,7 @@ const JobTimer = ({ job }) => {
 
 function App() {
   const [queue, setQueue] = useState([]);
+  const [isConnected, setIsConnected] = useState(socket.connected);
   const [concurrency, setConcurrency] = useState(3);
   const [headless, setHeadless] = useState(true);
   const [activeTab, setActiveTab] = useState('queue');
@@ -88,7 +89,21 @@ function App() {
     monthsToCheck: 6
   });
 
+  const fetchQueueData = () => {
+    axios.get('http://localhost:3001/api/queue').then(res => setQueue(res.data)).catch(console.error);
+  };
+
   useEffect(() => {
+    const onConnect = () => {
+      setIsConnected(true);
+      fetchQueueData();
+    };
+    const onDisconnect = () => {
+      setIsConnected(false);
+    };
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
     socket.on('queue_update', (data) => setQueue(data));
     socket.on('job_log', ({ jobId, log }) => {
       setQueue(prevQueue => prevQueue.map(job => {
@@ -100,7 +115,7 @@ function App() {
       }));
     });
     
-    axios.get('http://localhost:3001/api/queue').then(res => setQueue(res.data)).catch(console.error);
+    fetchQueueData();
     axios.get('http://localhost:3001/api/apify-keys').then(res => {
       setApifyKeys(res.data);
       setApifyInput(res.data.map(k => k.key).join('\n'));
@@ -108,6 +123,8 @@ function App() {
     axios.get('http://localhost:3001/api/config').then(res => setApifyConfig(res.data)).catch(console.error);
 
     return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
       socket.off('queue_update');
       socket.off('job_log');
     };
@@ -286,18 +303,82 @@ function App() {
     }
   };
 
-  const queueItems = queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status));
-  const historyItems = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const handleTriggerQueue = async () => {
+    try {
+      await axios.post('http://localhost:3001/api/queue/trigger');
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
+  const handleBatchRetry = async () => {
+    const failedJobs = queue.filter(j => ['ERROR', 'INTERRUPTED', 'CANCELED'].includes(j.status));
+    if (failedJobs.length === 0) {
+      alert('Không có tiến trình lỗi hoặc gián đoạn nào.');
+      return;
+    }
+    if (!window.confirm(`Tìm thấy ${failedJobs.length} tiến trình lỗi/gián đoạn.\nBạn có muốn đưa tất cả vào hàng đợi để chạy lại từ đầu không?`)) {
+      return;
+    }
+    try {
+      await axios.post('http://localhost:3001/api/queue/batch-retry');
+      setActiveTab('queue');
+    } catch(e) {
+      alert(e.response?.data?.error || 'Có lỗi xảy ra khi chạy lại.');
+    }
+  };
+
+  const handleBatchResume = async () => {
+    const interruptedWithCp = queue.filter(j => (j.status === 'INTERRUPTED' || j.status === 'PAUSED') && j.hasCheckpoint);
+    if (interruptedWithCp.length === 0) {
+      alert('Không có tiến trình gián đoạn nào có điểm dừng lưu.');
+      return;
+    }
+    try {
+      await axios.post('http://localhost:3001/api/queue/batch-resume');
+      setActiveTab('queue');
+    } catch(e) {
+      alert(e.response?.data?.error || 'Có lỗi xảy ra khi tiếp tục tiến trình.');
+    }
+  };
+
+  const queueItems = queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED', 'INTERRUPTED'].includes(j.status));
+  const historyItems = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED', 'INTERRUPTED'].includes(j.status)).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
   return (
     <div className="app-layout" style={{ minHeight: '100dvh' }}>
       {/* Liquid Glass Header */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <motion.div initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.48 }}>
-          <h1 className="hero-title" style={{ margin: '0 0 0.25rem 0' }}>
-            Lead<span className="accent-mark">Purify</span>
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9375rem', margin: 0, letterSpacing: '0.01em' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h1 className="hero-title" style={{ margin: 0 }}>
+              Lead<span className="accent-mark">Purify</span>
+            </h1>
+            <span 
+              className="liquid-badge" 
+              style={{ 
+                background: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.15)', 
+                color: isConnected ? '#34d399' : '#fbbf24',
+                fontSize: '0.75rem',
+                padding: '2px 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem'
+              }}
+              title={isConnected ? 'Máy chủ backend đang hoạt động bình thường' : 'Mất kết nối máy chủ, đang tự động thử lại...'}
+            >
+              <span style={{ 
+                width: '6px', 
+                height: '6px', 
+                borderRadius: '50%', 
+                background: isConnected ? '#10b981' : '#f59e0b',
+                boxShadow: isConnected ? '0 0 6px #10b981' : '0 0 6px #f59e0b',
+                display: 'inline-block' 
+              }} />
+              {isConnected ? 'Máy chủ trực tuyến' : 'Đang kết nối lại...'}
+            </span>
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9375rem', margin: '0.25rem 0 0 0', letterSpacing: '0.01em' }}>
             Hệ thống xác thực liên kết và làm sạch dữ liệu tự động
           </p>
         </motion.div>
@@ -517,9 +598,43 @@ function App() {
                 </span>
               </div>
 
+              {/* Queue Actions Toolbar */}
+              {activeTab === 'queue' && (
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  {queue.some(j => (j.status === 'INTERRUPTED' || j.status === 'PAUSED') && j.hasCheckpoint) && (
+                    <button 
+                      onClick={handleBatchResume} 
+                      className="btn-outline btn-outline-success" 
+                      title="Tiếp tục tất cả các tiến trình bị gián đoạn từ điểm dừng đã lưu"
+                    >
+                      <Play size={15} /> Tiếp tục các tiến trình gián đoạn
+                    </button>
+                  )}
+                  {queue.some(j => j.status === 'PENDING') && !queue.some(j => j.status === 'RUNNING') && (
+                    <button 
+                      onClick={handleTriggerQueue} 
+                      className="btn-outline btn-outline-accent" 
+                      title="Kích hoạt worker để chạy các tiến trình đang chờ trong hàng đợi"
+                    >
+                      <Play size={15} /> Kích hoạt hàng đợi
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* History Actions Toolbar */}
               {activeTab === 'history' && historyItems.length > 0 && (
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  {queue.filter(j => ['ERROR', 'INTERRUPTED', 'CANCELED'].includes(j.status)).length > 0 && (
+                    <button 
+                      onClick={handleBatchRetry} 
+                      className="btn-outline btn-outline-accent"
+                      title="Chạy lại tất cả các tiến trình bị lỗi, hủy hoặc gián đoạn"
+                    >
+                      <RefreshCw size={15} /> Chạy lại lỗi / gián đoạn ({queue.filter(j => ['ERROR', 'INTERRUPTED', 'CANCELED'].includes(j.status)).length})
+                    </button>
+                  )}
+                  
                   <button 
                     onClick={handleBatchFixAvatar} 
                     className="btn-outline btn-outline-accent" 
@@ -577,10 +692,17 @@ function App() {
                             job.status === 'COMPLETED' ? 'liquid-badge-success' :
                             job.status === 'RUNNING' ? 'liquid-badge-accent' :
                             job.status === 'PAUSED' ? 'liquid-badge-warning' :
+                            job.status === 'INTERRUPTED' ? 'liquid-badge-warning' :
                             job.status === 'ERROR' || job.status === 'CANCELED' ? 'liquid-badge-danger' : ''
                           }`}>
-                            {job.status}
+                            {job.status === 'INTERRUPTED' ? 'Bị gián đoạn' : job.status}
                           </span>
+
+                          {job.hasCheckpoint && (
+                            <span className="liquid-badge" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }} title={`Đã lưu checkpoint an toàn tại dòng ${job.completed}/${job.total}`}>
+                              <Sparkles size={12} /> Điểm dừng ({job.completed}/{job.total})
+                            </span>
+                          )}
 
                           <JobTimer job={job} />
 
@@ -602,7 +724,7 @@ function App() {
                       </div>
 
                       {/* Tactical Action Buttons */}
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                         {job.status === 'RUNNING' && (
                           <button onClick={() => jobAction(job.id, 'pause')} className="btn-outline btn-outline-warning btn-icon" title="Tạm dừng">
                             <Pause size={15} />
@@ -623,7 +745,17 @@ function App() {
                             <ArrowUpCircle size={15} />
                           </button>
                         )}
-                        {['PENDING', 'CANCELED', 'COMPLETED', 'ERROR'].includes(job.status) && (
+                        {['INTERRUPTED', 'ERROR', 'CANCELED'].includes(job.status) && (job.hasCheckpoint || job.completed > 0) && (
+                          <button onClick={() => jobAction(job.id, 'resume')} className="btn-outline btn-outline-success btn-icon" title="Tiếp tục quét từ điểm dừng đã lưu">
+                            <Play size={15} />
+                          </button>
+                        )}
+                        {['INTERRUPTED', 'ERROR', 'CANCELED', 'COMPLETED'].includes(job.status) && (
+                          <button onClick={() => jobAction(job.id, 'retry')} className="btn-outline btn-outline-accent btn-icon" title="Chạy lại toàn bộ từ đầu">
+                            <RefreshCw size={15} />
+                          </button>
+                        )}
+                        {['PENDING', 'CANCELED', 'COMPLETED', 'ERROR', 'INTERRUPTED'].includes(job.status) && (
                           <button onClick={() => jobAction(job.id, 'remove')} className="btn-outline btn-outline-danger btn-icon" title="Xóa khỏi danh sách">
                             <Trash2 size={15} />
                           </button>
