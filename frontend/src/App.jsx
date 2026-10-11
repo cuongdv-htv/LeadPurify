@@ -81,6 +81,7 @@ function App() {
   const [apifyInput, setApifyInput] = useState('');
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState(null); // 'alive' | 'dead' | null
+  const [isQueueActionLoading, setIsQueueActionLoading] = useState(false);
   const [apifyConfig, setApifyConfig] = useState({ maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000 });
   const [jobOptions, setJobOptions] = useState({
     checkAlive: true,
@@ -390,16 +391,71 @@ function App() {
   };
 
   const handleBatchResume = async () => {
-    const interruptedWithCp = queue.filter(j => (j.status === 'INTERRUPTED' || j.status === 'PAUSED') && j.hasCheckpoint);
-    if (interruptedWithCp.length === 0) {
-      alert('Không có tiến trình gián đoạn nào có điểm dừng lưu.');
+    const pausedOrInterrupted = queue.filter(j => j.status === 'INTERRUPTED' || j.status === 'PAUSED');
+    if (pausedOrInterrupted.length === 0) {
+      alert('Không có tiến trình nào đang tạm dừng hoặc bị gián đoạn.');
       return;
     }
     try {
+      setIsQueueActionLoading(true);
       await axios.post('http://localhost:3001/api/queue/batch-resume');
       setActiveTab('queue');
     } catch(e) {
       alert(e.response?.data?.error || 'Có lỗi xảy ra khi tiếp tục tiến trình.');
+    } finally {
+      setIsQueueActionLoading(false);
+    }
+  };
+
+  const handleBatchPause = async () => {
+    try {
+      setIsQueueActionLoading(true);
+      await axios.post('http://localhost:3001/api/queue/batch-pause');
+    } catch (e) {
+      alert(e.response?.data?.error || 'Có lỗi xảy ra khi tạm dừng toàn bộ tiến trình.');
+    } finally {
+      setIsQueueActionLoading(false);
+    }
+  };
+
+  const handleBatchStop = async () => {
+    const runningOrPendingJobs = queue.filter(j => ['RUNNING', 'PAUSED', 'PENDING'].includes(j.status));
+    if (runningOrPendingJobs.length === 0) {
+      alert('Không có tiến trình nào đang chạy hoặc chờ trong hàng đợi để dừng.');
+      return;
+    }
+
+    if (!window.confirm(`Bạn có chắc muốn dừng toàn bộ ${runningOrPendingJobs.length} tiến trình đang chạy và chờ trong hàng đợi không?\nCác tiến trình sẽ được chuyển vào lịch sử và lưu kết quả một phần (nếu có).`)) {
+      return;
+    }
+
+    try {
+      setIsQueueActionLoading(true);
+      await axios.post('http://localhost:3001/api/queue/batch-stop');
+    } catch (e) {
+      alert(e.response?.data?.error || 'Có lỗi xảy ra khi dừng toàn bộ tiến trình.');
+    } finally {
+      setIsQueueActionLoading(false);
+    }
+  };
+
+  const handleBatchClearQueue = async () => {
+    if (queueItems.length === 0) {
+      alert('Hàng đợi hiện đang trống.');
+      return;
+    }
+
+    if (!window.confirm(`Bạn có chắc muốn xóa toàn bộ ${queueItems.length} tiến trình trong hàng đợi không?\nThao tác này sẽ hủy các tiến trình đang chạy/chờ và dọn dẹp các tệp liên quan khỏi ổ cứng.`)) {
+      return;
+    }
+
+    try {
+      setIsQueueActionLoading(true);
+      await axios.post('http://localhost:3001/api/queue/batch-clear');
+    } catch (e) {
+      alert(e.response?.data?.error || 'Có lỗi xảy ra khi xóa toàn bộ tiến trình trong hàng đợi.');
+    } finally {
+      setIsQueueActionLoading(false);
     }
   };
 
@@ -662,22 +718,54 @@ function App() {
               {/* Queue Actions Toolbar */}
               {activeTab === 'queue' && (
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  {queue.some(j => (j.status === 'INTERRUPTED' || j.status === 'PAUSED') && j.hasCheckpoint) && (
+                  {queue.some(j => j.status === 'INTERRUPTED' || j.status === 'PAUSED') && (
                     <button 
                       onClick={handleBatchResume} 
                       className="btn-outline btn-outline-success" 
-                      title="Tiếp tục tất cả các tiến trình bị gián đoạn từ điểm dừng đã lưu"
+                      disabled={isQueueActionLoading}
+                      title="Tiếp tục tất cả các tiến trình đang tạm dừng hoặc bị gián đoạn"
                     >
-                      <Play size={15} /> Tiếp tục các tiến trình gián đoạn
+                      <Play size={15} /> Tiếp tục toàn bộ
                     </button>
                   )}
-                  {queue.some(j => j.status === 'PENDING') && !queue.some(j => j.status === 'RUNNING') && (
+                  {queue.some(j => j.status === 'PENDING') && !queue.some(j => j.status === 'RUNNING') && !queue.some(j => j.status === 'PAUSED') && (
                     <button 
                       onClick={handleTriggerQueue} 
                       className="btn-outline btn-outline-accent" 
+                      disabled={isQueueActionLoading}
                       title="Kích hoạt worker để chạy các tiến trình đang chờ trong hàng đợi"
                     >
                       <Play size={15} /> Kích hoạt hàng đợi
+                    </button>
+                  )}
+                  {queue.some(j => j.status === 'RUNNING' || j.status === 'PENDING') && (
+                    <button 
+                      onClick={handleBatchPause} 
+                      className="btn-outline btn-outline-warning" 
+                      disabled={isQueueActionLoading}
+                      title="Tạm dừng tất cả các tiến trình đang chạy và đang chờ trong hàng đợi"
+                    >
+                      <Pause size={15} /> Tạm dừng toàn bộ
+                    </button>
+                  )}
+                  {queue.some(j => ['RUNNING', 'PAUSED', 'PENDING'].includes(j.status)) && (
+                    <button 
+                      onClick={handleBatchStop} 
+                      className="btn-outline btn-outline-danger" 
+                      disabled={isQueueActionLoading}
+                      title="Dừng tất cả các tiến trình trong hàng đợi và lưu kết quả một phần nếu có"
+                    >
+                      <Square size={15} /> Dừng toàn bộ
+                    </button>
+                  )}
+                  {queueItems.length > 0 && (
+                    <button 
+                      onClick={handleBatchClearQueue} 
+                      className="btn-outline btn-outline-danger" 
+                      disabled={isQueueActionLoading}
+                      title="Hủy và xóa toàn bộ các tiến trình khỏi hàng đợi"
+                    >
+                      <Trash2 size={15} /> Xóa toàn bộ tiến trình
                     </button>
                   )}
                 </div>

@@ -874,7 +874,7 @@ async function runJob(job) {
                     job.lastStartedAt = null;
                 }
                 pushLog(job, `🎉 Hoàn thành! Sống: ${job.stats.alive}, Chết: ${job.stats.dead}`, 'success');
-            } else if (job.hasCheckpoint && (aliveRows.length > 0 || deadRows.length > 0)) {
+            } else if (job.status !== 'REMOVED' && job.hasCheckpoint && (aliveRows.length > 0 || deadRows.length > 0)) {
                 // Tạo file kết quả tạm thời nếu bị hủy hoặc gián đoạn để người dùng vẫn có thể tải
                 const baseName = job.filename.replace(/\.[^/.]+$/, "");
                 const partialAlive = `Partial_${baseName}_alive_${job.id}.csv`;
@@ -1074,9 +1074,14 @@ app.post('/api/queue/:id/:action', (req, res) => {
       pushLog(job, 'Tạm dừng tiến trình', 'warning');
   }
   if (action === 'resume' && (job.status === 'PAUSED' || job.status === 'INTERRUPTED' || job.status === 'ERROR')) {
-      job.resumeFromCheckpoint = true;
-      job.status = 'PENDING';
-      if (job.lastStartedAt) job.lastStartedAt = null;
+      if (currentRunningJob && currentRunningJob.id === job.id) {
+          job.status = 'RUNNING';
+          job.lastStartedAt = Date.now();
+      } else {
+          job.resumeFromCheckpoint = !!job.hasCheckpoint;
+          job.status = 'PENDING';
+          if (job.lastStartedAt) job.lastStartedAt = null;
+      }
       pushLog(job, 'Kích hoạt tiếp tục từ điểm dừng...', 'info');
       processQueue();
   }
@@ -1103,6 +1108,7 @@ app.post('/api/queue/:id/:action', (req, res) => {
   }
   if (action === 'remove') {
       job.status = 'REMOVED';
+      removeCheckpoint(job.id);
       const remainingQueue = queue.filter(j => j.id !== id);
       deleteJobFiles(job, remainingQueue);
       queue = remainingQueue;
@@ -1150,12 +1156,73 @@ app.post('/api/queue/batch-retry', (req, res) => {
   res.json({ success: true, count: targetJobs.length });
 });
 
+app.post('/api/queue/batch-pause', (req, res) => {
+  let pausedCount = 0;
+  for (const job of queue) {
+    if (job.status === 'RUNNING' || job.status === 'PENDING') {
+      if (job.status === 'RUNNING' && job.lastStartedAt) {
+        job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
+        job.lastStartedAt = null;
+      }
+      job.status = 'PAUSED';
+      pushLog(job, 'Tạm dừng toàn bộ tiến trình', 'warning');
+      pausedCount++;
+    }
+  }
+  broadcastQueue();
+  res.json({ success: true, count: pausedCount });
+});
+
+app.post('/api/queue/batch-stop', (req, res) => {
+  let stoppedCount = 0;
+  for (const job of queue) {
+    if (job.status === 'RUNNING' || job.status === 'PAUSED' || job.status === 'PENDING') {
+      if (job.lastStartedAt) {
+        job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
+        job.lastStartedAt = null;
+      }
+      job.status = 'CANCELED';
+      pushLog(job, 'Đã dừng toàn bộ tiến trình', 'error');
+      stoppedCount++;
+    }
+  }
+  broadcastQueue();
+  res.json({ success: true, count: stoppedCount });
+});
+
+app.post('/api/queue/batch-clear', (req, res) => {
+  const queueJobs = queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED', 'INTERRUPTED'].includes(j.status));
+  const remainingQueue = queue.filter(j => !['PENDING', 'RUNNING', 'PAUSED', 'INTERRUPTED'].includes(j.status));
+
+  for (const job of queueJobs) {
+    job.status = 'REMOVED';
+    removeCheckpoint(job.id);
+    deleteJobFiles(job, remainingQueue);
+  }
+
+  queue = remainingQueue;
+  const orphanResult = cleanAllOrphanedFiles();
+  broadcastQueue();
+  res.json({ 
+    success: true, 
+    count: queueJobs.length,
+    freedBytes: orphanResult.freedBytes,
+    deletedFilesCount: orphanResult.deletedCount
+  });
+});
+
 app.post('/api/queue/batch-resume', (req, res) => {
-  const targetJobs = queue.filter(j => (j.status === 'INTERRUPTED' || j.status === 'PAUSED') && j.hasCheckpoint);
+  const targetJobs = queue.filter(j => j.status === 'INTERRUPTED' || j.status === 'PAUSED');
   targetJobs.forEach(job => {
-    job.resumeFromCheckpoint = true;
-    job.status = 'PENDING';
-    pushLog(job, 'Tiếp tục từ điểm dừng theo lô', 'info');
+    if (currentRunningJob && currentRunningJob.id === job.id) {
+      job.status = 'RUNNING';
+      job.lastStartedAt = Date.now();
+    } else {
+      job.resumeFromCheckpoint = !!job.hasCheckpoint;
+      job.status = 'PENDING';
+      if (job.lastStartedAt) job.lastStartedAt = null;
+    }
+    pushLog(job, 'Tiếp tục xử lý tiến trình...', 'info');
   });
   broadcastQueue();
   if (targetJobs.length > 0) processQueue();

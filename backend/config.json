@@ -1,5 +1,5 @@
 {
-  "maxUsagePerKey": 500,
-  "minDelay": 1500,
+  "maxUsagePerKey": 700,
+  "minDelay": 1000,
   "maxDelay": 2000
 }

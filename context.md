@@ -15,7 +15,10 @@ Bất kỳ tài liệu tham khảo, API docs, cấu trúc cơ sở dữ liệu, 
 - `GET /api/queue`: Lấy danh sách hàng đợi tiến trình.
 - `POST /api/queue/:id/:action`: Điều khiển tiến trình (`pause`, `resume`, `retry`, `cancel`, `remove`, `force`).
 - `POST /api/queue/batch-retry`: Chạy lại toàn bộ các tiến trình bị lỗi/gián đoạn.
-- `POST /api/queue/batch-resume`: Tiếp tục tất cả các tiến trình bị gián đoạn từ checkpoint.
+- `POST /api/queue/batch-resume`: Tiếp tục tất cả các tiến trình bị gián đoạn hoặc tạm dừng.
+- `POST /api/queue/batch-pause`: Tạm dừng toàn bộ các tiến trình đang chạy và chờ trong hàng đợi.
+- `POST /api/queue/batch-stop`: Dừng toàn bộ các tiến trình đang chạy/chờ trong hàng đợi và lưu kết quả một phần.
+- `POST /api/queue/batch-clear`: Xóa toàn bộ các tiến trình trong hàng đợi và dọn dẹp các tệp liên quan.
 - `POST /api/queue/trigger`: Kích hoạt worker xử lý hàng đợi nếu đang ở trạng thái nhàn rỗi.
 - `POST /api/shutdown`: Graceful shutdown an toàn lưu checkpoint và đóng browser.
 - `POST /api/clear-history`: Xóa lịch sử các tiến trình đã hoàn thành/hủy, đồng thời tự động xóa các tệp CSV kết quả trong `outputs/`, tệp gốc trong `uploads/` và các file mồ côi.

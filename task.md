@@ -7,6 +7,12 @@ Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi 
 - [ ] Chưa có task nào.
 
 ## Task Đã Hoàn Thành
+- [x] Thêm chức năng tạm dừng toàn bộ, dừng toàn bộ, và xóa toàn bộ tiến trình trong hàng đợi:
+  - [x] Backend (`server.js`): Thêm endpoint `POST /api/queue/batch-pause` tạm dừng an toàn tất cả các tiến trình đang chạy và chờ.
+  - [x] Backend (`server.js`): Thêm endpoint `POST /api/queue/batch-stop` dừng toàn bộ các tiến trình, đóng browser, lưu kết quả tạm thời partial CSV và chuyển sang Lịch sử.
+  - [x] Backend (`server.js`): Thêm endpoint `POST /api/queue/batch-clear` xóa toàn bộ tiến trình trong hàng đợi và dọn dẹp các tệp liên quan.
+  - [x] Backend (`server.js`): Cập nhật endpoint `POST /api/queue/batch-resume` và action `resume` để tiếp tục mượt mà cả tiến trình đang chạy tạm dừng và tiến trình đang chờ.
+  - [x] Frontend (`App.jsx`): Thêm các nút "Tạm dừng toàn bộ", "Dừng toàn bộ", "Xóa toàn bộ tiến trình", "Tiếp tục toàn bộ" trên thanh công cụ Hàng đợi (`Queue Actions Toolbar`) kèm dialog xác nhận bảo vệ an toàn.
 - [x] Nén hàng loạt kết quả Link Sống và Link Chết thành 1 file ZIP:
   - [x] Backend (`zipHelper.js`): Xây dựng bộ tạo kho lưu trữ chuẩn PKZIP (.zip) bằng Node.js `zlib` (Deflate & Store mode, CRC-32 table, hỗ trợ UTF-8 filename), không phụ thuộc thư viện ngoài.
   - [x] Backend (`server.js`): Thêm endpoint `GET /api/download-batch-zip/:type` (hỗ trợ `type=alive` hoặc `type=dead`), tự động lọc dữ liệu CSV, xóa cột thừa bằng `cleanRowForDownload` và tạo file ZIP gắn nhãn thời gian.
