@@ -528,13 +528,7 @@ app.post('/api/clear-history', (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/api/queue/:id/fix-avatar', (req, res) => {
-  const { id } = req.params;
-  const historyJob = queue.find(j => j.id === id);
-  if (!historyJob) {
-      return res.status(400).json({ error: 'Không tìm thấy tiến trình' });
-  }
-  
+function createFixAvatarJob(historyJob) {
   let targetFilePath = historyJob.filePath;
   if (historyJob.downloadLinks && historyJob.downloadLinks.aliveFile) {
       const filename = historyJob.downloadLinks.aliveFile.split('/').pop();
@@ -543,9 +537,20 @@ app.post('/api/queue/:id/fix-avatar', (req, res) => {
           targetFilePath = p;
       }
   }
-  
+
+  if (targetFilePath && !fs.existsSync(targetFilePath)) {
+      const pAbs = path.join(__dirname, targetFilePath);
+      if (fs.existsSync(pAbs)) {
+          targetFilePath = pAbs;
+      }
+  }
+
+  if (!targetFilePath || !fs.existsSync(targetFilePath)) {
+      return null;
+  }
+
   const config = getConfig();
-  const job = {
+  return {
     id: crypto.randomBytes(8).toString('hex'),
     filename: `FixAvatar_${historyJob.filename}`,
     status: 'PENDING',
@@ -567,10 +572,55 @@ app.post('/api/queue/:id/fix-avatar', (req, res) => {
     accumulatedTime: 0,
     lastStartedAt: null
   };
+}
+
+app.post('/api/queue/:id/fix-avatar', (req, res) => {
+  const { id } = req.params;
+  const historyJob = queue.find(j => j.id === id);
+  if (!historyJob) {
+      return res.status(400).json({ error: 'Không tìm thấy tiến trình' });
+  }
+  
+  const job = createFixAvatarJob(historyJob);
+  if (!job) {
+      return res.status(400).json({ error: 'Không tìm thấy tệp dữ liệu nguồn của tiến trình' });
+  }
+
   queue.push(job);
   broadcastQueue();
   processQueue(); 
   res.json({ success: true, jobId: job.id });
+});
+
+app.post('/api/queue/batch-fix-avatar', (req, res) => {
+  const { jobIds } = req.body || {};
+  
+  let eligibleHistoryJobs;
+  if (Array.isArray(jobIds) && jobIds.length > 0) {
+    eligibleHistoryJobs = queue.filter(j => jobIds.includes(j.id));
+  } else {
+    eligibleHistoryJobs = queue.filter(j => 
+      ['COMPLETED', 'ERROR'].includes(j.status) && 
+      !j.checkAvatarApify &&
+      !queue.some(q => ['PENDING', 'RUNNING'].includes(q.status) && q.filename === `FixAvatar_${j.filename}`)
+    );
+  }
+
+  const newJobs = [];
+  for (const historyJob of eligibleHistoryJobs) {
+    const job = createFixAvatarJob(historyJob);
+    if (job) {
+      queue.push(job);
+      newJobs.push(job);
+    }
+  }
+
+  if (newJobs.length > 0) {
+    broadcastQueue();
+    processQueue();
+  }
+
+  res.json({ success: true, count: newJobs.length });
 });
 
 app.post('/api/queue/:id/:action', (req, res) => {
