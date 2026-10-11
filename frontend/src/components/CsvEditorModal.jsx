@@ -267,10 +267,10 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
         >
           <div className="modal-header">
             <h2>
-              Preview: <span className="neon-text-cyan">{file.name}</span>
+              Xem trước tệp: <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>{file.name}</span>
             </h2>
-            <button className="close-btn" onClick={onClose}>
-              <X size={24} />
+            <button className="close-btn" onClick={onClose} title="Đóng">
+              <X size={20} />
             </button>
           </div>
 
@@ -303,26 +303,25 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
                           <div 
                             className="header-content flex items-center justify-between gap-2 cursor-text" 
                             onDoubleClick={() => startEditingHeader(colIndex, col)}
-                            title="Click đúp để sửa"
+                            title="Click đúp để sửa tiêu đề cột"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}
                           >
                             <span>{col}</span>
                             <button 
-                              className="delete-col-btn opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+                              className="delete-btn"
                               onClick={(e) => { e.stopPropagation(); deleteColumn(colIndex); }}
                               title="Xóa cột"
-                              style={{ opacity: 0 }}
-                              onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
-                              onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                              style={{ opacity: 0.6 }}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={13} />
                             </button>
                           </div>
                         )}
                       </th>
                     ))}
-                    <th className="add-col-th" style={{ minWidth: '40px' }}>
-                       <button onClick={addColumn} className="add-btn text-cyan-400 hover:text-cyan-300 p-1 rounded hover:bg-white/5" title="Thêm cột">
-                         <Plus size={18} />
+                    <th className="add-col-th" style={{ minWidth: '40px', textAlign: 'center' }}>
+                       <button onClick={addColumn} className="btn-icon btn-outline-accent" style={{ padding: '4px', borderRadius: '4px' }} title="Thêm cột mới">
+                         <Plus size={16} />
                        </button>
                     </th>
                   </tr>
@@ -338,7 +337,7 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
                             onClick={() => deleteRow(globalIndex)}
                             title="Xóa dòng"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
                         </td>
                         <td className="index-col">{globalIndex + 1}</td>
@@ -372,7 +371,7 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
                                   autoFocus
                                 />
                               ) : (
-                                <span className="cell-content block min-h-[24px]">
+                                <span className="cell-content">
                                   {row[col] || ''}
                                 </span>
                               )}
@@ -385,8 +384,8 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
                   })}
                   {currentData.length === 0 && (
                     <tr>
-                      <td colSpan={headers.length + 3} className="text-center p-4">
-                        Không có dữ liệu
+                      <td colSpan={headers.length + 3} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                        Không có dữ liệu trong tệp CSV
                       </td>
                     </tr>
                   )}
@@ -394,9 +393,9 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
               </table>
             </div>
             
-            <div className="p-4 border-t border-white/10 bg-black/20 flex gap-4">
-               <button onClick={addRow} className="btn-outline text-cyan-400 flex items-center gap-2 text-sm py-1.5 px-3">
-                 <Plus size={16} /> Thêm dòng mới
+            <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--glass-border-subtle)', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', gap: '0.75rem' }}>
+               <button onClick={addRow} className="btn-outline btn-outline-accent" style={{ padding: '0.4rem 0.85rem', fontSize: '0.8125rem' }}>
+                 <Plus size={15} /> Thêm dòng mới
                </button>
             </div>
           </div>
@@ -410,7 +409,7 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
               >
                 <ChevronLeft size={16} /> Trước
               </button>
-              <span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>
                 Trang {page} / {totalPages || 1} ({data.length} dòng)
               </span>
               <button
@@ -423,14 +422,14 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
             </div>
             
             <div className="modal-actions">
-              <button className="btn-outline text-muted" onClick={onClose} style={{ borderColor: 'var(--glass-border)' }}>
+              <button className="btn-outline" onClick={onClose}>
                 Hủy bỏ
               </button>
               <button
                 className="btn-primary"
                 onClick={handleConfirm}
               >
-                {mode === "upload" ? <UploadCloud size={18} /> : <Download size={18} />} 
+                {mode === "upload" ? <UploadCloud size={17} /> : <Download size={17} />} 
                 {mode === "upload" ? "Xác nhận & Tải lên" : "Lưu & Tải xuống"}
               </button>
             </div>
