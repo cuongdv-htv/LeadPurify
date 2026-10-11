@@ -21,8 +21,8 @@ import {
   Info,
   Layers,
   Sliders,
-  Sparkles,
-  FileSpreadsheet
+  FileSpreadsheet,
+  RotateCcw
 } from 'lucide-react';
 import './index.css';
 import CsvEditorModal from './components/CsvEditorModal';
@@ -362,6 +362,17 @@ function App() {
       alert('Lỗi khi kiểm tra trạng thái API Keys');
     } finally {
       setIsCheckingKeys(false);
+    }
+  };
+
+  const handleResetApifyUsage = async () => {
+    if (!window.confirm('Bạn có chắc muốn đặt lại lượt dùng về 0 và kích hoạt lại toàn bộ Keys?')) return;
+    try {
+      const res = await axios.post('http://localhost:3001/api/apify-keys/reset-usage');
+      setApifyKeys(res.data);
+      alert('Đã đặt lại lượt dùng về 0 và kích hoạt lại toàn bộ Keys thành công!');
+    } catch (e) {
+      alert('Lỗi khi đặt lại lượt dùng: ' + e.message);
     }
   };
 
@@ -1094,9 +1105,28 @@ function App() {
                 Quản lý Apify API Keys
               </h2>
             </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9375rem', marginBottom: '2rem' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9375rem', marginBottom: '1.5rem' }}>
               Nhập danh sách API Token của Apify (mỗi token trên một dòng riêng). Hệ thống sẽ tự động luân phiên xoay vòng khi token đạt ngưỡng request tối đa hoặc gặp giới hạn định ngạch.
             </p>
+
+            {/* Cảnh báo khi toàn bộ keys hết hạn hoặc không có key hoạt động */}
+            {apifyKeys.length > 0 && !apifyKeys.some(k => k.status === 'active') && (
+              <div style={{ 
+                padding: '0.875rem 1.25rem', 
+                background: 'rgba(239, 68, 68, 0.12)', 
+                border: '1px solid rgba(239, 68, 68, 0.35)', 
+                borderRadius: 'var(--radius-md)', 
+                marginBottom: '1.5rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.75rem' 
+              }}>
+                <AlertTriangle size={20} style={{ color: '#ef4444', flexShrink: 0 }} />
+                <span style={{ fontSize: '0.875rem', color: '#fca5a5' }}>
+                  <strong>Cảnh báo:</strong> Toàn bộ API Token hiện tại đều đã hết hạn hoặc không hợp lệ (401/403/429). Hãy đăng nhập <a href="https://console.apify.com/account/integrations" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'underline' }}>Apify Console</a>, sao chép API Token cá nhân mới, dán vào ô bên dưới và nhấn "Lưu danh sách Keys".
+                </span>
+              </div>
+            )}
 
             <div className="grid-2col" style={{ alignItems: 'start' }}>
               {/* Left Column: API Keys Input */}
@@ -1121,6 +1151,13 @@ function App() {
                   >
                     <RefreshCw size={16} className={isCheckingKeys ? "spin" : ""} /> 
                     {isCheckingKeys ? "Đang kiểm tra..." : "Kiểm tra toàn bộ Keys"}
+                  </button>
+                  <button 
+                    onClick={handleResetApifyUsage} 
+                    className="btn-outline btn-outline-accent"
+                    title="Đặt lại lượt dùng về 0 và kích hoạt lại tất cả các Keys"
+                  >
+                    <RotateCcw size={16} /> Đặt lại lượt dùng (Reset)
                   </button>
                 </div>
               </div>
