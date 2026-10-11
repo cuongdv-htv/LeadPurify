@@ -40,6 +40,18 @@ function callApify(url, token) {
     });
 }
 
+function isApifyTokenError(errMessage) {
+    if (!errMessage || typeof errMessage !== 'string') return false;
+    return errMessage.includes('401') || 
+           errMessage.includes('403') || 
+           errMessage.includes('429') || 
+           errMessage.includes('user-or-token-not-found') || 
+           errMessage.includes('token is not valid') ||
+           errMessage.includes('authentication token is not valid') ||
+           errMessage.includes('insufficient-permissions') ||
+           errMessage.includes('rate-limit-exceeded');
+}
+
 function optimizeFacebookAvatarUrl(url) {
     if (!url || typeof url !== 'string') return url;
     try {
@@ -655,10 +667,34 @@ async function runJob(job) {
 
                 // --- 1. APIFY CHECKS ---
                 if (job.checkAliveApify || job.checkAvatarApify) {
-                    try {
-                        let token = getApifyKey();
-                        if (!token) throw new Error('Hết API Key Apify');
-                        
+                    let apifyData = null;
+                    let apifySuccess = false;
+
+                    while (!apifySuccess) {
+                        await checkState();
+                        const currentToken = getApifyKey();
+                        if (!currentToken) {
+                            pushLog(job, `⚠️ Không còn API Key Apify nào khả dụng (tất cả đều hết hạn hoặc không hợp lệ). Tự động tạm dừng tiến trình... Vui lòng thêm Key mới trong tab "Cài đặt Apify" rồi bấm "Tiếp tục".`, 'error');
+                            job.status = 'PAUSED';
+                            if (job.lastStartedAt) {
+                                job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
+                                job.lastStartedAt = null;
+                            }
+                            saveCheckpoint(job.id, {
+                                jobId: job.id,
+                                filename: job.filename,
+                                lastCompletedIndex: job.completed,
+                                stats: job.stats,
+                                aliveRows,
+                                deadRows,
+                                updatedAt: Date.now()
+                            });
+                            job.hasCheckpoint = true;
+                            broadcastQueue();
+                            await checkState();
+                            continue;
+                        }
+
                         const minD = job.minDelay || 2000;
                         const maxD = Math.max(job.maxDelay || 5000, minD);
                         const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
@@ -666,12 +702,30 @@ async function runJob(job) {
                         await new Promise(r => setTimeout(r, randomDelay));
                         await checkState();
 
-                        pushLog(job, `⚡ Gọi Apify kiểm tra: ${fullUrl}`, 'info');
-                        const data = await callApify(fullUrl, token);
-                        incrementKeyUsage(token);
-                        
-                        let apifyData = data && data.length > 0 ? data[0] : null;
+                        pushLog(job, `⚡ Gọi Apify kiểm tra (${currentToken.substring(0, 14)}...): ${fullUrl}`, 'info');
+                        try {
+                            const data = await callApify(fullUrl, currentToken);
+                            incrementKeyUsage(currentToken);
+                            apifyData = data && data.length > 0 ? data[0] : null;
+                            apifySuccess = true;
+                        } catch (apiErr) {
+                            if (apiErr.message === 'ABORTED') throw apiErr;
+                            if (isApifyTokenError(apiErr.message)) {
+                                const errDesc = apiErr.message.includes('401')
+                                    ? 'Key không tồn tại hoặc sai token (401)'
+                                    : (apiErr.message.includes('429') ? 'Quá giới hạn request (429)' : 'Hết hạn/Hết credit (403)');
+                                pushLog(job, `⚠️ Token ${currentToken.substring(0, 14)}... lỗi [${errDesc}], đánh dấu hết hạn và tự động chuyển sang Key tiếp theo...`, 'warning');
+                                markKeyAsExpired(currentToken);
+                                // Tiếp tục vòng lặp while để lấy token tiếp theo và thử lại link này
+                            } else {
+                                pushLog(job, `⚠️ LỖI Apify: ${apiErr.message}`, 'error');
+                                hasError = true;
+                                apifySuccess = true;
+                            }
+                        }
+                    }
 
+                    if (apifySuccess && !hasError) {
                         if (job.checkAliveApify) {
                             if (apifyData && apifyData.time) {
                                 const postDate = new Date(apifyData.time);
@@ -709,16 +763,6 @@ async function runJob(job) {
                                 pushLog(job, `🖼️ Cập nhật Avatar HD (Apify) thành công`, 'success');
                             }
                         }
-
-                    } catch (apiErr) {
-                        if (apiErr.message.includes('403') || apiErr.message.includes('429')) {
-                            pushLog(job, `⚠️ API Key lỗi/hết hạn, đánh dấu hết hạn...`, 'warning');
-                            let token = getApifyKey();
-                            if (token) markKeyAsExpired(token);
-                        } else {
-                            pushLog(job, `⚠️ LỖI Apify: ${apiErr.message}`, 'error');
-                        }
-                        hasError = true;
                     }
                 }
 
@@ -840,7 +884,7 @@ async function runJob(job) {
               job.hasCheckpoint = true;
             }
           } catch (e) {
-            if (e.message !== 'ABORTED' && e.message !== 'Hết API Key Apify') throw e;
+            if (e.message !== 'ABORTED' && !e.message.includes('Hết API Key Apify')) throw e;
           } finally {
             if (browser) {
                 try { await browser.close(); } catch(e) {}
@@ -848,7 +892,7 @@ async function runJob(job) {
             }
             currentRunningJob = null;
             
-            if (job.status !== 'REMOVED' && job.status !== 'CANCELED' && job.status !== 'INTERRUPTED') {
+            if (job.status !== 'REMOVED' && job.status !== 'CANCELED' && job.status !== 'INTERRUPTED' && job.status !== 'PAUSED') {
                 const ts = new Date().getTime();
                 const baseName = job.filename.replace(/\.[^/.]+$/, "");
                 const aliveFilename = `${baseName}_alive_${ts}.csv`;
@@ -1283,6 +1327,7 @@ app.post('/api/apify-keys', (req, res) => {
 
 app.post('/api/apify-keys/check', async (req, res) => {
     try {
+        const config = getConfig();
         const keysPath = path.join(__dirname, 'apify_keys.json');
         if (!fs.existsSync(keysPath)) return res.json([]);
         let keys = JSON.parse(fs.readFileSync(keysPath, 'utf8'));
@@ -1301,13 +1346,29 @@ app.post('/api/apify-keys/check', async (req, res) => {
             const isValid = await checkToken(k.key);
             if (!isValid) {
                 k.status = 'expired';
-            } else if (k.usage >= 400) {
+            } else if (k.usage >= config.maxUsagePerKey) {
                 k.status = 'expired';
             } else {
                 k.status = 'active';
             }
         }
         
+        fs.writeFileSync(keysPath, JSON.stringify(keys, null, 2));
+        res.json(keys);
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/apify-keys/reset-usage', (req, res) => {
+    try {
+        const keysPath = path.join(__dirname, 'apify_keys.json');
+        if (!fs.existsSync(keysPath)) return res.json([]);
+        let keys = JSON.parse(fs.readFileSync(keysPath, 'utf8'));
+        keys.forEach(k => {
+            k.usage = 0;
+            k.status = 'active';
+        });
         fs.writeFileSync(keysPath, JSON.stringify(keys, null, 2));
         res.json(keys);
     } catch(e) {

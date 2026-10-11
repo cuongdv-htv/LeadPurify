@@ -25,4 +25,5 @@ Bất kỳ tài liệu tham khảo, API docs, cấu trúc cơ sở dữ liệu, 
 - `POST /api/clean-storage`: Quét và dọn dẹp tất cả các tệp mồ côi trong `outputs/` và `uploads/` không thuộc tiến trình nào đang hoạt động.
 - `GET /api/download/:filename`: Tải xuống kết quả CSV đã phân loại (Sống, Chết, Hoạt động, Checkpoint một phần).
 - `GET /api/download-batch-zip/:type`: Nén toàn bộ các file kết quả theo loại (`alive` hoặc `dead`) từ tất cả tiến trình trong lịch sử thành 1 file ZIP duy nhất.
+- `POST /api/apify-keys/reset-usage`: Đặt lại lượt dùng về 0 và kích hoạt lại toàn bộ các API Token trong hệ thống.
 

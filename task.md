@@ -55,4 +55,9 @@ Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi 
   - [x] 1. Thiết lập hệ thống CSS Design Tokens (Liquid Glass: màu sắc, blur động, hiệu ứng ánh sáng iridescent, typography, nút bấm, inputs) trong `index.css`
   - [x] 2. Tái cấu trúc và nâng cấp giao diện toàn bộ `App.jsx` (Header, Upload, Cấu hình quét, Hàng đợi, Lịch sử, Quản lý API Key, Quick Guide) chuẩn Liquid Glass và tuân thủ Do's & Don'ts (không emoji, min-h 100dvh, micro-animations)
   - [x] 3. Nâng cấp giao diện Modal `CsvEditorModal.jsx` và `CsvEditorModal.css` theo phong cách Liquid Glass
-  - [x] 4. Kiểm tra build, lint, và chạy thử nghiệm giao diện để đảm bảo tính thẩm mỹ, mượt mà và không có lỗi logic/layout
+  - [x] Fix lỗi Apify 401 (User was not found or authentication token is not valid):
+  - [x] Bổ sung hàm nhận diện mã lỗi xác thực Apify `isApifyTokenError()` (hỗ trợ mã 401, 403, 429 và thông báo lỗi liên quan token).
+  - [x] Tự động đánh dấu Key hết hạn (`expired`), tự động xoay vòng sang Key khả dụng tiếp theo và thử lại ngay lập tức cho dòng dữ liệu đang xử lý.
+  - [x] Tự động tạm dừng tiến trình an toàn (`PAUSED`) và lưu checkpoint khi toàn bộ API Key Apify đều đã hết hạn hoặc không hợp lệ.
+  - [x] Bổ sung API `/api/apify-keys/reset-usage` và nút "Đặt lại lượt dùng (Reset)" trên giao diện để tái kích hoạt các Key.
+  - [x] Hiển thị banner cảnh báo đỏ nổi bật khi toàn bộ Key hết hạn trên tab Quản lý Apify Keys kèm hướng dẫn lấy Token mới.
