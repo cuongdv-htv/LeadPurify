@@ -80,6 +80,7 @@ function App() {
   const [apifyKeys, setApifyKeys] = useState([]);
   const [apifyInput, setApifyInput] = useState('');
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
+  const [isDownloadingZip, setIsDownloadingZip] = useState(null); // 'alive' | 'dead' | null
   const [apifyConfig, setApifyConfig] = useState({ maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000 });
   const [jobOptions, setJobOptions] = useState({
     checkAlive: true,
@@ -167,43 +168,102 @@ function App() {
   };
 
   const jobAction = async (id, action) => {
+    if (action === 'remove') {
+      if (!window.confirm('Bạn có chắc muốn xóa tiến trình này và tất cả các tệp kết quả / tệp gốc liên quan khỏi ổ cứng không?')) {
+        return;
+      }
+    }
     await axios.post(`http://localhost:3001/api/queue/${id}/${action}`);
   };
 
-  const handleBatchDownload = (type) => {
-    const historyJobs = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status));
-    let delay = 0;
-    historyJobs.forEach(job => {
-      if (job.downloadLinks) {
-        if (type === 'alive' && job.stats?.alive > 0 && job.downloadLinks.aliveFile) {
-          setTimeout(() => {
-            const a = document.createElement('a');
-            a.href = job.downloadLinks.aliveFile;
-            a.download = '';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-          }, delay);
-          delay += 300;
-        }
-        if (type === 'dead' && job.stats?.dead > 0 && job.downloadLinks.deadFile) {
-          setTimeout(() => {
-            const a = document.createElement('a');
-            a.href = job.downloadLinks.deadFile;
-            a.download = '';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-          }, delay);
-          delay += 300;
-        }
+  const handleBatchDownload = async (type) => {
+    const historyJobs = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED', 'INTERRUPTED'].includes(j.status));
+    const matchingJobs = historyJobs.filter(job => {
+      if (!job.downloadLinks) return false;
+      if (type === 'alive') {
+        return (job.stats?.alive > 0 || (!job.stats && job.downloadLinks.aliveFile)) && job.downloadLinks.aliveFile;
+      } else {
+        return (job.stats?.dead > 0 || (!job.stats && job.downloadLinks.deadFile)) && job.downloadLinks.deadFile;
       }
     });
+
+    if (matchingJobs.length === 0) {
+      alert(`Không có tiến trình nào trong lịch sử có ${type === 'alive' ? 'link sống' : 'link chết'} để tải.`);
+      return;
+    }
+
+    try {
+      setIsDownloadingZip(type);
+      const res = await axios.get(`http://localhost:3001/api/download-batch-zip/${type}`, {
+        responseType: 'blob'
+      });
+
+      let filename = `LeadPurify_${type === 'alive' ? 'Link_Song' : 'Link_Chet'}.zip`;
+      const disposition = res.headers['content-disposition'];
+      if (disposition) {
+        const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+        if (utf8Match && utf8Match[1]) {
+          filename = decodeURIComponent(utf8Match[1]);
+        } else {
+          const match = disposition.match(/filename="?([^";]+)"?/i);
+          if (match && match[1]) {
+            filename = decodeURIComponent(match[1]);
+          }
+        }
+      }
+
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data], { type: 'application/zip' }));
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error('Lỗi khi tải file zip:', err);
+      let errMsg = 'Có lỗi xảy ra khi nén và tải file ZIP.';
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const json = JSON.parse(text);
+          if (json.error) errMsg = json.error;
+        } catch(e) {}
+      } else if (err.response?.data?.error) {
+        errMsg = err.response.data.error;
+      }
+      alert(errMsg);
+    } finally {
+      setIsDownloadingZip(null);
+    }
   };
 
   const handleClearHistory = async () => {
-    if (window.confirm('Bạn có chắc muốn xóa toàn bộ lịch sử tiến trình không?')) {
-      await axios.post('http://localhost:3001/api/clear-history');
+    if (window.confirm('Bạn có chắc muốn xóa toàn bộ lịch sử không?\nThao tác này sẽ xóa sạch các file kết quả và file tải lên liên quan trên ổ cứng.')) {
+      try {
+        const res = await axios.post('http://localhost:3001/api/clear-history');
+        const freedMb = ((res.data?.freedBytes || 0) / (1024 * 1024)).toFixed(2);
+        const count = res.data?.deletedFilesCount || 0;
+        if (count > 0 || res.data?.clearedCount > 0) {
+          alert(`Đã xóa sạch lịch sử và dọn dẹp ${count} tệp (giải phóng ${freedMb} MB).`);
+        }
+      } catch (err) {
+        alert('Lỗi khi xóa lịch sử: ' + (err.response?.data?.error || err.message));
+      }
+    }
+  };
+
+  const handleCleanStorage = async () => {
+    if (!window.confirm('Hệ thống sẽ quét và dọn dẹp toàn bộ các tệp kết quả (outputs) và tệp tải lên (uploads) mồ côi không gắn với bất kỳ tiến trình nào đang chạy.\nBạn có muốn tiếp tục?')) {
+      return;
+    }
+    try {
+      const res = await axios.post('http://localhost:3001/api/clean-storage');
+      const { deletedCount, freedBytes } = res.data;
+      const mb = ((freedBytes || 0) / (1024 * 1024)).toFixed(2);
+      alert(`Đã dọn dẹp thành công ${deletedCount} tệp mồ côi (giải phóng ${mb} MB ổ cứng).`);
+    } catch (err) {
+      alert('Lỗi khi dọn dẹp ổ cứng: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -624,40 +684,79 @@ function App() {
               )}
 
               {/* History Actions Toolbar */}
-              {activeTab === 'history' && historyItems.length > 0 && (
+              {activeTab === 'history' && (
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  {queue.filter(j => ['ERROR', 'INTERRUPTED', 'CANCELED'].includes(j.status)).length > 0 && (
-                    <button 
-                      onClick={handleBatchRetry} 
-                      className="btn-outline btn-outline-accent"
-                      title="Chạy lại tất cả các tiến trình bị lỗi, hủy hoặc gián đoạn"
-                    >
-                      <RefreshCw size={15} /> Chạy lại lỗi / gián đoạn ({queue.filter(j => ['ERROR', 'INTERRUPTED', 'CANCELED'].includes(j.status)).length})
-                    </button>
+                  {historyItems.length > 0 && (
+                    <>
+                      {queue.filter(j => ['ERROR', 'INTERRUPTED', 'CANCELED'].includes(j.status)).length > 0 && (
+                        <button 
+                          onClick={handleBatchRetry} 
+                          className="btn-outline btn-outline-accent"
+                          title="Chạy lại tất cả các tiến trình bị lỗi, hủy hoặc gián đoạn"
+                        >
+                          <RefreshCw size={15} /> Chạy lại lỗi / gián đoạn ({queue.filter(j => ['ERROR', 'INTERRUPTED', 'CANCELED'].includes(j.status)).length})
+                        </button>
+                      )}
+                      
+                      <button 
+                        onClick={handleBatchFixAvatar} 
+                        className="btn-outline btn-outline-accent" 
+                        style={{ 
+                          opacity: queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length === 0 ? 0.5 : 1
+                        }}
+                        title="Đưa các tiến trình trong lịch sử chưa sửa ảnh bằng Apify vào hàng đợi"
+                      >
+                        <RefreshCw size={15} /> 
+                        Sửa ảnh Apify hàng loạt ({queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length})
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleBatchDownload('alive')} 
+                        className="btn-outline btn-outline-success"
+                        disabled={isDownloadingZip === 'alive'}
+                        title="Nén tất cả các file link sống trong lịch sử thành 1 file ZIP và tải xuống"
+                      >
+                        {isDownloadingZip === 'alive' ? (
+                          <>
+                            <RefreshCw size={15} className="spin" /> Đang nén ZIP...
+                          </>
+                        ) : (
+                          <>
+                            <Download size={15} /> Tải Link Sống (ZIP)
+                          </>
+                        )}
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleBatchDownload('dead')} 
+                        className="btn-outline btn-outline-warning"
+                        disabled={isDownloadingZip === 'dead'}
+                        title="Nén tất cả các file link chết trong lịch sử thành 1 file ZIP và tải xuống"
+                      >
+                        {isDownloadingZip === 'dead' ? (
+                          <>
+                            <RefreshCw size={15} className="spin" /> Đang nén ZIP...
+                          </>
+                        ) : (
+                          <>
+                            <Download size={15} /> Tải Link Chết (ZIP)
+                          </>
+                        )}
+                      </button>
+                      
+                      <button onClick={handleClearHistory} className="btn-outline btn-outline-danger" title="Xóa lịch sử và dọn dẹp các tệp kết quả & tải lên liên quan">
+                        <Trash2 size={15} /> Xóa lịch sử
+                      </button>
+                    </>
                   )}
-                  
+
                   <button 
-                    onClick={handleBatchFixAvatar} 
-                    className="btn-outline btn-outline-accent" 
-                    style={{ 
-                      opacity: queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length === 0 ? 0.5 : 1
-                    }}
-                    title="Đưa các tiến trình trong lịch sử chưa sửa ảnh bằng Apify vào hàng đợi"
+                    onClick={handleCleanStorage} 
+                    className="btn-outline" 
+                    style={{ borderColor: 'rgba(255, 255, 255, 0.2)', color: 'var(--text-secondary)' }}
+                    title="Quét và xóa các tệp mồ côi trong thư mục outputs và uploads không thuộc tiến trình nào"
                   >
-                    <RefreshCw size={15} /> 
-                    Sửa ảnh Apify hàng loạt ({queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length})
-                  </button>
-                  
-                  <button onClick={() => handleBatchDownload('alive')} className="btn-outline btn-outline-success">
-                    <Download size={15} /> Tải Link Sống
-                  </button>
-                  
-                  <button onClick={() => handleBatchDownload('dead')} className="btn-outline btn-outline-warning">
-                    <Download size={15} /> Tải Link Chết
-                  </button>
-                  
-                  <button onClick={handleClearHistory} className="btn-outline btn-outline-danger">
-                    <Trash2 size={15} /> Xóa lịch sử
+                    <Sparkles size={15} /> Dọn dẹp ổ cứng
                   </button>
                 </div>
               )}

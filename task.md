@@ -7,6 +7,16 @@ Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi 
 - [ ] Chưa có task nào.
 
 ## Task Đã Hoàn Thành
+- [x] Nén hàng loạt kết quả Link Sống và Link Chết thành 1 file ZIP:
+  - [x] Backend (`zipHelper.js`): Xây dựng bộ tạo kho lưu trữ chuẩn PKZIP (.zip) bằng Node.js `zlib` (Deflate & Store mode, CRC-32 table, hỗ trợ UTF-8 filename), không phụ thuộc thư viện ngoài.
+  - [x] Backend (`server.js`): Thêm endpoint `GET /api/download-batch-zip/:type` (hỗ trợ `type=alive` hoặc `type=dead`), tự động lọc dữ liệu CSV, xóa cột thừa bằng `cleanRowForDownload` và tạo file ZIP gắn nhãn thời gian.
+  - [x] Frontend (`App.jsx`): Cập nhật 2 nút "Tải Link Sống" và "Tải Link Chết" trên thanh công cụ Lịch sử để tải trọn gói 1 file ZIP duy nhất, hiển thị trạng thái "Đang nén ZIP..." kèm icon xoay mượt mà khi đang xử lý.
+- [x] Tích hợp cơ chế tự động xóa file kết quả (outputs) & file tải lên (uploads) khi xóa lịch sử / xóa tiến trình và bổ sung chức năng dọn dẹp ổ cứng:
+  - [x] Backend (`server.js`): Thêm các hàm `getJobFilePaths`, `deleteJobFiles`, `cleanAllOrphanedFiles` để tìm và xóa an toàn các tệp CSV kết quả, tệp gốc upload, và checkpoint liên quan.
+  - [x] Backend (`server.js`): Cập nhật endpoint `POST /api/clear-history` tự động xóa tất cả file liên quan đến các job lịch sử và dọn sạch file mồ côi; trả về số lượng tệp đã xóa và dung lượng giải phóng.
+  - [x] Backend (`server.js`): Cập nhật action `remove` (`POST /api/queue/:id/remove`) tự động xóa file của job khi người dùng xóa khỏi danh sách.
+  - [x] Backend (`server.js`): Bổ sung endpoint `POST /api/clean-storage` để quét và dọn dẹp tất cả các file mồ côi trong `outputs/` và `uploads/`.
+  - [x] Frontend (`App.jsx`): Cập nhật hộp thoại xác nhận khi xóa tiến trình và xóa toàn bộ lịch sử; bổ sung nút "Dọn dẹp ổ cứng" trên thanh công cụ Lịch sử.
 - [x] Nâng cấp độ phân giải ảnh Avatar từ Apify API lên chuẩn HD:
   - [x] Phân tích cơ chế URL từ Apify (`post.user.profilePic`): Facebook CDN sinh mặc định `ctp=s50x50` (50x50 thumbnail).
   - [x] Xây dựng hàm `optimizeFacebookAvatarUrl`: Loại bỏ tham số thumbnail `ctp` để Facebook CDN tự động trả về ảnh gốc độ phân giải cao theo tỷ lệ `cstp` (từ 720x720 đến 2000x2000 px, dung lượng từ ~800 bytes tăng lên 40KB - 250KB).

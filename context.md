@@ -18,6 +18,8 @@ Bất kỳ tài liệu tham khảo, API docs, cấu trúc cơ sở dữ liệu, 
 - `POST /api/queue/batch-resume`: Tiếp tục tất cả các tiến trình bị gián đoạn từ checkpoint.
 - `POST /api/queue/trigger`: Kích hoạt worker xử lý hàng đợi nếu đang ở trạng thái nhàn rỗi.
 - `POST /api/shutdown`: Graceful shutdown an toàn lưu checkpoint và đóng browser.
-- `POST /api/clear-history`: Xóa lịch sử các tiến trình đã hoàn thành/hủy.
+- `POST /api/clear-history`: Xóa lịch sử các tiến trình đã hoàn thành/hủy, đồng thời tự động xóa các tệp CSV kết quả trong `outputs/`, tệp gốc trong `uploads/` và các file mồ côi.
+- `POST /api/clean-storage`: Quét và dọn dẹp tất cả các tệp mồ côi trong `outputs/` và `uploads/` không thuộc tiến trình nào đang hoạt động.
 - `GET /api/download/:filename`: Tải xuống kết quả CSV đã phân loại (Sống, Chết, Hoạt động, Checkpoint một phần).
+- `GET /api/download-batch-zip/:type`: Nén toàn bộ các file kết quả theo loại (`alive` hoặc `dead`) từ tất cả tiến trình trong lịch sử thành 1 file ZIP duy nhất.
 

@@ -9,6 +9,7 @@ const path = require('path');
 const Papa = require('papaparse');
 const crypto = require('crypto');
 const https = require('https');
+const { createZipBuffer } = require('./zipHelper');
 
 function callApify(url, token) {
     return new Promise((resolve, reject) => {
@@ -259,6 +260,138 @@ function initQueue() {
     saveQueue();
 }
 initQueue();
+
+// --- QUẢN LÝ DỌN DẸP FILE (UPLOADS & OUTPUTS) ---
+function getJobFilePaths(job) {
+    const filePaths = [];
+    if (!job) return filePaths;
+
+    // 1. File input ban đầu (thường nằm ở uploads/ hoặc outputs/)
+    if (job.filePath) {
+        const p = path.isAbsolute(job.filePath) ? path.normalize(job.filePath) : path.normalize(path.join(__dirname, job.filePath));
+        filePaths.push(p);
+    }
+
+    // 2. File kết quả từ downloadLinks (aliveFile, deadFile, checkedFile,...)
+    if (job.downloadLinks) {
+        for (const val of Object.values(job.downloadLinks)) {
+            if (typeof val === 'string') {
+                const fn = decodeURIComponent(val.split('/').pop().split('?')[0]);
+                if (fn) {
+                    filePaths.push(path.normalize(path.join(__dirname, 'outputs', fn)));
+                }
+            }
+        }
+    }
+
+    // 3. File checkpoint
+    filePaths.push(path.normalize(getCheckpointPath(job.id)));
+    filePaths.push(path.normalize(`${getCheckpointPath(job.id)}.tmp`));
+
+    return filePaths;
+}
+
+function deleteJobFiles(job, remainingJobs = []) {
+    if (!job) return;
+
+    // Danh sách file đang được tham chiếu bởi các job còn lại trong hệ thống
+    const remainingReferenced = new Set();
+    for (const rj of remainingJobs) {
+        for (const p of getJobFilePaths(rj)) {
+            remainingReferenced.add(p);
+        }
+    }
+
+    // Xóa các file của job này nếu không có job nào khác đang dùng
+    const pathsToDelete = getJobFilePaths(job);
+    for (const p of pathsToDelete) {
+        if (!remainingReferenced.has(p) && fs.existsSync(p)) {
+            try {
+                fs.unlinkSync(p);
+                console.log(`[LeadPurify] Đã xóa file: ${p}`);
+            } catch (e) {
+                console.error(`[LeadPurify] Lỗi khi xóa file ${p}:`, e.message);
+            }
+        }
+    }
+
+    // Xóa các file partial hay checkpoint có chứa jobId trong tên tệp ở thư mục outputs
+    try {
+        const outputsDir = path.join(__dirname, 'outputs');
+        if (fs.existsSync(outputsDir)) {
+            const files = fs.readdirSync(outputsDir);
+            for (const file of files) {
+                if (file.includes(job.id)) {
+                    const fullPath = path.normalize(path.join(outputsDir, file));
+                    if (!remainingReferenced.has(fullPath) && fs.existsSync(fullPath)) {
+                        try {
+                            fs.unlinkSync(fullPath);
+                            console.log(`[LeadPurify] Đã xóa checkpoint/partial file: ${fullPath}`);
+                        } catch (e) {}
+                    }
+                }
+            }
+        }
+    } catch (e) {}
+}
+
+function cleanAllOrphanedFiles() {
+    const referenced = new Set();
+    for (const job of queue) {
+        for (const p of getJobFilePaths(job)) {
+            referenced.add(p);
+        }
+    }
+
+    let deletedCount = 0;
+    let freedBytes = 0;
+
+    // Dọn dẹp thư mục outputs
+    const outputsDir = path.join(__dirname, 'outputs');
+    if (fs.existsSync(outputsDir)) {
+        try {
+            const files = fs.readdirSync(outputsDir);
+            for (const file of files) {
+                if (file === '.gitkeep') continue;
+                const fullPath = path.normalize(path.join(outputsDir, file));
+                if (!referenced.has(fullPath) && fs.existsSync(fullPath)) {
+                    try {
+                        const stat = fs.statSync(fullPath);
+                        if (stat.isFile()) {
+                            freedBytes += stat.size;
+                            fs.unlinkSync(fullPath);
+                            deletedCount++;
+                        }
+                    } catch (e) {}
+                }
+            }
+        } catch (e) {}
+    }
+
+    // Dọn dẹp thư mục uploads
+    const uploadsDir = path.join(__dirname, 'uploads');
+    if (fs.existsSync(uploadsDir)) {
+        try {
+            const files = fs.readdirSync(uploadsDir);
+            for (const file of files) {
+                if (file === '.gitkeep') continue;
+                const fullPath = path.normalize(path.join(uploadsDir, file));
+                if (!referenced.has(fullPath) && fs.existsSync(fullPath)) {
+                    try {
+                        const stat = fs.statSync(fullPath);
+                        if (stat.isFile()) {
+                            freedBytes += stat.size;
+                            fs.unlinkSync(fullPath);
+                            deletedCount++;
+                        }
+                    } catch (e) {}
+                }
+            }
+        } catch (e) {}
+    }
+
+    return { deletedCount, freedBytes };
+}
 
 // --- XỬ LÝ ĐÓNG SERVER AN TOÀN (GRACEFUL SHUTDOWN) ---
 async function handleShutdown(signal) {
@@ -800,9 +933,36 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 });
 
 app.post('/api/clear-history', (req, res) => {
-  queue = queue.filter(j => !['COMPLETED', 'ERROR', 'CANCELED', 'REMOVED'].includes(j.status));
+  const historyJobs = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED', 'REMOVED'].includes(j.status));
+  const remainingQueue = queue.filter(j => !['COMPLETED', 'ERROR', 'CANCELED', 'REMOVED'].includes(j.status));
+
+  // 1. Xóa tất cả các file liên quan đến từng tiến trình trong lịch sử
+  for (const job of historyJobs) {
+    deleteJobFiles(job, remainingQueue);
+  }
+
+  // 2. Cập nhật hàng đợi
+  queue = remainingQueue;
+
+  // 3. Dọn dẹp cả các file mồ côi còn sót lại trong outputs và uploads
+  const orphanResult = cleanAllOrphanedFiles();
+
   broadcastQueue();
-  res.json({ success: true });
+  res.json({ 
+    success: true, 
+    clearedCount: historyJobs.length,
+    deletedFilesCount: orphanResult.deletedCount,
+    freedBytes: orphanResult.freedBytes 
+  });
+});
+
+app.post('/api/clean-storage', (req, res) => {
+  try {
+    const result = cleanAllOrphanedFiles();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 function createFixAvatarJob(historyJob) {
@@ -943,8 +1103,9 @@ app.post('/api/queue/:id/:action', (req, res) => {
   }
   if (action === 'remove') {
       job.status = 'REMOVED';
-      removeCheckpoint(job.id);
-      queue = queue.filter(j => j.id !== id);
+      const remainingQueue = queue.filter(j => j.id !== id);
+      deleteJobFiles(job, remainingQueue);
+      queue = remainingQueue;
   }
   if (action === 'force' && job.status === 'PENDING') {
       const runningJob = queue.find(j => j.status === 'RUNNING');
@@ -1119,6 +1280,87 @@ app.get('/api/download/:filename', (req, res) => {
   } catch (err) {
     console.error('Lỗi khi lọc cột tải xuống:', err);
     return res.download(filePath, filename);
+  }
+});
+
+// Route tải nén hàng loạt các tệp link sống / link chết thành 1 file ZIP
+app.get(['/api/download-batch-zip/:type', '/api/download-batch-zip'], (req, res) => {
+  const type = (req.params.type || req.query.type || '').toLowerCase();
+  if (type !== 'alive' && type !== 'dead') {
+    return res.status(400).json({ error: 'Loại tệp không hợp lệ. Vui lòng chọn "alive" hoặc "dead".' });
+  }
+
+  try {
+    const historyJobs = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED', 'INTERRUPTED'].includes(j.status));
+    const entries = [];
+
+    for (const job of historyJobs) {
+      if (!job.downloadLinks) continue;
+
+      const linkUrl = type === 'alive' ? job.downloadLinks.aliveFile : job.downloadLinks.deadFile;
+      if (!linkUrl) continue;
+
+      // Nếu có thông tin stats và số lượng bằng 0 thì bỏ qua
+      if (job.stats && ((type === 'alive' && job.stats.alive === 0) || (type === 'dead' && job.stats.dead === 0))) {
+        continue;
+      }
+
+      let rawFilename = '';
+      try {
+        const u = new URL(linkUrl);
+        rawFilename = decodeURIComponent(u.pathname.split('/').pop());
+      } catch (e) {
+        rawFilename = decodeURIComponent(linkUrl.split('/').pop());
+      }
+
+      if (!rawFilename) continue;
+      const filePath = path.join(__dirname, 'outputs', rawFilename);
+      if (!fs.existsSync(filePath)) continue;
+
+      let fileContent = '';
+      try {
+        const rawContent = fs.readFileSync(filePath, 'utf8');
+        if (rawContent.trim()) {
+          const parsed = Papa.parse(rawContent, { header: true, skipEmptyLines: true });
+          if (parsed.data && parsed.data.length > 0) {
+            const cleanedData = parsed.data.map(cleanRowForDownload);
+            fileContent = '\uFEFF' + Papa.unparse(cleanedData);
+          } else {
+            fileContent = rawContent;
+          }
+        } else {
+          fileContent = rawContent;
+        }
+      } catch (err) {
+        fileContent = fs.readFileSync(filePath, 'utf8');
+      }
+
+      entries.push({
+        name: rawFilename,
+        data: fileContent
+      });
+    }
+
+    if (entries.length === 0) {
+      return res.status(404).json({
+        error: `Không tìm thấy tệp CSV ${type === 'alive' ? 'link sống' : 'link chết'} nào trong lịch sử để nén.`
+      });
+    }
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const now = new Date();
+    const tsStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const zipFilename = type === 'alive' ? `LeadPurify_Link_Song_${tsStr}.zip` : `LeadPurify_Link_Chet_${tsStr}.zip`;
+
+    const zipBuffer = createZipBuffer(entries);
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(zipFilename)}"; filename*=UTF-8''${encodeURIComponent(zipFilename)}`);
+    res.setHeader('Content-Length', zipBuffer.length);
+    return res.send(zipBuffer);
+  } catch (error) {
+    console.error('Lỗi khi nén tệp zip hàng loạt:', error);
+    return res.status(500).json({ error: 'Lỗi máy chủ khi nén file zip: ' + error.message });
   }
 });
 
