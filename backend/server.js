@@ -16,7 +16,7 @@ function callApify(url, token) {
             startUrls: [{ url }],
             resultsLimit: 1
         });
-        const req = https.request(`https://api.apify.com/v2/acts/apify~facebook-posts-scraper/run-sync-get-dataset?token=${token}`, {
+        const req = https.request(`https://api.apify.com/v2/actors/apify~facebook-posts-scraper/run-sync-get-dataset-items?token=${token}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
