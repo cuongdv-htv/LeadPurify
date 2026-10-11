@@ -562,6 +562,42 @@ app.post('/api/clear-history', (req, res) => {
   res.json({ success: true });
 });
 
+
+
+app.post('/api/queue/:id/check-activity', (req, res) => {
+  const { id } = req.params;
+  const historyJob = queue.find(j => j.id === id);
+  if (!historyJob || !historyJob.downloadLinks || !historyJob.downloadLinks.aliveFile) {
+      return res.status(400).json({ error: 'Job không hợp lệ hoặc chưa có file Alive' });
+  }
+  
+  const filename = historyJob.downloadLinks.aliveFile.split('/').pop();
+  const filePath = path.join(__dirname, 'outputs', decodeURIComponent(filename));
+  
+  const job = {
+    id: crypto.randomBytes(8).toString('hex'),
+    type: 'CHECK_ACTIVITY',
+    filename: `Check6m_${historyJob.filename}`,
+    status: 'PENDING',
+    concurrency: 1, // Chạy 1 luồng để xoay vòng API an toàn
+    headless: true,
+    minDelay: parseInt(req.body.minDelay) || 2000,
+    maxDelay: parseInt(req.body.maxDelay) || 5000,
+    stats: { alive: 0, dead: 0, error: 0 },
+    completed: 0,
+    total: 0,
+    logs: [],
+    filePath: filePath,
+    createdAt: Date.now(),
+    accumulatedTime: 0,
+    lastStartedAt: null
+  };
+  queue.push(job);
+  broadcastQueue();
+  processQueue(); 
+  res.json({ success: true, jobId: job.id });
+});
+
 app.post('/api/queue/:id/:action', (req, res) => {
   const { id, action } = req.params;
   const job = queue.find(j => j.id === id);
@@ -598,40 +634,6 @@ app.post('/api/queue/:id/:action', (req, res) => {
   
   broadcastQueue();
   res.json({ success: true });
-});
-
-app.post('/api/queue/:id/check-activity', (req, res) => {
-  const { id } = req.params;
-  const historyJob = queue.find(j => j.id === id);
-  if (!historyJob || !historyJob.downloadLinks || !historyJob.downloadLinks.aliveFile) {
-      return res.status(400).json({ error: 'Job không hợp lệ hoặc chưa có file Alive' });
-  }
-  
-  const filename = historyJob.downloadLinks.aliveFile.split('/').pop();
-  const filePath = path.join(__dirname, 'outputs', decodeURIComponent(filename));
-  
-  const job = {
-    id: crypto.randomBytes(8).toString('hex'),
-    type: 'CHECK_ACTIVITY',
-    filename: `Check6m_${historyJob.filename}`,
-    status: 'PENDING',
-    concurrency: 1, // Chạy 1 luồng để xoay vòng API an toàn
-    headless: true,
-    minDelay: parseInt(req.body.minDelay) || 2000,
-    maxDelay: parseInt(req.body.maxDelay) || 5000,
-    stats: { alive: 0, dead: 0, error: 0 },
-    completed: 0,
-    total: 0,
-    logs: [],
-    filePath: filePath,
-    createdAt: Date.now(),
-    accumulatedTime: 0,
-    lastStartedAt: null
-  };
-  queue.push(job);
-  broadcastQueue();
-  processQueue(); 
-  res.json({ success: true, jobId: job.id });
 });
 
 app.get('/api/apify-keys', (req, res) => {
