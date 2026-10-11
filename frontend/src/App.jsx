@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock, Eye, Calendar, Key, RefreshCw } from 'lucide-react';
+import { UploadCloud, Play, Settings, CheckCircle, XCircle, AlertTriangle, Download, Pause, Square, Trash2, ArrowUpCircle, Clock, Eye, Calendar, Key, RefreshCw, Info } from 'lucide-react';
 import './index.css';
 import CsvEditorModal from './components/CsvEditorModal';
 
@@ -270,6 +270,18 @@ function App() {
             </button>
         </div>
       </header>
+
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '24px', padding: '16px', background: 'rgba(0, 240, 255, 0.05)', border: '1px solid var(--neon-cyan)', borderRadius: '8px', color: '#e2e8f0', display: 'flex', alignItems: 'flex-start', gap: '12px', boxShadow: '0 0 10px rgba(0,240,255,0.1)' }}>
+        <Info size={24} color="var(--neon-cyan)" style={{ flexShrink: 0 }} />
+        <div>
+          <h4 style={{ margin: '0 0 8px 0', color: 'var(--neon-cyan)', fontSize: '1.1rem' }}>Hướng dẫn sử dụng nhanh LeadPurify</h4>
+          <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--text-muted)' }}>
+            1. <b>Hàng đợi:</b> Kéo thả file CSV chứa danh sách link vào khu vực bên dưới để hệ thống tự động kiểm tra trạng thái sống/chết của các link.<br/>
+            2. <b>Lịch sử:</b> Xem kết quả kiểm tra trạng thái và tải về các file dữ liệu (Sống/Chết/Lỗi).<br/>
+            3. <b>Kiểm tra hoạt động:</b> Từ các file "Sống" ở tab Lịch sử, bạn có thể chạy "Kiểm tra 6 tháng" để xem trang/group có hoạt động gần đây hay không (chức năng này yêu cầu cấu hình Apify Key).
+          </p>
+        </div>
+      </motion.div>
 
       <div className="flex gap-4 flex-col" style={{ marginTop: '20px' }}>
         
