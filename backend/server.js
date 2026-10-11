@@ -101,9 +101,11 @@ io.on('connection', (socket) => {
 });
 
 function saveQueue() {
-    fs.writeFile(QUEUE_FILE, JSON.stringify(queue, null, 2), (err) => {
-        if(err) console.error('Lỗi lưu queue:', err);
-    });
+    try {
+        fs.writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2));
+    } catch(err) {
+        console.error('Lỗi lưu queue:', err);
+    }
 }
 
 function pushLog(job, message, type = 'info') {
