@@ -84,24 +84,179 @@ const server = createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 const upload = multer({ dest: 'uploads/' });
-if (!fs.existsSync('outputs')) fs.mkdirSync('outputs');
+if (!fs.existsSync('outputs')) fs.mkdirSync('outputs', { recursive: true });
 
 const QUEUE_FILE = path.join(__dirname, 'queue.json');
-let queue = [];
-if (fs.existsSync(QUEUE_FILE)) {
+const QUEUE_BAK_FILE = path.join(__dirname, 'queue.json.bak');
+const CHECKPOINT_DIR = path.join(__dirname, 'outputs');
+
+// --- HỆ THỐNG CHECKPOINT (TIẾN ĐỘ TRUNG GIAN) ---
+function getCheckpointPath(jobId) {
+    return path.join(CHECKPOINT_DIR, `checkpoint_${jobId}.json`);
+}
+
+function loadCheckpoint(jobId) {
+    const cpPath = getCheckpointPath(jobId);
+    if (fs.existsSync(cpPath)) {
+        try {
+            return JSON.parse(fs.readFileSync(cpPath, 'utf8'));
+        } catch(e) {
+            console.error(`[LeadPurify] Lỗi đọc checkpoint của job ${jobId}:`, e.message);
+        }
+    }
+    return null;
+}
+
+function saveCheckpoint(jobId, data) {
+    const cpPath = getCheckpointPath(jobId);
     try {
-        queue = JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8'));
-        queue.forEach(job => {
-            if (job.status === 'RUNNING' || job.status === 'PAUSED') {
-                job.status = 'ERROR';
-                if (!job.logs) job.logs = [];
-                job.logs.push({ message: 'Tiến trình bị gián đoạn do server khởi động lại', type: 'error', timestamp: new Date().toISOString() });
-            }
-        });
+        const tmpPath = `${cpPath}.tmp`;
+        fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
+        fs.renameSync(tmpPath, cpPath);
     } catch(e) {
-        queue = [];
+        console.error(`[LeadPurify] Lỗi lưu checkpoint của job ${jobId}:`, e.message);
     }
 }
+
+function removeCheckpoint(jobId) {
+    const cpPath = getCheckpointPath(jobId);
+    if (fs.existsSync(cpPath)) {
+        try { fs.unlinkSync(cpPath); } catch(e) {}
+    }
+}
+
+// --- QUẢN LÝ TIẾN TRÌNH & TRÌNH DUYỆT (CHỐNG TREO/CRASH) ---
+const activeBrowsers = new Set();
+let currentRunningJob = null;
+let isShuttingDown = false;
+
+// --- LƯU TRỮ HÀNG ĐỢI AN TOÀN (ATOMIC WRITE & BACKUP) ---
+let queue = [];
+
+function saveQueue() {
+    try {
+        const tmpFile = `${QUEUE_FILE}.tmp`;
+        const data = JSON.stringify(queue, null, 2);
+        fs.writeFileSync(tmpFile, data, 'utf8');
+        if (fs.existsSync(QUEUE_FILE)) {
+            try { fs.copyFileSync(QUEUE_FILE, QUEUE_BAK_FILE); } catch(e) {}
+        }
+        fs.renameSync(tmpFile, QUEUE_FILE);
+    } catch(err) {
+        console.error('[LeadPurify] Lỗi lưu queue.json:', err);
+    }
+}
+
+// --- KHỞI TẠO VÀ PHỤC HỒI DỮ LIỆU KHI KHỞI ĐỘNG (STARTUP RECOVERY) ---
+function initQueue() {
+    let raw = null;
+    if (fs.existsSync(QUEUE_FILE)) {
+        try {
+            raw = fs.readFileSync(QUEUE_FILE, 'utf8');
+            queue = JSON.parse(raw);
+        } catch(e) {
+            console.error('[LeadPurify] queue.json bị lỗi/hỏng, thử khôi phục từ queue.json.bak:', e.message);
+            if (fs.existsSync(QUEUE_BAK_FILE)) {
+                try {
+                    raw = fs.readFileSync(QUEUE_BAK_FILE, 'utf8');
+                    queue = JSON.parse(raw);
+                    console.log('[LeadPurify] Đã khôi phục thành công từ queue.json.bak');
+                } catch(bakErr) {
+                    console.error('[LeadPurify] Tệp dự phòng cũng bị lỗi:', bakErr.message);
+                    queue = [];
+                }
+            }
+        }
+    }
+
+    let recoveredCount = 0;
+    queue.forEach(job => {
+        const cp = loadCheckpoint(job.id);
+        if (cp) {
+            job.hasCheckpoint = true;
+        }
+
+        // Bắt các job đang chạy hoặc tạm dừng bị đứt đoạn do server tắt đột ngột
+        if (job.status === 'RUNNING' || job.status === 'PAUSED') {
+            job.status = 'INTERRUPTED';
+            recoveredCount++;
+            if (job.lastStartedAt) {
+                job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
+                job.lastStartedAt = null;
+            }
+            if (!job.logs) job.logs = [];
+            job.logs.push({ 
+                message: 'Tiến trình bị gián đoạn do máy chủ tắt đột ngột. Hệ thống đã bảo toàn tiến độ đã quét. Bạn có thể nhấn "Tiếp tục" hoặc "Chạy lại".', 
+                type: 'warning', 
+                timestamp: new Date().toISOString() 
+            });
+        }
+    });
+
+    if (recoveredCount > 0) {
+        console.log(`[LeadPurify] Đã phát hiện và đánh dấu ${recoveredCount} tiến trình bị gián đoạn (INTERRUPTED)`);
+    }
+
+    saveQueue();
+}
+initQueue();
+
+// --- XỬ LÝ ĐÓNG SERVER AN TOÀN (GRACEFUL SHUTDOWN) ---
+async function handleShutdown(signal) {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    console.log(`\n[LeadPurify] Đang xử lý đóng hệ thống an toàn (${signal})...`);
+
+    // Đánh dấu job đang chạy sang trạng thái INTERRUPTED
+    queue.forEach(job => {
+        if (job.status === 'RUNNING' || job.status === 'PAUSED') {
+            job.status = 'INTERRUPTED';
+            if (job.lastStartedAt) {
+                job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
+                job.lastStartedAt = null;
+            }
+            if (!job.logs) job.logs = [];
+            job.logs.push({ 
+                message: `Hệ thống dừng (${signal}): Tiến trình đã được lưu an toàn`, 
+                type: 'warning', 
+                timestamp: new Date().toISOString() 
+            });
+            const cp = loadCheckpoint(job.id);
+            if (cp) job.hasCheckpoint = true;
+        }
+    });
+
+    saveQueue();
+
+    // Đóng toàn bộ các tab và browser Puppeteer đang mở để tránh zombie process
+    for (const b of activeBrowsers) {
+        try {
+            await b.close();
+        } catch(e) {}
+    }
+    activeBrowsers.clear();
+
+    console.log('[LeadPurify] Toàn bộ dữ liệu và tiến trình trình duyệt đã được dọn dẹp sạch sẽ.');
+    server.close(() => {
+        process.exit(0);
+    });
+
+    setTimeout(() => {
+        process.exit(0);
+    }, 2500);
+}
+
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+process.on('SIGHUP', () => handleShutdown('SIGHUP'));
+process.on('SIGBREAK', () => handleShutdown('SIGBREAK'));
+process.on('uncaughtException', (err) => {
+    console.error('[LeadPurify] Uncaught Exception:', err);
+    handleShutdown('UNCAUGHT_EXCEPTION');
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('[LeadPurify] Unhandled Rejection:', reason);
+});
 
 let isWorkerRunning = false;
 
@@ -109,13 +264,7 @@ io.on('connection', (socket) => {
   socket.emit('queue_update', queue);
 });
 
-function saveQueue() {
-    try {
-        fs.writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2));
-    } catch(err) {
-        console.error('Lỗi lưu queue:', err);
-    }
-}
+
 
 function pushLog(job, message, type = 'info') {
   const log = { message, type, timestamp: new Date().toISOString() };
@@ -134,35 +283,40 @@ async function processQueue() {
   if (isWorkerRunning) return;
   isWorkerRunning = true;
   
-  while (true) {
-    let job = queue.find(j => j.status === 'RUNNING' || j.status === 'PAUSED');
-    if (!job) {
-       job = queue.find(j => j.status === 'PENDING');
-       if (job) {
-          job.status = 'RUNNING';
-          job.lastStartedAt = Date.now();
-          broadcastQueue();
-       }
-    }
-    
-    if (!job) break;
-    
-    try {
-       await runJob(job);
-    } catch(e) {
-       if (job.status !== 'REMOVED' && job.status !== 'CANCELED') {
-         job.status = 'ERROR';
-         if (job.lastStartedAt) {
-             job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
-             job.lastStartedAt = null;
+  try {
+    while (true) {
+      let job = queue.find(j => j.status === 'RUNNING');
+      if (!job) {
+         job = queue.find(j => j.status === 'PENDING');
+         if (job) {
+            job.status = 'RUNNING';
+            job.lastStartedAt = Date.now();
+            broadcastQueue();
          }
-         pushLog(job, `Lỗi hệ thống: ${e.message}`, 'error');
-       }
+      }
+      
+      if (!job) break;
+      
+      try {
+         await runJob(job);
+      } catch(e) {
+         if (job.status !== 'REMOVED' && job.status !== 'CANCELED' && job.status !== 'INTERRUPTED') {
+           job.status = 'ERROR';
+           if (job.lastStartedAt) {
+               job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
+               job.lastStartedAt = null;
+           }
+           pushLog(job, `Lỗi hệ thống: ${e.message}`, 'error');
+         }
+      }
+      broadcastQueue();
     }
+  } catch(err) {
+    console.error('[LeadPurify] Lỗi vòng lặp worker processQueue:', err);
+  } finally {
+    isWorkerRunning = false;
     broadcastQueue();
   }
-  
-  isWorkerRunning = false;
 }
 
 function getFacebookAvatarUrl(fbLink) {
@@ -209,6 +363,9 @@ function getFacebookAvatarUrl(fbLink) {
 
 async function runJob(job) {
   pushLog(job, `Khởi tạo tiến trình quét file: ${job.filename}`, 'info');
+  if (!fs.existsSync(job.filePath)) {
+    throw new Error(`Tệp dữ liệu nguồn không tồn tại: ${job.filePath}`);
+  }
   const csvFile = fs.readFileSync(job.filePath, 'utf8');
   
   return new Promise((resolve, reject) => {
@@ -232,10 +389,29 @@ async function runJob(job) {
           }
 
           job.total = rows.length;
-          broadcastQueue();
+          currentRunningJob = job;
           
           let aliveRows = [];
           let deadRows = [];
+          let startIndex = 0;
+
+          // Kiểm tra và khôi phục từ checkpoint nếu có
+          const checkpoint = loadCheckpoint(job.id);
+          if (job.resumeFromCheckpoint && checkpoint) {
+              aliveRows = checkpoint.aliveRows || [];
+              deadRows = checkpoint.deadRows || [];
+              startIndex = checkpoint.lastCompletedIndex || 0;
+              job.completed = startIndex;
+              job.stats = checkpoint.stats || { alive: aliveRows.length, dead: deadRows.length, error: 0 };
+              pushLog(job, `Khôi phục tiến trình từ điểm dừng: Tiếp tục dòng ${startIndex + 1}/${rows.length}`, 'info');
+          } else {
+              removeCheckpoint(job.id);
+              job.completed = 0;
+              job.stats = { alive: 0, dead: 0, error: 0 };
+              job.resumeFromCheckpoint = false;
+              job.hasCheckpoint = false;
+          }
+          broadcastQueue();
           
           let browser = null;
           if (job.checkAlive || job.checkAvatar) {
@@ -244,14 +420,19 @@ async function runJob(job) {
                 protocolTimeout: 600000,
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-notifications']
               });
+              activeBrowsers.add(browser);
+              browser.on('disconnected', () => {
+                  activeBrowsers.delete(browser);
+              });
           }
 
+          const rowsToProcess = rows.slice(startIndex);
           const chunks = [];
-          for (let i = 0; i < rows.length; i += job.concurrency) chunks.push(rows.slice(i, i + job.concurrency));
+          for (let i = 0; i < rowsToProcess.length; i += job.concurrency) chunks.push(rowsToProcess.slice(i, i + job.concurrency));
 
           const checkState = async () => {
              while (job.status === 'PAUSED') await new Promise(r => setTimeout(r, 1000));
-             if (job.status === 'CANCELED' || job.status === 'REMOVED') throw new Error('ABORTED');
+             if (job.status === 'CANCELED' || job.status === 'REMOVED' || job.status === 'INTERRUPTED') throw new Error('ABORTED');
           };
 
           try {
@@ -452,13 +633,29 @@ async function runJob(job) {
                 job.completed++;
                 broadcastQueue();
               }));
+
+              // Lưu checkpoint sau khi hoàn thành từng chunk
+              saveCheckpoint(job.id, {
+                  jobId: job.id,
+                  filename: job.filename,
+                  lastCompletedIndex: job.completed,
+                  stats: job.stats,
+                  aliveRows,
+                  deadRows,
+                  updatedAt: Date.now()
+              });
+              job.hasCheckpoint = true;
             }
           } catch (e) {
             if (e.message !== 'ABORTED' && e.message !== 'Hết API Key Apify') throw e;
           } finally {
-            if (browser) await browser.close();
+            if (browser) {
+                try { await browser.close(); } catch(e) {}
+                activeBrowsers.delete(browser);
+            }
+            currentRunningJob = null;
             
-            if (job.status !== 'REMOVED') {
+            if (job.status !== 'REMOVED' && job.status !== 'CANCELED' && job.status !== 'INTERRUPTED') {
                 const ts = new Date().getTime();
                 const baseName = job.filename.replace(/\.[^/.]+$/, "");
                 const aliveFilename = `${baseName}_alive_${ts}.csv`;
@@ -473,12 +670,28 @@ async function runJob(job) {
                     aliveFile: `http://localhost:3001/api/download/${encodeURIComponent(aliveFilename)}`, 
                     deadFile: `http://localhost:3001/api/download/${encodeURIComponent(deadFilename)}` 
                 };
-                if (job.status !== 'CANCELED') job.status = 'COMPLETED';
+                job.status = 'COMPLETED';
+                removeCheckpoint(job.id);
+                job.hasCheckpoint = false;
+                job.resumeFromCheckpoint = false;
                 if (job.lastStartedAt) {
                     job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
                     job.lastStartedAt = null;
                 }
                 pushLog(job, `🎉 Hoàn thành! Sống: ${job.stats.alive}, Chết: ${job.stats.dead}`, 'success');
+            } else if (job.hasCheckpoint && (aliveRows.length > 0 || deadRows.length > 0)) {
+                // Tạo file kết quả tạm thời nếu bị hủy hoặc gián đoạn để người dùng vẫn có thể tải
+                const baseName = job.filename.replace(/\.[^/.]+$/, "");
+                const partialAlive = `Partial_${baseName}_alive_${job.id}.csv`;
+                const partialDead = `Partial_${baseName}_dead_${job.id}.csv`;
+                try {
+                    fs.writeFileSync(path.join(__dirname, 'outputs', partialAlive), Papa.unparse(aliveRows));
+                    fs.writeFileSync(path.join(__dirname, 'outputs', partialDead), Papa.unparse(deadRows));
+                    job.downloadLinks = {
+                        aliveFile: `http://localhost:3001/api/download/${encodeURIComponent(partialAlive)}`,
+                        deadFile: `http://localhost:3001/api/download/${encodeURIComponent(partialDead)}`
+                    };
+                } catch(e) {}
             }
             resolve();
           }
@@ -634,31 +847,104 @@ app.post('/api/queue/:id/:action', (req, res) => {
           job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
           job.lastStartedAt = null;
       }
+      pushLog(job, 'Tạm dừng tiến trình', 'warning');
   }
-  if (action === 'resume' && job.status === 'PAUSED') {
-      job.status = 'RUNNING';
-      job.lastStartedAt = Date.now();
+  if (action === 'resume' && (job.status === 'PAUSED' || job.status === 'INTERRUPTED' || job.status === 'ERROR')) {
+      job.resumeFromCheckpoint = true;
+      job.status = 'PENDING';
+      if (job.lastStartedAt) job.lastStartedAt = null;
+      pushLog(job, 'Kích hoạt tiếp tục từ điểm dừng...', 'info');
+      processQueue();
   }
-  if (action === 'cancel' && (job.status === 'RUNNING' || job.status === 'PAUSED')) {
+  if (action === 'retry' && ['ERROR', 'CANCELED', 'INTERRUPTED', 'COMPLETED', 'PAUSED'].includes(job.status)) {
+      removeCheckpoint(job.id);
+      job.hasCheckpoint = false;
+      job.resumeFromCheckpoint = false;
+      job.status = 'PENDING';
+      job.completed = 0;
+      job.stats = { alive: 0, dead: 0, error: 0 };
+      job.accumulatedTime = 0;
+      job.lastStartedAt = null;
+      job.downloadLinks = null;
+      pushLog(job, 'Đưa về hàng đợi để chạy lại từ đầu', 'info');
+      processQueue();
+  }
+  if (action === 'cancel' && (job.status === 'RUNNING' || job.status === 'PAUSED' || job.status === 'PENDING')) {
       job.status = 'CANCELED';
       if (job.lastStartedAt) {
           job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
           job.lastStartedAt = null;
       }
+      pushLog(job, 'Đã hủy tiến trình', 'error');
   }
   if (action === 'remove') {
       job.status = 'REMOVED';
+      removeCheckpoint(job.id);
       queue = queue.filter(j => j.id !== id);
   }
   if (action === 'force' && job.status === 'PENDING') {
       const runningJob = queue.find(j => j.status === 'RUNNING');
-      if (runningJob) runningJob.status = 'PAUSED';
+      if (runningJob) {
+          runningJob.status = 'PAUSED';
+          if (runningJob.lastStartedAt) {
+              runningJob.accumulatedTime = (runningJob.accumulatedTime || 0) + (Date.now() - runningJob.lastStartedAt);
+              runningJob.lastStartedAt = null;
+          }
+      }
       queue = queue.filter(j => j.id !== id);
       queue.unshift(job);
+      pushLog(job, 'Đã đưa lên ưu tiên chạy ngay', 'info');
+      processQueue();
   }
   
   broadcastQueue();
-  res.json({ success: true });
+  res.json({ success: true, job });
+});
+
+app.post('/api/queue/batch-retry', (req, res) => {
+  const { jobIds } = req.body || {};
+  let targetJobs;
+  if (Array.isArray(jobIds) && jobIds.length > 0) {
+    targetJobs = queue.filter(j => jobIds.includes(j.id));
+  } else {
+    targetJobs = queue.filter(j => ['ERROR', 'INTERRUPTED', 'CANCELED'].includes(j.status));
+  }
+  targetJobs.forEach(job => {
+    removeCheckpoint(job.id);
+    job.hasCheckpoint = false;
+    job.resumeFromCheckpoint = false;
+    job.status = 'PENDING';
+    job.completed = 0;
+    job.stats = { alive: 0, dead: 0, error: 0 };
+    job.accumulatedTime = 0;
+    job.lastStartedAt = null;
+    pushLog(job, 'Chạy lại theo lô từ đầu', 'info');
+  });
+  broadcastQueue();
+  if (targetJobs.length > 0) processQueue();
+  res.json({ success: true, count: targetJobs.length });
+});
+
+app.post('/api/queue/batch-resume', (req, res) => {
+  const targetJobs = queue.filter(j => (j.status === 'INTERRUPTED' || j.status === 'PAUSED') && j.hasCheckpoint);
+  targetJobs.forEach(job => {
+    job.resumeFromCheckpoint = true;
+    job.status = 'PENDING';
+    pushLog(job, 'Tiếp tục từ điểm dừng theo lô', 'info');
+  });
+  broadcastQueue();
+  if (targetJobs.length > 0) processQueue();
+  res.json({ success: true, count: targetJobs.length });
+});
+
+app.post('/api/queue/trigger', (req, res) => {
+  processQueue();
+  res.json({ success: true, isWorkerRunning });
+});
+
+app.post('/api/shutdown', (req, res) => {
+  res.json({ success: true, message: 'Đang tắt máy chủ an toàn...' });
+  setTimeout(() => handleShutdown('API_SHUTDOWN'), 200);
 });
 
 app.get('/api/config', (req, res) => {
@@ -743,4 +1029,14 @@ app.get('/api/download/:filename', (req, res) => {
   else res.status(404).send('Not found');
 });
 
-server.listen(3001, () => console.log('Queue backend on 3001'));
+server.listen(3001, () => {
+  console.log('Queue backend on port 3001');
+  // Tự động kiểm tra và chạy các tiến trình PENDING khi khởi động lại
+  setTimeout(() => {
+    const hasPending = queue.some(j => j.status === 'PENDING');
+    if (hasPending) {
+      console.log('[LeadPurify] Phát hiện tiến trình PENDING trong hàng đợi, tự động kích hoạt xử lý...');
+      processQueue();
+    }
+  }, 1200);
+});
