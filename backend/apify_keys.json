@@ -1,12 +1,7 @@
 [
   {
-    "key": "YOUR_APIFY_TOKEN_1",
-    "usage": 0,
-    "status": "active"
-  },
-  {
-    "key": "YOUR_APIFY_TOKEN_2",
-    "usage": 0,
+    "key": "YOUR_APIFY_API_KEY",
+    "usage": 28,
     "status": "active"
   }
 ]

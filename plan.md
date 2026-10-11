@@ -36,3 +36,11 @@ Chức năng này cho phép người dùng click vào nút "Kiểm tra 6 tháng"
     *   [x] Thêm nút `Tải Kết quả 6 tháng` khi có file `job.downloadLinks.checkedFile`.
     *   [x] Tách màn hình Cấu hình API và Kiểm tra 6 tháng thành tab riêng biệt.
 *   **Nhánh:** `feature/task-4-frontend-ui`
+
+## Task 5: Bổ sung Lấy Avatar từ Apify API [HOÀN THÀNH]
+*   **Mô tả:** Lấy link ảnh đại diện từ kết quả trả về của Apify và cập nhật vào file kết quả.
+*   **Chi tiết:**
+    *   [x] Tách hoặc tạo mới cột Avatar/Image.
+    *   [x] Trích xuất `profilePic` / `profileUrl` từ object trả về (nếu có).
+    *   [x] Hiển thị Note ở giao diện Frontend tab Check 6 Months.
+*   **Nhánh:** `feature/task-5-apify-avatar`

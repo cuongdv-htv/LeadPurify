@@ -326,6 +326,17 @@ function App() {
             </div>
             )}
             
+            {activeTab === 'check6m' && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '20px', background: 'rgba(255,255,255,0.05)', padding: '12px 16px', borderRadius: '8px', borderLeft: '4px solid var(--neon-purple)' }}>
+                    <p style={{ margin: 0, display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <span style={{ color: 'var(--neon-purple)' }}><Calendar size={18} /></span>
+                        <span>
+                            <b>Kiểm tra bài viết 6 tháng:</b> Tiến trình này sẽ gọi API của Apify để kiểm tra xem tài khoản có hoạt động (đăng bài) trong 6 tháng qua hay không. Đồng thời, hệ thống sẽ <b>tự động lấy link ảnh đại diện (avatar) mới nhất</b> từ Apify để cập nhật vào cột ảnh (nếu có) hoặc tự tạo cột mới.
+                        </span>
+                    </p>
+                </motion.div>
+            )}
+            
             {activeTab !== 'api' && (
             <AnimatePresence>
                 {(activeTab === 'check6m' ? queue.filter(j => j.type === 'CHECK_ACTIVITY') : activeTab === 'queue' ? queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => b.createdAt - a.createdAt)).map(job => {

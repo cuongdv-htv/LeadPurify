@@ -422,6 +422,9 @@ async function runCheckActivityJob(job) {
           }
           if (!fbCol) throw new Error('Không tìm thấy cột chứa link Facebook');
 
+          let imgCol = Object.keys(rows[0]).find(c => c.toLowerCase().includes('image') || c.toLowerCase().includes('avatar') || c.toLowerCase().includes('ảnh') || c.toLowerCase().includes('pic'));
+          if (!imgCol) imgCol = 'Avatar';
+
           job.total = rows.length;
           broadcastQueue();
           let checkedRows = [];
@@ -481,6 +484,20 @@ async function runCheckActivityJob(job) {
                             const sixMonthsAgo = new Date();
                             sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
                             if (postDate >= sixMonthsAgo) active = true;
+                        }
+
+                        let avatarUrl = null;
+                        if (post.user && post.user.profilePic) avatarUrl = post.user.profilePic;
+                        else if (post.user && post.user.profile_pic) avatarUrl = post.user.profile_pic;
+                        else if (post.author && post.author.profileUrl) avatarUrl = post.author.profileUrl;
+                        else if (post.author && post.author.profilePicture) avatarUrl = post.author.profilePicture;
+                        else if (post.author && post.author.profile_picture) avatarUrl = post.author.profile_picture;
+                        else if (post.page && post.page.profilePic) avatarUrl = post.page.profilePic;
+                        else if (post.page && post.page.profilePicture) avatarUrl = post.page.profilePicture;
+                        
+                        if (avatarUrl) {
+                            row[imgCol] = avatarUrl;
+                            pushLog(job, `🖼️ Cập nhật Avatar thành công`, 'success');
                         }
                     }
                     
