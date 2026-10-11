@@ -39,6 +39,24 @@ function callApify(url, token) {
     });
 }
 
+function optimizeFacebookAvatarUrl(url) {
+    if (!url || typeof url !== 'string') return url;
+    try {
+        let trimmed = url.trim();
+        if (trimmed.includes('fbcdn.net')) {
+            const u = new URL(trimmed);
+            if (u.searchParams.has('ctp')) {
+                u.searchParams.delete('ctp');
+                return u.toString();
+            }
+        }
+    } catch(e) {}
+    if (url.includes('ctp=')) {
+        return url.replace(/([?&])ctp=s\d+x\d+(&|$)/g, (match, p1, p2) => (p2 === '&' ? p1 : '')).replace(/[?&]$/, '');
+    }
+    return url;
+}
+
 function isActivityCheckKey(key) {
     if (!key) return false;
     return /^active_within/i.test(key) || /^latest_post_date$/i.test(key);
@@ -70,7 +88,11 @@ function cleanRowForDownload(row) {
     const newRow = {};
     for (const k of Object.keys(row)) {
         if (!isActivityCheckKey(k)) {
-            newRow[k] = row[k];
+            let val = row[k];
+            if (typeof val === 'string' && val.includes('fbcdn.net') && val.includes('ctp=')) {
+                val = optimizeFacebookAvatarUrl(val);
+            }
+            newRow[k] = val;
         }
     }
     return newRow;
@@ -549,8 +571,9 @@ async function runJob(job) {
                             else if (post.page && post.page.profilePicture) extractedAvatar = post.page.profilePicture;
                             
                             if (extractedAvatar) {
+                                extractedAvatar = optimizeFacebookAvatarUrl(extractedAvatar);
                                 row[imgCol] = extractedAvatar;
-                                pushLog(job, `🖼️ Cập nhật Avatar (Apify) thành công`, 'success');
+                                pushLog(job, `🖼️ Cập nhật Avatar HD (Apify) thành công`, 'success');
                             }
                         }
 
@@ -638,7 +661,7 @@ async function runJob(job) {
                                 });
                                 
                                 if (newAvatar) {
-                                    row[imgCol] = newAvatar;
+                                    row[imgCol] = optimizeFacebookAvatarUrl(newAvatar);
                                     pushLog(job, `✅ Cập nhật ảnh đại diện thành công`, 'success');
                                 }
                             }
