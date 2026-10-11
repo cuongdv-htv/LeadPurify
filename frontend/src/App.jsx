@@ -245,7 +245,8 @@ function App() {
 
   const handlePreviewHistory = async (url, originalFilename) => {
     try {
-      const res = await axios.get(url, { responseType: 'blob' });
+      const previewUrl = url.includes('?') ? `${url}&preview=true` : `${url}?preview=true`;
+      const res = await axios.get(previewUrl, { responseType: 'blob' });
       const file = new File([res.data], originalFilename, { type: 'text/csv' });
       setHistoryPreviewFile(file);
     } catch (err) {

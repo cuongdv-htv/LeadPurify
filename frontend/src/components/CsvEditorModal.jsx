@@ -21,18 +21,39 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
 
   const modalRef = useRef(null);
 
+  const reorderHeaders = (hdrList) => {
+    if (!hdrList || !Array.isArray(hdrList)) return [];
+    const activeKeys = hdrList.filter(k => /^active_within/i.test(k));
+    const postDateKeys = hdrList.filter(k => /^latest_post_date$/i.test(k));
+    const specialKeys = [...activeKeys, ...postDateKeys];
+    if (specialKeys.length === 0) return hdrList;
+    const normalKeys = hdrList.filter(k => !specialKeys.includes(k));
+    return [...normalKeys, ...specialKeys];
+  };
+
   useEffect(() => {
     if (file) {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          setData(results.data);
+          let rawHeaders = [];
           if (results.meta.fields) {
-            setHeaders(results.meta.fields);
+            rawHeaders = results.meta.fields;
           } else if (results.data.length > 0) {
-            setHeaders(Object.keys(results.data[0]));
+            rawHeaders = Object.keys(results.data[0]);
           }
+          const sortedHeaders = reorderHeaders(rawHeaders);
+          setHeaders(sortedHeaders);
+
+          const sortedData = (results.data || []).map(row => {
+            const newRow = {};
+            sortedHeaders.forEach(h => {
+              newRow[h] = row[h] !== undefined ? row[h] : '';
+            });
+            return newRow;
+          });
+          setData(sortedData);
         },
       });
     }
@@ -248,7 +269,19 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
   };
 
   const handleConfirm = () => {
-    const csvStr = Papa.unparse(data);
+    let finalData = data;
+    if (mode === "download") {
+      finalData = data.map(row => {
+        const newRow = { ...row };
+        Object.keys(newRow).forEach(key => {
+          if (/^active_within/i.test(key) || /^latest_post_date$/i.test(key)) {
+            delete newRow[key];
+          }
+        });
+        return newRow;
+      });
+    }
+    const csvStr = '\uFEFF' + Papa.unparse(finalData);
     const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
     const newFile = new File([blob], file.name, { type: 'text/csv' });
     onConfirm(newFile);

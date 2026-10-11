@@ -7,6 +7,12 @@ Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi 
 - [ ] Chưa có task nào.
 
 ## Task Đã Hoàn Thành
+- [x] Task: Di chuyển 2 cột `Active_Within_*_Months` và `Latest_Post_Date` về cuối file CSV và xóa khi download:
+  - [x] 1. Backend: Thêm hàm tiện ích `reorderRowColumns` để luôn sắp xếp 2 cột kiểm tra hoạt động (`Active_Within_*_Months`, `Latest_Post_Date`) về cuối cùng của mỗi row khi lưu file CSV (hoàn thành job & checkpoint).
+  - [x] 2. Backend: Cập nhật route `GET /api/download/:filename` để tự động loại bỏ 2 cột này khi tải về (hỗ trợ `?preview=true` để phục vụ xem trước).
+  - [x] 3. Frontend (`CsvEditorModal.jsx`): Tự động sắp xếp 2 cột này về cuối bảng khi xem trước; xóa bỏ 2 cột này khi xác nhận tải xuống từ modal (`mode === 'download'`).
+  - [x] 4. Frontend (`App.jsx`): Cập nhật `handlePreviewHistory` truyền tham số `?preview=true` để tải đầy đủ dữ liệu khi xem trước.
+  - [x] 5. Kiểm thử toàn bộ luồng: Kiểm tra xuất file, tải trực tiếp, tải hàng loạt, xem trước và tải từ modal.
 - [x] Task Resilience & Crash Recovery: Xử lý pending chạy lại, server đóng đột ngột, checkpointing & khôi phục dữ liệu:
   - [x] 1. Xây dựng cơ chế Checkpoint & Lưu trữ an toàn (Safe/Atomic Write cho `queue.json`, Backup file `.bak`, lưu tiến độ trung gian `checkpoint_{jobId}.json`).
   - [x] 2. Xử lý đóng server đột ngột & Graceful Shutdown (Bắt sự kiện SIGINT, SIGTERM, uncaughtException, đóng Puppeteer browsers sạch sẽ, cập nhật trạng thái INTERRUPTED cho job đang chạy).

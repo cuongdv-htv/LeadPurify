@@ -39,6 +39,43 @@ function callApify(url, token) {
     });
 }
 
+function isActivityCheckKey(key) {
+    if (!key) return false;
+    return /^active_within/i.test(key) || /^latest_post_date$/i.test(key);
+}
+
+function reorderRowColumns(row) {
+    if (!row || typeof row !== 'object') return row;
+    const keys = Object.keys(row);
+    const activeKeys = keys.filter(k => /^active_within/i.test(k));
+    const postDateKeys = keys.filter(k => /^latest_post_date$/i.test(k));
+    const specialKeys = [...activeKeys, ...postDateKeys];
+    
+    if (specialKeys.length === 0) return row;
+    
+    const newRow = {};
+    for (const k of keys) {
+        if (!specialKeys.includes(k)) {
+            newRow[k] = row[k];
+        }
+    }
+    for (const k of specialKeys) {
+        newRow[k] = row[k];
+    }
+    return newRow;
+}
+
+function cleanRowForDownload(row) {
+    if (!row || typeof row !== 'object') return row;
+    const newRow = {};
+    for (const k of Object.keys(row)) {
+        if (!isActivityCheckKey(k)) {
+            newRow[k] = row[k];
+        }
+    }
+    return newRow;
+}
+
 function getConfig() {
     try {
         const configPath = path.join(__dirname, 'config.json');
@@ -482,7 +519,6 @@ async function runJob(job) {
 
                         if (job.checkAliveApify) {
                             if (apifyData && apifyData.time) {
-                                row['Latest_Post_Date'] = apifyData.time;
                                 const postDate = new Date(apifyData.time);
                                 const targetDate = new Date();
                                 targetDate.setMonth(targetDate.getMonth() - (job.monthsToCheck || 6));
@@ -493,9 +529,10 @@ async function runJob(job) {
                                     row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'FALSE';
                                     isDead = true; 
                                 }
+                                row['Latest_Post_Date'] = apifyData.time;
                             } else {
-                                row['Latest_Post_Date'] = 'NOT_FOUND';
                                 row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'UNKNOWN';
+                                row['Latest_Post_Date'] = 'NOT_FOUND';
                                 isDead = true; 
                             }
                         }
@@ -663,8 +700,10 @@ async function runJob(job) {
                 
                 const aPath = path.join(__dirname, 'outputs', aliveFilename);
                 const dPath = path.join(__dirname, 'outputs', deadFilename);
-                fs.writeFileSync(aPath, Papa.unparse(aliveRows));
-                fs.writeFileSync(dPath, Papa.unparse(deadRows));
+                const reorderedAlive = aliveRows.map(reorderRowColumns);
+                const reorderedDead = deadRows.map(reorderRowColumns);
+                fs.writeFileSync(aPath, '\uFEFF' + Papa.unparse(reorderedAlive));
+                fs.writeFileSync(dPath, '\uFEFF' + Papa.unparse(reorderedDead));
                 
                 job.downloadLinks = { 
                     aliveFile: `http://localhost:3001/api/download/${encodeURIComponent(aliveFilename)}`, 
@@ -685,8 +724,10 @@ async function runJob(job) {
                 const partialAlive = `Partial_${baseName}_alive_${job.id}.csv`;
                 const partialDead = `Partial_${baseName}_dead_${job.id}.csv`;
                 try {
-                    fs.writeFileSync(path.join(__dirname, 'outputs', partialAlive), Papa.unparse(aliveRows));
-                    fs.writeFileSync(path.join(__dirname, 'outputs', partialDead), Papa.unparse(deadRows));
+                    const reorderedPartialAlive = aliveRows.map(reorderRowColumns);
+                    const reorderedPartialDead = deadRows.map(reorderRowColumns);
+                    fs.writeFileSync(path.join(__dirname, 'outputs', partialAlive), '\uFEFF' + Papa.unparse(reorderedPartialAlive));
+                    fs.writeFileSync(path.join(__dirname, 'outputs', partialDead), '\uFEFF' + Papa.unparse(reorderedPartialDead));
                     job.downloadLinks = {
                         aliveFile: `http://localhost:3001/api/download/${encodeURIComponent(partialAlive)}`,
                         deadFile: `http://localhost:3001/api/download/${encodeURIComponent(partialDead)}`
@@ -1024,9 +1065,38 @@ app.post('/api/apify-keys/check', async (req, res) => {
 });
 
 app.get('/api/download/:filename', (req, res) => {
-  const filePath = path.join(__dirname, 'outputs', req.params.filename);
-  if (fs.existsSync(filePath)) res.download(filePath);
-  else res.status(404).send('Not found');
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'outputs', filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('Not found');
+  }
+
+  // Khi xem trước (preview modal), giữ nguyên đầy đủ cột để người dùng kiểm tra
+  if (req.query.preview === 'true') {
+    return res.download(filePath, filename);
+  }
+
+  // Khi download về máy: xóa 2 cột kiểm tra hoạt động (Active_Within_* và Latest_Post_Date)
+  try {
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    if (!fileContent.trim()) {
+      return res.download(filePath, filename);
+    }
+
+    const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
+    if (parsed.data && parsed.data.length > 0) {
+      const cleanedData = parsed.data.map(cleanRowForDownload);
+      const csvStr = '\uFEFF' + Papa.unparse(cleanedData);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+      return res.send(csvStr);
+    } else {
+      return res.download(filePath, filename);
+    }
+  } catch (err) {
+    console.error('Lỗi khi lọc cột tải xuống:', err);
+    return res.download(filePath, filename);
+  }
 });
 
 server.listen(3001, () => {
