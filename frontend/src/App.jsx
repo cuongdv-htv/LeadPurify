@@ -178,6 +178,33 @@ function App() {
     }
   };
 
+  const handleBatchFixAvatar = async () => {
+    const unfixJobs = queue.filter(j => 
+      ['COMPLETED', 'ERROR'].includes(j.status) && 
+      !j.checkAvatarApify
+    );
+
+    if (unfixJobs.length === 0) {
+      alert('Không có tiến trình nào trong lịch sử chưa chạy sửa ảnh bằng Apify.');
+      return;
+    }
+
+    if (!window.confirm(`Tìm thấy ${unfixJobs.length} tiến trình chưa chạy sửa ảnh bằng Apify.\nBạn có muốn đưa tất cả vào hàng đợi để xử lý không?`)) {
+      return;
+    }
+
+    try {
+      const res = await axios.post('http://localhost:3001/api/queue/batch-fix-avatar');
+      if (res.data.count > 0) {
+        setActiveTab('queue');
+      } else {
+        alert('Không có tiến trình hợp lệ nào được thêm vào hàng đợi (tệp dữ liệu có thể không tồn tại hoặc các tiến trình đã có trong hàng đợi).');
+      }
+    } catch (e) {
+      alert(e.response?.data?.error || 'Có lỗi xảy ra khi đưa tiến trình vào hàng đợi.');
+    }
+  };
+
   const handlePreviewHistory = async (url, originalFilename) => {
       try {
           const res = await axios.get(url, { responseType: 'blob' });
@@ -353,7 +380,23 @@ function App() {
                    </span>
                 </h2>
                 {activeTab === 'history' && queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length > 0 && (
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <button 
+                            onClick={handleBatchFixAvatar} 
+                            className="btn-outline" 
+                            style={{ 
+                                borderColor: 'var(--neon-cyan)', 
+                                color: 'var(--neon-cyan)', 
+                                padding: '8px 16px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px',
+                                opacity: queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length === 0 ? 0.6 : 1
+                            }}
+                            title="Đưa các tiến trình trong lịch sử chưa sửa ảnh bằng Apify vào hàng đợi"
+                        >
+                            <RefreshCw size={18} /> Chạy sửa ảnh bằng Apify hàng loạt ({queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length})
+                        </button>
                         <button onClick={() => handleBatchDownload('alive')} className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Download size={18} /> Tải Link Sống
                         </button>
