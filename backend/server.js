@@ -404,7 +404,8 @@ async function runJob(job) {
 app.get('/api/queue', (req, res) => res.json(queue));
 
 async function runCheckActivityJob(job) {
-  pushLog(job, `Khởi tạo tiến trình Check 6 tháng: ${job.filename}`, 'info');
+  const checkMonths = job.monthsToCheck || 6;
+  pushLog(job, `Khởi tạo tiến trình Check hoạt động (${checkMonths} tháng): ${job.filename}`, 'info');
   const csvFile = fs.readFileSync(job.filePath, 'utf8');
   
   return new Promise((resolve, reject) => {
@@ -481,9 +482,9 @@ async function runCheckActivityJob(job) {
                         if (post.time) {
                             lastPostDate = post.time;
                             const postDate = new Date(post.time);
-                            const sixMonthsAgo = new Date();
-                            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-                            if (postDate >= sixMonthsAgo) active = true;
+                            const targetDate = new Date();
+                            targetDate.setMonth(targetDate.getMonth() - checkMonths);
+                            if (postDate >= targetDate) active = true;
                         }
 
                         let avatarUrl = null;
@@ -502,14 +503,14 @@ async function runCheckActivityJob(job) {
                     }
                     
                     row['Latest_Post_Date'] = lastPostDate;
-                    row['Active_Within_6_Months'] = active ? 'TRUE' : 'FALSE';
+                    row[`Active_Within_${checkMonths}_Months`] = active ? 'TRUE' : 'FALSE';
                     
                     if (active) {
                         job.stats.alive++;
                         pushLog(job, `✅ Sống (có bài đăng): ${lastPostDate.substring(0,10)}`, 'success');
                     } else {
                         job.stats.dead++;
-                        pushLog(job, `❌ Không có bài đăng trong 6 tháng`, 'error');
+                        pushLog(job, `❌ Không có bài đăng trong ${checkMonths} tháng`, 'error');
                     }
                 } catch (apiErr) {
                     if (apiErr.message.includes('403') || apiErr.message.includes('429')) {
@@ -520,7 +521,7 @@ async function runCheckActivityJob(job) {
                     }
                     job.stats.error++;
                     row['Latest_Post_Date'] = 'LỖI_API';
-                    row['Active_Within_6_Months'] = 'UNKNOWN';
+                    row[`Active_Within_${checkMonths}_Months`] = 'UNKNOWN';
                 }
                 
                 checkedRows.push(row);
@@ -545,7 +546,7 @@ async function runCheckActivityJob(job) {
                     job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
                     job.lastStartedAt = null;
                 }
-                pushLog(job, `🎉 Hoàn thành Check 6 tháng!`, 'success');
+                pushLog(job, `🎉 Hoàn thành Check hoạt động!`, 'success');
             }
             resolve();
           }
@@ -597,6 +598,7 @@ app.post('/api/queue/:id/check-activity', (req, res) => {
       return res.status(400).json({ error: 'Job không hợp lệ hoặc chưa có file Alive' });
   }
   
+  const monthsToCheck = parseInt(req.body.monthsToCheck) || 6;
   const filename = historyJob.downloadLinks.aliveFile.split('/').pop();
   const filePath = path.join(__dirname, 'outputs', decodeURIComponent(filename));
   const config = getConfig();
@@ -604,7 +606,8 @@ app.post('/api/queue/:id/check-activity', (req, res) => {
   const job = {
     id: crypto.randomBytes(8).toString('hex'),
     type: 'CHECK_ACTIVITY',
-    filename: `Check6m_${historyJob.filename}`,
+    monthsToCheck: monthsToCheck,
+    filename: `Check${monthsToCheck}m_${historyJob.filename}`,
     status: 'PENDING',
     concurrency: 1, // Chạy 1 luồng để xoay vòng API an toàn
     headless: true,

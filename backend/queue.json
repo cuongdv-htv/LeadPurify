@@ -4505,64 +4505,19 @@
     "id": "2a312358682b5eea",
     "type": "CHECK_ACTIVITY",
     "filename": "Check6m_leads_bacninh_20261011_011319.csv",
-    "status": "RUNNING",
+    "status": "COMPLETED",
     "concurrency": 1,
     "headless": true,
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 11,
+      "alive": 13,
       "dead": 2,
       "error": 0
     },
-    "completed": 13,
+    "completed": 15,
     "total": 15,
     "logs": [
-      {
-        "message": "🖼️ Cập nhật Avatar thành công",
-        "type": "success",
-        "timestamp": "2026-10-11T02:08:51.267Z"
-      },
-      {
-        "message": "✅ Sống (có bài đăng): 2026-10-03",
-        "type": "success",
-        "timestamp": "2026-10-11T02:08:51.267Z"
-      },
-      {
-        "message": "⏳ Chờ 3.6s trước khi gọi Apify cho: https://facebook.com/nhakhoathammygc.dentist",
-        "type": "info",
-        "timestamp": "2026-10-11T02:08:51.272Z"
-      },
-      {
-        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/nhakhoathammygc.dentist",
-        "type": "info",
-        "timestamp": "2026-10-11T02:08:54.886Z"
-      },
-      {
-        "message": "🖼️ Cập nhật Avatar thành công",
-        "type": "success",
-        "timestamp": "2026-10-11T02:09:03.350Z"
-      },
-      {
-        "message": "✅ Sống (có bài đăng): 2026-04-29",
-        "type": "success",
-        "timestamp": "2026-10-11T02:09:03.351Z"
-      },
-      {
-        "message": "⏳ Chờ 3.3s trước khi gọi Apify cho: https://facebook.com/nhakhoaquoctethammy",
-        "type": "info",
-        "timestamp": "2026-10-11T02:09:03.354Z"
-      },
-      {
-        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/nhakhoaquoctethammy",
-        "type": "info",
-        "timestamp": "2026-10-11T02:09:06.678Z"
-      },
-      {
-        "message": "🖼️ Cập nhật Avatar thành công",
-        "type": "success",
-        "timestamp": "2026-10-11T02:09:12.511Z"
-      },
       {
         "message": "❌ Không có bài đăng trong 6 tháng",
         "type": "error",
@@ -4767,11 +4722,59 @@
         "message": "✅ Sống (có bài đăng): 2026-10-10",
         "type": "success",
         "timestamp": "2026-10-11T02:10:48.515Z"
+      },
+      {
+        "message": "⏳ Chờ 3.1s trước khi gọi Apify cho: https://facebook.com/haianhtraulim",
+        "type": "info",
+        "timestamp": "2026-10-11T02:10:48.519Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/haianhtraulim",
+        "type": "info",
+        "timestamp": "2026-10-11T02:10:51.649Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T02:10:58.755Z"
+      },
+      {
+        "message": "✅ Sống (có bài đăng): 2026-10-08",
+        "type": "success",
+        "timestamp": "2026-10-11T02:10:58.756Z"
+      },
+      {
+        "message": "⏳ Chờ 3.3s trước khi gọi Apify cho: https://facebook.com/p/Phong-Thái-Homestay-Gia-Bình-Bắc-Ninh-100090855423491",
+        "type": "info",
+        "timestamp": "2026-10-11T02:10:58.759Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/p/Phong-Thái-Homestay-Gia-Bình-Bắc-Ninh-100090855423491",
+        "type": "info",
+        "timestamp": "2026-10-11T02:11:02.109Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T02:11:09.916Z"
+      },
+      {
+        "message": "✅ Sống (có bài đăng): 2026-09-22",
+        "type": "success",
+        "timestamp": "2026-10-11T02:11:09.916Z"
+      },
+      {
+        "message": "🎉 Hoàn thành Check 6 tháng!",
+        "type": "success",
+        "timestamp": "2026-10-11T02:11:09.922Z"
       }
     ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_bacninh_20261011_011319_alive_1791671908533.csv",
     "createdAt": 1791684522387,
-    "accumulatedTime": 0,
-    "lastStartedAt": 1791684522395
+    "accumulatedTime": 147527,
+    "lastStartedAt": null,
+    "downloadLinks": {
+      "checkedFile": "http://localhost:3001/api/download/Check6m_leads_bacninh_20261011_011319_checked_1791684669920.csv"
+    }
   }
 ]
