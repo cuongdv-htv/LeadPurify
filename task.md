@@ -7,6 +7,11 @@ Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi 
 - [ ] Chưa có task nào.
 
 ## Task Đã Hoàn Thành
+- [x] Nâng cấp độ phân giải ảnh Avatar từ Apify API lên chuẩn HD:
+  - [x] Phân tích cơ chế URL từ Apify (`post.user.profilePic`): Facebook CDN sinh mặc định `ctp=s50x50` (50x50 thumbnail).
+  - [x] Xây dựng hàm `optimizeFacebookAvatarUrl`: Loại bỏ tham số thumbnail `ctp` để Facebook CDN tự động trả về ảnh gốc độ phân giải cao theo tỷ lệ `cstp` (từ 720x720 đến 2000x2000 px, dung lượng từ ~800 bytes tăng lên 40KB - 250KB).
+  - [x] Cập nhật Backend (`server.js`): Tự động tối ưu hóa URL avatar sang HD khi quét bằng Apify và Puppeteer, đồng thời áp dụng khi người dùng tải CSV.
+  - [x] Di chuyển & cập nhật hàng loạt (Migration) 25 file kết quả và checkpoint hiện có trong `outputs/` với 211 URL ảnh đại diện được nâng cấp lên HD hoàn chỉnh.
 - [x] Task: Di chuyển 2 cột `Active_Within_*_Months` và `Latest_Post_Date` về cuối file CSV và xóa khi download:
   - [x] 1. Backend: Thêm hàm tiện ích `reorderRowColumns` để luôn sắp xếp 2 cột kiểm tra hoạt động (`Active_Within_*_Months`, `Latest_Post_Date`) về cuối cùng của mỗi row khi lưu file CSV (hoàn thành job & checkpoint).
   - [x] 2. Backend: Cập nhật route `GET /api/download/:filename` để tự động loại bỏ 2 cột này khi tải về (hỗ trợ `?preview=true` để phục vụ xem trước).

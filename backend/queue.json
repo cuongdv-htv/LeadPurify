@@ -5352,7 +5352,7 @@
   {
     "id": "25823f94d4e0e685",
     "filename": "FixAvatar_leads_haiphong_20261011_044500.csv",
-    "status": "PAUSED",
+    "status": "COMPLETED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5363,53 +5363,13 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 2,
+      "alive": 11,
       "dead": 0,
       "error": 0
     },
-    "completed": 2,
+    "completed": 11,
     "total": 11,
     "logs": [
-      {
-        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_haiphong_20261011_044500.csv",
-        "type": "info",
-        "timestamp": "2026-10-11T03:34:26.936Z"
-      },
-      {
-        "message": "⏳ Chờ 3.4s trước khi gọi Apify: https://facebook.com/OcngonhaiphongThuongOc",
-        "type": "info",
-        "timestamp": "2026-10-11T03:34:26.941Z"
-      },
-      {
-        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/OcngonhaiphongThuongOc",
-        "type": "info",
-        "timestamp": "2026-10-11T03:34:30.361Z"
-      },
-      {
-        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
-        "type": "success",
-        "timestamp": "2026-10-11T03:34:38.332Z"
-      },
-      {
-        "message": "✅ ALIVE: https://facebook.com/OcngonhaiphongThuongOc",
-        "type": "success",
-        "timestamp": "2026-10-11T03:34:38.333Z"
-      },
-      {
-        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/mr.hanhphuc102",
-        "type": "info",
-        "timestamp": "2026-10-11T03:34:38.340Z"
-      },
-      {
-        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/mr.hanhphuc102",
-        "type": "info",
-        "timestamp": "2026-10-11T03:34:40.803Z"
-      },
-      {
-        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
-        "type": "success",
-        "timestamp": "2026-10-11T03:34:45.298Z"
-      },
       {
         "message": "✅ ALIVE: https://facebook.com/mr.hanhphuc102",
         "type": "success",
@@ -5419,17 +5379,263 @@
         "message": "⏳ Chờ 4.6s trước khi gọi Apify: https://facebook.com/p/Square-Fitness-Yoga-Center-61590808165286",
         "type": "info",
         "timestamp": "2026-10-11T03:34:45.303Z"
+      },
+      {
+        "message": "Tiến trình bị gián đoạn do máy chủ tắt đột ngột. Hệ thống đã bảo toàn tiến độ đã quét. Bạn có thể nhấn \"Tiếp tục\" hoặc \"Chạy lại\".",
+        "type": "warning",
+        "timestamp": "2026-10-11T05:48:51.483Z"
+      },
+      {
+        "message": "Kích hoạt tiếp tục từ điểm dừng...",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:02.423Z"
+      },
+      {
+        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_haiphong_20261011_044500.csv",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:36.278Z"
+      },
+      {
+        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/OcngonhaiphongThuongOc",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:36.354Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/OcngonhaiphongThuongOc",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:38.864Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:44.606Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/OcngonhaiphongThuongOc",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:44.607Z"
+      },
+      {
+        "message": "⏳ Chờ 2.2s trước khi gọi Apify: https://facebook.com/mr.hanhphuc102",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:44.627Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/mr.hanhphuc102",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:46.831Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:51.861Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/mr.hanhphuc102",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:51.863Z"
+      },
+      {
+        "message": "⏳ Chờ 2.7s trước khi gọi Apify: https://facebook.com/p/Square-Fitness-Yoga-Center-61590808165286",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:51.904Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/p/Square-Fitness-Yoga-Center-61590808165286",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:54.645Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:51:21.679Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/p/Square-Fitness-Yoga-Center-61590808165286",
+        "type": "success",
+        "timestamp": "2026-10-11T05:51:21.682Z"
+      },
+      {
+        "message": "⏳ Chờ 3.0s trước khi gọi Apify: https://facebook.com/tntfitnesshaiphong",
+        "type": "info",
+        "timestamp": "2026-10-11T05:51:21.702Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/tntfitnesshaiphong",
+        "type": "info",
+        "timestamp": "2026-10-11T05:51:24.667Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:51:29.788Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/tntfitnesshaiphong",
+        "type": "success",
+        "timestamp": "2026-10-11T05:51:29.788Z"
+      },
+      {
+        "message": "⏳ Chờ 3.3s trước khi gọi Apify: https://facebook.com/Shinbi.Dental.Offical",
+        "type": "info",
+        "timestamp": "2026-10-11T05:51:29.809Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/Shinbi.Dental.Offical",
+        "type": "info",
+        "timestamp": "2026-10-11T05:51:33.120Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:51:42.051Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/Shinbi.Dental.Offical",
+        "type": "success",
+        "timestamp": "2026-10-11T05:51:42.052Z"
+      },
+      {
+        "message": "⏳ Chờ 3.2s trước khi gọi Apify: https://facebook.com/61565572137718",
+        "type": "info",
+        "timestamp": "2026-10-11T05:51:42.071Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/61565572137718",
+        "type": "info",
+        "timestamp": "2026-10-11T05:51:45.242Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:02.123Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/61565572137718",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:02.124Z"
+      },
+      {
+        "message": "⏳ Chờ 2.1s trước khi gọi Apify: https://facebook.com/NhakhoaParisHaiPhong",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:02.146Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/NhakhoaParisHaiPhong",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:04.232Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:13.127Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/NhakhoaParisHaiPhong",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:13.127Z"
+      },
+      {
+        "message": "⏳ Chờ 4.4s trước khi gọi Apify: https://facebook.com/houseofluck.banchat",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:13.146Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/houseofluck.banchat",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:17.580Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:24.831Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/houseofluck.banchat",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:24.833Z"
+      },
+      {
+        "message": "⏳ Chờ 3.0s trước khi gọi Apify: https://facebook.com/100231505900160",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:24.866Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/100231505900160",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:27.869Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:35.397Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/100231505900160",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:35.398Z"
+      },
+      {
+        "message": "⏳ Chờ 4.4s trước khi gọi Apify: https://facebook.com/1986cafenstay",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:35.423Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/1986cafenstay",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:39.824Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:45.505Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/1986cafenstay",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:45.506Z"
+      },
+      {
+        "message": "⏳ Chờ 3.3s trước khi gọi Apify: https://facebook.com/HoaSenMassage",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:45.530Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/HoaSenMassage",
+        "type": "info",
+        "timestamp": "2026-10-11T05:52:48.793Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:54.354Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/HoaSenMassage",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:54.357Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 11, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-11T05:52:54.386Z"
       }
     ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_haiphong_20261011_044500_alive_1791687583914.csv",
     "createdAt": 1791689545656,
-    "accumulatedTime": 22249,
-    "lastStartedAt": null
+    "accumulatedTime": 160378,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": false,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/FixAvatar_leads_haiphong_20261011_044500_alive_1791697974378.csv",
+      "deadFile": "http://localhost:3001/api/download/FixAvatar_leads_haiphong_20261011_044500_dead_1791697974378.csv"
+    }
   },
   {
     "id": "bab73c2aa35d9481",
     "filename": "FixAvatar_leads_dongnai_muinhon_20261011_043500.csv",
-    "status": "PENDING",
+    "status": "COMPLETED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5440,22 +5646,239 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 0,
+      "alive": 10,
       "dead": 0,
       "error": 0
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 10,
+    "total": 10,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_dongnai_muinhon_20261011_043500.csv",
+        "type": "info",
+        "timestamp": "2026-10-11T05:48:52.734Z"
+      },
+      {
+        "message": "⏳ Chờ 2.6s trước khi gọi Apify: https://facebook.com/bienhoadongnai.diva",
+        "type": "info",
+        "timestamp": "2026-10-11T05:48:52.757Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/bienhoadongnai.diva",
+        "type": "info",
+        "timestamp": "2026-10-11T05:48:55.382Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:02.933Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/bienhoadongnai.diva",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:02.935Z"
+      },
+      {
+        "message": "⏳ Chờ 2.4s trước khi gọi Apify: https://facebook.com/pkdalieudivabienhoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:02.952Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/pkdalieudivabienhoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:05.395Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:11.993Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/pkdalieudivabienhoa",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:11.995Z"
+      },
+      {
+        "message": "⏳ Chờ 2.2s trước khi gọi Apify: https://facebook.com/thammydivacamau",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:12.013Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/thammydivacamau",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:14.247Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:21.036Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/thammydivacamau",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:21.038Z"
+      },
+      {
+        "message": "⏳ Chờ 2.8s trước khi gọi Apify: https://facebook.com/Nhakhoanhanduclongthanh",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:21.060Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/Nhakhoanhanduclongthanh",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:23.894Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:33.206Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/Nhakhoanhanduclongthanh",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:33.208Z"
+      },
+      {
+        "message": "⏳ Chờ 3.1s trước khi gọi Apify: https://facebook.com/carnex.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:33.230Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/carnex.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:36.322Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:41.790Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/carnex.vn",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:41.791Z"
+      },
+      {
+        "message": "⏳ Chờ 3.7s trước khi gọi Apify: https://facebook.com/DAauto.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:41.816Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/DAauto.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:45.555Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:51.510Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/DAauto.vn",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:51.511Z"
+      },
+      {
+        "message": "⏳ Chờ 2.6s trước khi gọi Apify: https://facebook.com/phanluong.chamsocsausinh",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:51.536Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/phanluong.chamsocsausinh",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:54.185Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:59.799Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/phanluong.chamsocsausinh",
+        "type": "success",
+        "timestamp": "2026-10-11T05:49:59.800Z"
+      },
+      {
+        "message": "⏳ Chờ 4.5s trước khi gọi Apify: https://facebook.com/chamsocmevabebienhoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:49:59.825Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/chamsocmevabebienhoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:04.352Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:10.786Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/chamsocmevabebienhoa",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:10.787Z"
+      },
+      {
+        "message": "⏳ Chờ 3.7s trước khi gọi Apify: https://facebook.com/chamsocsausinh.taiBienHoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:10.807Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/chamsocsausinh.taiBienHoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:14.519Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:22.935Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/chamsocsausinh.taiBienHoa",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:22.936Z"
+      },
+      {
+        "message": "⏳ Chờ 3.2s trước khi gọi Apify: https://facebook.com/ham.ruou.yba",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:22.959Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/ham.ruou.yba",
+        "type": "info",
+        "timestamp": "2026-10-11T05:50:26.176Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:36.200Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/ham.ruou.yba",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:36.201Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 10, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-11T05:50:36.233Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_dongnai_muinhon_20261011_043500_alive_1791687669015.csv",
     "createdAt": 1791689545656,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 103520,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": false,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/FixAvatar_leads_dongnai_muinhon_20261011_043500_alive_1791697836225.csv",
+      "deadFile": "http://localhost:3001/api/download/FixAvatar_leads_dongnai_muinhon_20261011_043500_dead_1791697836225.csv"
+    }
   },
   {
     "id": "afe6b3d1f50bff1a",
     "filename": "FixAvatar_leads_hanoi_muinhon_20261011_041500.csv",
-    "status": "PENDING",
+    "status": "COMPLETED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5466,22 +5889,279 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 0,
+      "alive": 13,
       "dead": 0,
       "error": 0
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 13,
+    "total": 13,
+    "logs": [
+      {
+        "message": "✅ ALIVE: https://facebook.com/cozyliving.com.vn",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:03.195Z"
+      },
+      {
+        "message": "⏳ Chờ 3.1s trước khi gọi Apify: https://facebook.com/100093415929427",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:03.220Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/100093415929427",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:06.319Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:11.142Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/100093415929427",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:11.143Z"
+      },
+      {
+        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/HangThumakeup",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:11.168Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/HangThumakeup",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:13.701Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:21.312Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/HangThumakeup",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:21.313Z"
+      },
+      {
+        "message": "⏳ Chờ 4.6s trước khi gọi Apify: https://facebook.com/NhakhoaGiadinhBSHien",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:21.336Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/NhakhoaGiadinhBSHien",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:25.927Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:31.240Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/NhakhoaGiadinhBSHien",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:31.241Z"
+      },
+      {
+        "message": "⏳ Chờ 2.6s trước khi gọi Apify: https://facebook.com/hocvienthammyquocteMAYAacademy",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:31.267Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/hocvienthammyquocteMAYAacademy",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:33.903Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:39.097Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/hocvienthammyquocteMAYAacademy",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:39.098Z"
+      },
+      {
+        "message": "⏳ Chờ 2.3s trước khi gọi Apify: https://facebook.com/nhakhoaTuyetAnh",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:39.124Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/nhakhoaTuyetAnh",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:41.433Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:48.893Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhakhoaTuyetAnh",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:48.894Z"
+      },
+      {
+        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/trunganhgara.on",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:48.929Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/trunganhgara.on",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:51.453Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:58.450Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/trunganhgara.on",
+        "type": "success",
+        "timestamp": "2026-10-11T05:53:58.451Z"
+      },
+      {
+        "message": "⏳ Chờ 4.0s trước khi gọi Apify: https://facebook.com/nhakhoasmileone.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:53:58.474Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/nhakhoasmileone.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:02.519Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:14.261Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhakhoasmileone.vn",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:14.262Z"
+      },
+      {
+        "message": "⏳ Chờ 2.1s trước khi gọi Apify: https://facebook.com/61583711410535",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:14.295Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/61583711410535",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:16.363Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:23.565Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/61583711410535",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:23.566Z"
+      },
+      {
+        "message": "⏳ Chờ 4.3s trước khi gọi Apify: https://facebook.com/autobenz.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:23.596Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/autobenz.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:27.944Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:35.124Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/autobenz.vn",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:35.124Z"
+      },
+      {
+        "message": "⏳ Chờ 3.6s trước khi gọi Apify: https://facebook.com/duc.tran.7374480",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:35.145Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/duc.tran.7374480",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:38.799Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:49.627Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/duc.tran.7374480",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:49.628Z"
+      },
+      {
+        "message": "⏳ Chờ 2.2s trước khi gọi Apify: https://facebook.com/The36lakeview",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:49.654Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/The36lakeview",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:51.876Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:59.245Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/The36lakeview",
+        "type": "success",
+        "timestamp": "2026-10-11T05:54:59.246Z"
+      },
+      {
+        "message": "⏳ Chờ 2.9s trước khi gọi Apify: https://facebook.com/notethescentlab",
+        "type": "info",
+        "timestamp": "2026-10-11T05:54:59.268Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/notethescentlab",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:02.143Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:06.911Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/notethescentlab",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:06.913Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 13, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:06.940Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_hanoi_muinhon_20261011_041500_alive_1791687733869.csv",
     "createdAt": 1791689545656,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 132539,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": false,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/FixAvatar_leads_hanoi_muinhon_20261011_041500_alive_1791698106934.csv",
+      "deadFile": "http://localhost:3001/api/download/FixAvatar_leads_hanoi_muinhon_20261011_041500_dead_1791698106934.csv"
+    }
   },
   {
     "id": "e08c2ad07a32d85f",
     "filename": "FixAvatar_leads_dongnai_20261011_040500.csv",
-    "status": "PENDING",
+    "status": "COMPLETED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5492,22 +6172,259 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 0,
+      "alive": 11,
       "dead": 0,
       "error": 0
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 11,
+    "total": 11,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_dongnai_20261011_040500.csv",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:06.982Z"
+      },
+      {
+        "message": "⏳ Chờ 3.9s trước khi gọi Apify: https://facebook.com/vtxuanmai",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:07.010Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/vtxuanmai",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:10.920Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:16.863Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/vtxuanmai",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:16.865Z"
+      },
+      {
+        "message": "⏳ Chờ 3.8s trước khi gọi Apify: https://facebook.com/61577787990368",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:16.887Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/61577787990368",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:20.708Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:26.656Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/61577787990368",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:26.659Z"
+      },
+      {
+        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/HoangVoSu",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:26.695Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/HoangVoSu",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:29.225Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:36.942Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/HoangVoSu",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:36.945Z"
+      },
+      {
+        "message": "⏳ Chờ 4.3s trước khi gọi Apify: https://facebook.com/PethealthcentreLongThanh",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:36.997Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/PethealthcentreLongThanh",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:41.346Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:55.081Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/PethealthcentreLongThanh",
+        "type": "success",
+        "timestamp": "2026-10-11T05:55:55.082Z"
+      },
+      {
+        "message": "⏳ Chờ 4.1s trước khi gọi Apify: https://facebook.com/chamsocnangcapxehoi",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:55.115Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/chamsocnangcapxehoi",
+        "type": "info",
+        "timestamp": "2026-10-11T05:55:59.232Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:04.613Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/chamsocnangcapxehoi",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:04.614Z"
+      },
+      {
+        "message": "⏳ Chờ 4.2s trước khi gọi Apify: https://facebook.com/khevietbienhoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:04.643Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/khevietbienhoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:08.827Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:14.072Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/khevietbienhoa",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:14.073Z"
+      },
+      {
+        "message": "⏳ Chờ 3.0s trước khi gọi Apify: https://facebook.com/lautom5ribienhoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:14.104Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/lautom5ribienhoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:17.088Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:23.194Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/lautom5ribienhoa",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:23.195Z"
+      },
+      {
+        "message": "⏳ Chờ 5.0s trước khi gọi Apify: https://facebook.com/BoNuongTang0799997636",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:23.224Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/BoNuongTang0799997636",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:28.203Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:34.837Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/BoNuongTang0799997636",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:34.840Z"
+      },
+      {
+        "message": "⏳ Chờ 2.7s trước khi gọi Apify: https://facebook.com/nhakhoatamducsmileBienHoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:34.873Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/nhakhoatamducsmileBienHoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:37.582Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:43.626Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhakhoatamducsmileBienHoa",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:43.627Z"
+      },
+      {
+        "message": "⏳ Chờ 4.9s trước khi gọi Apify: https://facebook.com/DalieuSaiGonBienHoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:43.650Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/DalieuSaiGonBienHoa",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:48.541Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:54.336Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/DalieuSaiGonBienHoa",
+        "type": "success",
+        "timestamp": "2026-10-11T05:56:54.337Z"
+      },
+      {
+        "message": "⏳ Chờ 4.6s trước khi gọi Apify: https://facebook.com/61579551085024",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:54.358Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/61579551085024",
+        "type": "info",
+        "timestamp": "2026-10-11T05:56:58.955Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:07.001Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/61579551085024",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:07.002Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 11, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:07.035Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_dongnai_20261011_040500_alive_1791687802798.csv",
     "createdAt": 1791689545657,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 120074,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": false,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/FixAvatar_leads_dongnai_20261011_040500_alive_1791698227029.csv",
+      "deadFile": "http://localhost:3001/api/download/FixAvatar_leads_dongnai_20261011_040500_dead_1791698227029.csv"
+    }
   },
   {
     "id": "55eff4a8e345c50b",
     "filename": "FixAvatar_leads_hanoi_20261011_035500.csv",
-    "status": "PENDING",
+    "status": "COMPLETED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5518,22 +6435,279 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 0,
+      "alive": 13,
       "dead": 0,
       "error": 0
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 13,
+    "total": 13,
+    "logs": [
+      {
+        "message": "✅ ALIVE: https://facebook.com/Trulywedding",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:15.625Z"
+      },
+      {
+        "message": "⏳ Chờ 3.2s trước khi gọi Apify: https://facebook.com/9amstudio.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:57:15.654Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/9amstudio.vn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:57:18.827Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:26.335Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/9amstudio.vn",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:26.337Z"
+      },
+      {
+        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/megau.pilates",
+        "type": "info",
+        "timestamp": "2026-10-11T05:57:26.367Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/megau.pilates",
+        "type": "info",
+        "timestamp": "2026-10-11T05:57:28.908Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:34.094Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/megau.pilates",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:34.095Z"
+      },
+      {
+        "message": "⏳ Chờ 3.2s trước khi gọi Apify: https://facebook.com/chuoiduongsinhtrilieutrunghoahongphungcac",
+        "type": "info",
+        "timestamp": "2026-10-11T05:57:34.122Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/chuoiduongsinhtrilieutrunghoahongphungcac",
+        "type": "info",
+        "timestamp": "2026-10-11T05:57:37.319Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:49.017Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/chuoiduongsinhtrilieutrunghoahongphungcac",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:49.020Z"
+      },
+      {
+        "message": "⏳ Chờ 2.6s trước khi gọi Apify: https://facebook.com/100094758860310",
+        "type": "info",
+        "timestamp": "2026-10-11T05:57:49.056Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/100094758860310",
+        "type": "info",
+        "timestamp": "2026-10-11T05:57:51.648Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:58.213Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/100094758860310",
+        "type": "success",
+        "timestamp": "2026-10-11T05:57:58.214Z"
+      },
+      {
+        "message": "⏳ Chờ 3.1s trước khi gọi Apify: https://facebook.com/p/B%E1%BB%87nh-vi%E1%BB%87n-Th%C3%BA-y-Luna-100091859275663",
+        "type": "info",
+        "timestamp": "2026-10-11T05:57:58.246Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/p/B%E1%BB%87nh-vi%E1%BB%87n-Th%C3%BA-y-Luna-100091859275663",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:01.341Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:06.655Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/p/B%E1%BB%87nh-vi%E1%BB%87n-Th%C3%BA-y-Luna-100091859275663",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:06.656Z"
+      },
+      {
+        "message": "⏳ Chờ 5.0s trước khi gọi Apify: https://facebook.com/healanimals139lethanhnghi",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:06.688Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/healanimals139lethanhnghi",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:11.665Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:17.073Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/healanimals139lethanhnghi",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:17.074Z"
+      },
+      {
+        "message": "⏳ Chờ 4.3s trước khi gọi Apify: https://facebook.com/massage.sentaman",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:17.096Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/massage.sentaman",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:21.383Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:27.397Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/massage.sentaman",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:27.398Z"
+      },
+      {
+        "message": "⏳ Chờ 3.4s trước khi gọi Apify: https://facebook.com/thelittleplan.cafe",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:27.433Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/thelittleplan.cafe",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:30.819Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:37.348Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/thelittleplan.cafe",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:37.350Z"
+      },
+      {
+        "message": "⏳ Chờ 4.0s trước khi gọi Apify: https://facebook.com/maisondetehn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:37.386Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/maisondetehn",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:41.359Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:47.161Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/maisondetehn",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:47.163Z"
+      },
+      {
+        "message": "⏳ Chờ 3.3s trước khi gọi Apify: https://facebook.com/diorynailslab",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:47.196Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/diorynailslab",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:50.549Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:55.719Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/diorynailslab",
+        "type": "success",
+        "timestamp": "2026-10-11T05:58:55.720Z"
+      },
+      {
+        "message": "⏳ Chờ 3.2s trước khi gọi Apify: https://facebook.com/61561621351498",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:55.749Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/61561621351498",
+        "type": "info",
+        "timestamp": "2026-10-11T05:58:58.957Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:59:04.331Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/61561621351498",
+        "type": "success",
+        "timestamp": "2026-10-11T05:59:04.332Z"
+      },
+      {
+        "message": "⏳ Chờ 4.8s trước khi gọi Apify: https://facebook.com/SkinzoneGlowupyourbeauty",
+        "type": "info",
+        "timestamp": "2026-10-11T05:59:04.356Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/SkinzoneGlowupyourbeauty",
+        "type": "info",
+        "timestamp": "2026-10-11T05:59:09.115Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:59:24.361Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/SkinzoneGlowupyourbeauty",
+        "type": "success",
+        "timestamp": "2026-10-11T05:59:24.362Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 13, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-11T05:59:24.388Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_hanoi_20261011_035500_alive_1791687912509.csv",
     "createdAt": 1791689545657,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 137327,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": false,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/FixAvatar_leads_hanoi_20261011_035500_alive_1791698364380.csv",
+      "deadFile": "http://localhost:3001/api/download/FixAvatar_leads_hanoi_20261011_035500_dead_1791698364380.csv"
+    }
   },
   {
     "id": "911b3c9b2b1636a4",
     "filename": "FixAvatar_leads_daklak_20261011_034500.csv",
-    "status": "PENDING",
+    "status": "COMPLETED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5544,22 +6718,279 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 0,
+      "alive": 14,
       "dead": 0,
       "error": 0
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 14,
+    "total": 14,
+    "logs": [
+      {
+        "message": "✅ ALIVE: https://facebook.com/BMCWorkshop",
+        "type": "success",
+        "timestamp": "2026-10-11T05:59:45.029Z"
+      },
+      {
+        "message": "⏳ Chờ 4.5s trước khi gọi Apify: https://facebook.com/cuoi.cong.studio",
+        "type": "info",
+        "timestamp": "2026-10-11T05:59:45.058Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/cuoi.cong.studio",
+        "type": "info",
+        "timestamp": "2026-10-11T05:59:49.607Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T05:59:55.199Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/cuoi.cong.studio",
+        "type": "success",
+        "timestamp": "2026-10-11T05:59:55.199Z"
+      },
+      {
+        "message": "⏳ Chờ 4.6s trước khi gọi Apify: https://facebook.com/p/Ph%C3%B2ng-Kh%C3%A1m-Th%C3%BA-Y-AURA-VET-Bmt-61570969380287",
+        "type": "info",
+        "timestamp": "2026-10-11T05:59:55.230Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/p/Ph%C3%B2ng-Kh%C3%A1m-Th%C3%BA-Y-AURA-VET-Bmt-61570969380287",
+        "type": "info",
+        "timestamp": "2026-10-11T05:59:59.865Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:00:08.742Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/p/Ph%C3%B2ng-Kh%C3%A1m-Th%C3%BA-Y-AURA-VET-Bmt-61570969380287",
+        "type": "success",
+        "timestamp": "2026-10-11T06:00:08.744Z"
+      },
+      {
+        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/anvipetbmt",
+        "type": "info",
+        "timestamp": "2026-10-11T06:00:08.778Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/anvipetbmt",
+        "type": "info",
+        "timestamp": "2026-10-11T06:00:11.303Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:00:22.381Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/anvipetbmt",
+        "type": "success",
+        "timestamp": "2026-10-11T06:00:22.383Z"
+      },
+      {
+        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/pitstopbmt",
+        "type": "info",
+        "timestamp": "2026-10-11T06:00:22.425Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/pitstopbmt",
+        "type": "info",
+        "timestamp": "2026-10-11T06:00:24.916Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:00:37.051Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/pitstopbmt",
+        "type": "success",
+        "timestamp": "2026-10-11T06:00:37.052Z"
+      },
+      {
+        "message": "⏳ Chờ 3.1s trước khi gọi Apify: https://facebook.com/BGYM2020",
+        "type": "info",
+        "timestamp": "2026-10-11T06:00:37.083Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/BGYM2020",
+        "type": "info",
+        "timestamp": "2026-10-11T06:00:40.203Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:01:06.860Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/BGYM2020",
+        "type": "success",
+        "timestamp": "2026-10-11T06:01:06.861Z"
+      },
+      {
+        "message": "⏳ Chờ 3.1s trước khi gọi Apify: https://facebook.com/NutrifortAcademy",
+        "type": "info",
+        "timestamp": "2026-10-11T06:01:06.896Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/NutrifortAcademy",
+        "type": "info",
+        "timestamp": "2026-10-11T06:01:09.991Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:01:28.162Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/NutrifortAcademy",
+        "type": "success",
+        "timestamp": "2026-10-11T06:01:28.163Z"
+      },
+      {
+        "message": "⏳ Chờ 3.3s trước khi gọi Apify: https://facebook.com/vietmyVUGBuonMaThuoc",
+        "type": "info",
+        "timestamp": "2026-10-11T06:01:28.179Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/vietmyVUGBuonMaThuoc",
+        "type": "info",
+        "timestamp": "2026-10-11T06:01:31.493Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:01:41.761Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/vietmyVUGBuonMaThuoc",
+        "type": "success",
+        "timestamp": "2026-10-11T06:01:41.762Z"
+      },
+      {
+        "message": "⏳ Chờ 4.7s trước khi gọi Apify: https://facebook.com/ChiOCoffeeTea",
+        "type": "info",
+        "timestamp": "2026-10-11T06:01:41.771Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/ChiOCoffeeTea",
+        "type": "info",
+        "timestamp": "2026-10-11T06:01:46.513Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:01:52.999Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/ChiOCoffeeTea",
+        "type": "success",
+        "timestamp": "2026-10-11T06:01:53.002Z"
+      },
+      {
+        "message": "⏳ Chờ 4.5s trước khi gọi Apify: https://facebook.com/SkyscapercityBMT47",
+        "type": "info",
+        "timestamp": "2026-10-11T06:01:53.020Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/SkyscapercityBMT47",
+        "type": "info",
+        "timestamp": "2026-10-11T06:01:57.526Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:07.872Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/SkyscapercityBMT47",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:07.876Z"
+      },
+      {
+        "message": "⏳ Chờ 2.0s trước khi gọi Apify: https://facebook.com/thehighlandhousebmt",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:07.918Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/thehighlandhousebmt",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:09.942Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:16.940Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/thehighlandhousebmt",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:16.941Z"
+      },
+      {
+        "message": "⏳ Chờ 4.4s trước khi gọi Apify: https://facebook.com/61571527493491",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:16.969Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/61571527493491",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:21.418Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:27.529Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/61571527493491",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:27.531Z"
+      },
+      {
+        "message": "⏳ Chờ 3.6s trước khi gọi Apify: https://facebook.com/Lensboutiquehouse",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:27.552Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/Lensboutiquehouse",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:31.137Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:36.939Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/Lensboutiquehouse",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:36.940Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 14, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:36.986Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_daklak_20261011_034500_alive_1791687991538.csv",
     "createdAt": 1791689545657,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 192578,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": false,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/FixAvatar_leads_daklak_20261011_034500_alive_1791698556980.csv",
+      "deadFile": "http://localhost:3001/api/download/FixAvatar_leads_daklak_20261011_034500_dead_1791698556980.csv"
+    }
   },
   {
     "id": "e9fd40307e7c312b",
     "filename": "FixAvatar_leads_daklak_muinhon_20261011_033000.csv",
-    "status": "PENDING",
+    "status": "COMPLETED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5570,22 +7001,239 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 0,
+      "alive": 10,
       "dead": 0,
       "error": 0
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 10,
+    "total": 10,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_daklak_muinhon_20261011_033000.csv",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:37.040Z"
+      },
+      {
+        "message": "⏳ Chờ 4.0s trước khi gọi Apify: https://facebook.com/OngGiaoGarden",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:37.079Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/OngGiaoGarden",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:41.054Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:52.109Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/OngGiaoGarden",
+        "type": "success",
+        "timestamp": "2026-10-11T06:02:52.112Z"
+      },
+      {
+        "message": "⏳ Chờ 2.2s trước khi gọi Apify: https://facebook.com/hoangphucreview",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:52.150Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/hoangphucreview",
+        "type": "info",
+        "timestamp": "2026-10-11T06:02:54.387Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:04.331Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/hoangphucreview",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:04.332Z"
+      },
+      {
+        "message": "⏳ Chờ 2.3s trước khi gọi Apify: https://facebook.com/maccadaklakNguyenPhuong",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:04.364Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/maccadaklakNguyenPhuong",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:06.706Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:12.785Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/maccadaklakNguyenPhuong",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:12.785Z"
+      },
+      {
+        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/caffeenguyenban",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:12.825Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/caffeenguyenban",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:15.333Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:21.790Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/caffeenguyenban",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:21.792Z"
+      },
+      {
+        "message": "⏳ Chờ 3.3s trước khi gọi Apify: https://facebook.com/DakLacCoffee",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:21.829Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/DakLacCoffee",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:25.103Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:33.638Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/DakLacCoffee",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:33.639Z"
+      },
+      {
+        "message": "⏳ Chờ 4.9s trước khi gọi Apify: https://facebook.com/100069579896862",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:33.684Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/100069579896862",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:38.633Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:44.634Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/100069579896862",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:44.835Z"
+      },
+      {
+        "message": "⏳ Chờ 4.9s trước khi gọi Apify: https://facebook.com/xanhhomestayeakao",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:45.748Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/xanhhomestayeakao",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:50.679Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:58.008Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/xanhhomestayeakao",
+        "type": "success",
+        "timestamp": "2026-10-11T06:03:58.009Z"
+      },
+      {
+        "message": "⏳ Chờ 3.8s trước khi gọi Apify: https://facebook.com/homestaynhabensuoibmt",
+        "type": "info",
+        "timestamp": "2026-10-11T06:03:58.039Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/homestaynhabensuoibmt",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:01.866Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:08.298Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/homestaynhabensuoibmt",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:08.299Z"
+      },
+      {
+        "message": "⏳ Chờ 2.6s trước khi gọi Apify: https://facebook.com/kpanhouse",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:08.320Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/kpanhouse",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:10.947Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:16.979Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/kpanhouse",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:16.979Z"
+      },
+      {
+        "message": "⏳ Chờ 3.7s trước khi gọi Apify: https://facebook.com/TamSpaMassagetrilieu",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:16.988Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/TamSpaMassagetrilieu",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:20.676Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:25.770Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/TamSpaMassagetrilieu",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:25.770Z"
+      },
+      {
+        "message": "🎉 Hoàn thành! Sống: 10, Chết: 0",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:25.778Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_daklak_muinhon_20261011_033000_alive_1791688056799.csv",
     "createdAt": 1791689545658,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 108761,
+    "lastStartedAt": null,
+    "hasCheckpoint": false,
+    "resumeFromCheckpoint": false,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/FixAvatar_leads_daklak_muinhon_20261011_033000_alive_1791698665777.csv",
+      "deadFile": "http://localhost:3001/api/download/FixAvatar_leads_daklak_muinhon_20261011_033000_dead_1791698665777.csv"
+    }
   },
   {
     "id": "c6ba68a3c9e790f7",
     "filename": "FixAvatar_leads_danang_muinhon_20261011_025500.csv",
-    "status": "PENDING",
+    "status": "CANCELED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5596,22 +7244,219 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 0,
+      "alive": 9,
       "dead": 0,
       "error": 0
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 9,
+    "total": 11,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_danang_muinhon_20261011_025500.csv",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:25.789Z"
+      },
+      {
+        "message": "⏳ Chờ 4.6s trước khi gọi Apify: https://facebook.com/danangdivingcruise",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:25.801Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/danangdivingcruise",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:30.379Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:35.781Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/danangdivingcruise",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:35.782Z"
+      },
+      {
+        "message": "⏳ Chờ 4.8s trước khi gọi Apify: https://facebook.com/duthuyensonghandn",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:35.804Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/duthuyensonghandn",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:40.560Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:45.979Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/duthuyensonghandn",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:45.980Z"
+      },
+      {
+        "message": "⏳ Chờ 3.8s trước khi gọi Apify: https://facebook.com/61584654275338",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:45.990Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/61584654275338",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:49.814Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:55.499Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/61584654275338",
+        "type": "success",
+        "timestamp": "2026-10-11T06:04:55.500Z"
+      },
+      {
+        "message": "⏳ Chờ 4.0s trước khi gọi Apify: https://facebook.com/thiboutiquevilla",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:55.535Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/thiboutiquevilla",
+        "type": "info",
+        "timestamp": "2026-10-11T06:04:59.537Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:05.885Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/thiboutiquevilla",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:05.885Z"
+      },
+      {
+        "message": "⏳ Chờ 4.9s trước khi gọi Apify: https://facebook.com/nhakhoaquocteorient.danang",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:05.905Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/nhakhoaquocteorient.danang",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:10.798Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:15.786Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/nhakhoaquocteorient.danang",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:15.787Z"
+      },
+      {
+        "message": "⏳ Chờ 2.8s trước khi gọi Apify: https://facebook.com/theraspadanang",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:15.827Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/theraspadanang",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:18.589Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:31.570Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/theraspadanang",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:31.571Z"
+      },
+      {
+        "message": "⏳ Chờ 2.2s trước khi gọi Apify: https://facebook.com/jejuspamassage",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:31.613Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/jejuspamassage",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:33.819Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:47.866Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/jejuspamassage",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:47.869Z"
+      },
+      {
+        "message": "⏳ Chờ 2.5s trước khi gọi Apify: https://facebook.com/chupanhcuoidanang.protiemstudio",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:47.907Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/chupanhcuoidanang.protiemstudio",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:50.395Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:55.396Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/chupanhcuoidanang.protiemstudio",
+        "type": "success",
+        "timestamp": "2026-10-11T06:05:55.399Z"
+      },
+      {
+        "message": "⏳ Chờ 2.8s trước khi gọi Apify: https://facebook.com/fixdanang",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:55.447Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/fixdanang",
+        "type": "info",
+        "timestamp": "2026-10-11T06:05:58.214Z"
+      },
+      {
+        "message": "Đã hủy tiến trình",
+        "type": "error",
+        "timestamp": "2026-10-11T06:05:58.693Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:04.260Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/fixdanang",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:04.261Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_danang_muinhon_20261011_025500_alive_1791688118448.csv",
     "createdAt": 1791689545658,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 92909,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": true,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_danang_muinhon_20261011_025500_alive_c6ba68a3c9e790f7.csv",
+      "deadFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_danang_muinhon_20261011_025500_dead_c6ba68a3c9e790f7.csv"
+    }
   },
   {
     "id": "8a91f759601bc86e",
     "filename": "FixAvatar_leads_danang_20261011_024500.csv",
-    "status": "PENDING",
+    "status": "CANCELED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5622,74 +7467,99 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 0,
+      "alive": 3,
       "dead": 0,
       "error": 0
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 3,
+    "total": 12,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_danang_20261011_024500.csv",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:04.333Z"
+      },
+      {
+        "message": "⏳ Chờ 2.2s trước khi gọi Apify: https://facebook.com/haisanbeni2",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:04.381Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/haisanbeni2",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:06.592Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:14.613Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/haisanbeni2",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:14.613Z"
+      },
+      {
+        "message": "⏳ Chờ 3.8s trước khi gọi Apify: https://facebook.com/mibeptrang",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:14.622Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/mibeptrang",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:18.436Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:23.871Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/mibeptrang",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:23.871Z"
+      },
+      {
+        "message": "⏳ Chờ 4.6s trước khi gọi Apify: https://facebook.com/haisanthoico",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:23.879Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/haisanthoico",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:28.451Z"
+      },
+      {
+        "message": "Đã hủy tiến trình",
+        "type": "error",
+        "timestamp": "2026-10-11T06:06:30.167Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:33.298Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/haisanthoico",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:33.299Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_danang_20261011_024500_alive_1791688181931.csv",
     "createdAt": 1791689545659,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
-  },
-  {
-    "id": "6a531a9175e32c5c",
-    "filename": "FixAvatar_leads_binhduong_muinhon_20261011_024048.csv",
-    "status": "PENDING",
-    "concurrency": 1,
-    "headless": true,
-    "checkAlive": false,
-    "checkAliveApify": false,
-    "checkAvatar": false,
-    "checkAvatarApify": true,
-    "monthsToCheck": 6,
-    "minDelay": 2000,
-    "maxDelay": 5000,
-    "stats": {
-      "alive": 0,
-      "dead": 0,
-      "error": 0
-    },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
-    "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_binhduong_muinhon_20261011_024048_alive_1791688237149.csv",
-    "createdAt": 1791689545659,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
-  },
-  {
-    "id": "d1d02903480dbf0d",
-    "filename": "FixAvatar_leads_cantho_20261011_023339.csv",
-    "status": "PENDING",
-    "concurrency": 1,
-    "headless": true,
-    "checkAlive": false,
-    "checkAliveApify": false,
-    "checkAvatar": false,
-    "checkAvatarApify": true,
-    "monthsToCheck": 6,
-    "minDelay": 2000,
-    "maxDelay": 5000,
-    "stats": {
-      "alive": 0,
-      "dead": 0,
-      "error": 0
-    },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
-    "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_cantho_20261011_023339_alive_1791688295884.csv",
-    "createdAt": 1791689545659,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 25851,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": true,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_danang_20261011_024500_alive_8a91f759601bc86e.csv",
+      "deadFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_danang_20261011_024500_dead_8a91f759601bc86e.csv"
+    }
   },
   {
     "id": "7d137b150c2f3e21",
     "filename": "FixAvatar_leads_cantho_muinhon_20261011_022547.csv",
-    "status": "PENDING",
+    "status": "CANCELED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5702,72 +7572,47 @@
     "stats": {
       "alive": 0,
       "dead": 0,
-      "error": 0
+      "error": 1
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 1,
+    "total": 13,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_cantho_muinhon_20261011_022547.csv",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:33.339Z"
+      },
+      {
+        "message": "⏳ Chờ 2.4s trước khi gọi Apify: https://facebook.com/MomAndBabyCareCanTho",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:33.355Z"
+      },
+      {
+        "message": "Đã hủy tiến trình",
+        "type": "error",
+        "timestamp": "2026-10-11T06:06:34.006Z"
+      },
+      {
+        "message": "⚠️ LỖI Apify: ABORTED",
+        "type": "error",
+        "timestamp": "2026-10-11T06:06:35.758Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_cantho_muinhon_20261011_022547_alive_1791688371553.csv",
     "createdAt": 1791689545659,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
-  },
-  {
-    "id": "c1c88998b29190a9",
-    "filename": "FixAvatar_leads_binhdinh_muinhon_20261011_022104.csv",
-    "status": "PENDING",
-    "concurrency": 1,
-    "headless": true,
-    "checkAlive": false,
-    "checkAliveApify": false,
-    "checkAvatar": false,
-    "checkAvatarApify": true,
-    "monthsToCheck": 6,
-    "minDelay": 2000,
-    "maxDelay": 5000,
-    "stats": {
-      "alive": 0,
-      "dead": 0,
-      "error": 0
-    },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
-    "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_binhdinh_muinhon_20261011_022104_alive_1791688430015.csv",
-    "createdAt": 1791689545659,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
-  },
-  {
-    "id": "92b471e836310860",
-    "filename": "FixAvatar_leads_binhduong_20261011_021106.csv",
-    "status": "PENDING",
-    "concurrency": 1,
-    "headless": true,
-    "checkAlive": false,
-    "checkAliveApify": false,
-    "checkAvatar": false,
-    "checkAvatarApify": true,
-    "monthsToCheck": 6,
-    "minDelay": 2000,
-    "maxDelay": 5000,
-    "stats": {
-      "alive": 0,
-      "dead": 0,
-      "error": 0
-    },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
-    "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_binhduong_20261011_021106_alive_1791688493601.csv",
-    "createdAt": 1791689545659,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 677,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": true,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_cantho_muinhon_20261011_022547_alive_7d137b150c2f3e21.csv",
+      "deadFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_cantho_muinhon_20261011_022547_dead_7d137b150c2f3e21.csv"
+    }
   },
   {
     "id": "d5ab25c0c235f81d",
     "filename": "FixAvatar_leads_binhdinh_20261011_013922.csv",
-    "status": "PENDING",
+    "status": "CANCELED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5780,20 +7625,47 @@
     "stats": {
       "alive": 0,
       "dead": 0,
-      "error": 0
+      "error": 1
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 1,
+    "total": 11,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_binhdinh_20261011_013922.csv",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:35.855Z"
+      },
+      {
+        "message": "⏳ Chờ 4.4s trước khi gọi Apify: https://facebook.com/ilovecococamp",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:35.886Z"
+      },
+      {
+        "message": "Đã hủy tiến trình",
+        "type": "error",
+        "timestamp": "2026-10-11T06:06:36.498Z"
+      },
+      {
+        "message": "⚠️ LỖI Apify: ABORTED",
+        "type": "error",
+        "timestamp": "2026-10-11T06:06:40.304Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_binhdinh_20261011_013922_alive_1791688556442.csv",
     "createdAt": 1791689545660,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 675,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": true,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_binhdinh_20261011_013922_alive_d5ab25c0c235f81d.csv",
+      "deadFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_binhdinh_20261011_013922_dead_d5ab25c0c235f81d.csv"
+    }
   },
   {
     "id": "b67adaa76eaaf99a",
     "filename": "FixAvatar_leads_bacninh_muinhon_20261011_013442.csv",
-    "status": "PENDING",
+    "status": "CANCELED",
     "concurrency": 1,
     "headless": true,
     "checkAlive": false,
@@ -5804,42 +7676,53 @@
     "minDelay": 2000,
     "maxDelay": 5000,
     "stats": {
-      "alive": 0,
+      "alive": 1,
       "dead": 0,
       "error": 0
     },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
+    "completed": 1,
+    "total": 8,
+    "logs": [
+      {
+        "message": "Khởi tạo tiến trình quét file: FixAvatar_leads_bacninh_muinhon_20261011_013442.csv",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:40.407Z"
+      },
+      {
+        "message": "⏳ Chờ 4.7s trước khi gọi Apify: https://facebook.com/viengiaoducngoainguvietnam",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:40.439Z"
+      },
+      {
+        "message": "⚡ Gọi Apify kiểm tra: https://facebook.com/viengiaoducngoainguvietnam",
+        "type": "info",
+        "timestamp": "2026-10-11T06:06:45.133Z"
+      },
+      {
+        "message": "Đã hủy tiến trình",
+        "type": "error",
+        "timestamp": "2026-10-11T06:06:45.626Z"
+      },
+      {
+        "message": "🖼️ Cập nhật Avatar (Apify) thành công",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:50.902Z"
+      },
+      {
+        "message": "✅ ALIVE: https://facebook.com/viengiaoducngoainguvietnam",
+        "type": "success",
+        "timestamp": "2026-10-11T06:06:50.903Z"
+      }
+    ],
     "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_bacninh_muinhon_20261011_013442_alive_1791688617496.csv",
     "createdAt": 1791689545660,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
-  },
-  {
-    "id": "be622c312096b135",
-    "filename": "FixAvatar_leads_bacninh_20261011_011319.csv",
-    "status": "PENDING",
-    "concurrency": 1,
-    "headless": true,
-    "checkAlive": false,
-    "checkAliveApify": false,
-    "checkAvatar": false,
-    "checkAvatarApify": true,
-    "monthsToCheck": 6,
-    "minDelay": 2000,
-    "maxDelay": 5000,
-    "stats": {
-      "alive": 0,
-      "dead": 0,
-      "error": 0
-    },
-    "completed": 0,
-    "total": 0,
-    "logs": [],
-    "filePath": "D:\\05_CODING\\LeadPurify\\backend\\outputs\\leads_bacninh_20261011_011319_alive_1791688692907.csv",
-    "createdAt": 1791689545660,
-    "accumulatedTime": 0,
-    "lastStartedAt": null
+    "accumulatedTime": 5249,
+    "lastStartedAt": null,
+    "resumeFromCheckpoint": false,
+    "hasCheckpoint": true,
+    "downloadLinks": {
+      "aliveFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_bacninh_muinhon_20261011_013442_alive_b67adaa76eaaf99a.csv",
+      "deadFile": "http://localhost:3001/api/download/Partial_FixAvatar_leads_bacninh_muinhon_20261011_013442_dead_b67adaa76eaaf99a.csv"
+    }
   }
 ]
