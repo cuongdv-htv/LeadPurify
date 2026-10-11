@@ -58,8 +58,14 @@ function App() {
   const [apifyKeys, setApifyKeys] = useState([]);
   const [apifyInput, setApifyInput] = useState('');
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
-  const [checkActivityModal, setCheckActivityModal] = useState({ isOpen: false, jobId: null, months: 6 });
   const [apifyConfig, setApifyConfig] = useState({ maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000 });
+  const [jobOptions, setJobOptions] = useState({
+    checkAlive: true,
+    checkAliveApify: false,
+    checkAvatar: true,
+    checkAvatarApify: false,
+    monthsToCheck: 6
+  });
 
   useEffect(() => {
     socket.on('queue_update', (data) => setQueue(data));
@@ -91,6 +97,11 @@ function App() {
     formData.append('file', file);
     formData.append('concurrency', concurrency);
     formData.append('headless', headless);
+    formData.append('checkAlive', jobOptions.checkAlive);
+    formData.append('checkAliveApify', jobOptions.checkAliveApify);
+    formData.append('checkAvatar', jobOptions.checkAvatar);
+    formData.append('checkAvatarApify', jobOptions.checkAvatarApify);
+    formData.append('monthsToCheck', jobOptions.monthsToCheck);
     try {
       await axios.post('http://localhost:3001/api/upload', formData);
     } catch(err) {
@@ -158,23 +169,10 @@ function App() {
     }
   };
 
-  const handleCheckActivity = (jobId) => {
-    setCheckActivityModal({ isOpen: true, jobId, months: 6 });
-  };
-
-  const submitCheckActivity = async () => {
-    const { jobId, months } = checkActivityModal;
-    const monthsToCheck = parseInt(months);
-    if (isNaN(monthsToCheck) || monthsToCheck <= 0) {
-        alert('Số tháng không hợp lệ!');
-        return;
-    }
-    
-    setCheckActivityModal({ isOpen: false, jobId: null, months: 6 });
-
+  const handleFixAvatar = async (jobId) => {
     try {
-        await axios.post(`http://localhost:3001/api/queue/${jobId}/check-activity`, { monthsToCheck });
-        setActiveTab('check6m');
+        await axios.post(`http://localhost:3001/api/queue/${jobId}/fix-avatar`);
+        setActiveTab('queue');
     } catch (e) {
         alert(e.response?.data?.error || 'Có lỗi xảy ra');
     }
@@ -262,9 +260,6 @@ function App() {
             <button className={`btn-outline ${activeTab === 'history' ? 'neon-text-purple' : ''}`} style={{ borderColor: activeTab === 'history' ? 'var(--neon-purple)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'history' ? 'bold' : 'normal' }} onClick={() => setActiveTab('history')}>
                 Lịch sử
             </button>
-            <button className={`btn-outline ${activeTab === 'check6m' ? 'neon-text-purple' : ''}`} style={{ borderColor: activeTab === 'check6m' ? 'var(--neon-purple)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'check6m' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setActiveTab('check6m')}>
-                <Calendar size={16}/> Kiểm tra hoạt động
-            </button>
             <button className={`btn-outline ${activeTab === 'api' ? 'neon-text-cyan' : ''}`} style={{ borderColor: activeTab === 'api' ? 'var(--neon-cyan)' : 'var(--glass-border)', padding: '8px 20px', fontWeight: activeTab === 'api' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setActiveTab('api')}>
                 <Key size={16}/> API Keys
             </button>
@@ -285,7 +280,7 @@ function App() {
 
       <div className="flex gap-4 flex-col" style={{ marginTop: '20px' }}>
         
-        {activeTab !== 'api' && activeTab !== 'check6m' && (
+        {activeTab !== 'api' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -305,7 +300,30 @@ function App() {
                 <Settings size={20} /> Cấu hình Quét mặc định
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                   <input type="checkbox" checked={jobOptions.checkAlive} onChange={e => setJobOptions({...jobOptions, checkAlive: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--neon-cyan)' }} />
+                   Kiểm tra link sống chết
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                   <input type="checkbox" checked={jobOptions.checkAliveApify} onChange={e => setJobOptions({...jobOptions, checkAliveApify: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--neon-cyan)' }} />
+                   Kiểm tra link sống chết bằng Apify
+                </label>
+                {jobOptions.checkAliveApify && (
+                    <div style={{ paddingLeft: '26px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Số tháng hoạt động:</span>
+                        <input type="number" min="1" value={jobOptions.monthsToCheck} onChange={e => setJobOptions({...jobOptions, monthsToCheck: e.target.value})} style={{ width: '60px', padding: '4px', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', color: 'white', borderRadius: '4px' }} />
+                    </div>
+                )}
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                   <input type="checkbox" checked={jobOptions.checkAvatar} onChange={e => setJobOptions({...jobOptions, checkAvatar: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--neon-cyan)' }} />
+                   Kiểm tra link ảnh avatar và sửa
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                   <input type="checkbox" checked={jobOptions.checkAvatarApify} onChange={e => setJobOptions({...jobOptions, checkAvatarApify: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--neon-cyan)' }} />
+                   Kiểm tra link ảnh avatar và sửa bằng Apify
+                </label>
+
+                <div style={{ marginTop: '8px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)' }}>
                     Luồng (Concurrency): <b>{concurrency}</b>
                   </label>
@@ -325,16 +343,16 @@ function App() {
         </div>
         )}
 
-        <div style={{ marginTop: activeTab !== 'api' && activeTab !== 'check6m' ? '32px' : '0' }}>
+        <div style={{ marginTop: activeTab !== 'api' ? '32px' : '0' }}>
             {activeTab !== 'api' && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }} className={activeTab === 'queue' ? "neon-text-cyan" : "neon-text-purple"}>
-                   {activeTab === 'queue' ? 'Hàng đợi tiến trình' : activeTab === 'check6m' ? 'Hàng đợi Kiểm tra 6 tháng' : 'Lịch sử tiến trình'} 
+                   {activeTab === 'queue' ? 'Hàng đợi tiến trình' : 'Lịch sử tiến trình'} 
                    <span style={{ background: activeTab === 'queue' ? 'var(--neon-purple)' : 'var(--neon-cyan)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '1rem' }}>
-                       {activeTab === 'check6m' ? queue.filter(j => j.type === 'CHECK_ACTIVITY').length : activeTab === 'queue' ? queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)).length : queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length}
+                       {activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)).length : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length}
                    </span>
                 </h2>
-                {activeTab === 'history' && queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length > 0 && (
+                {activeTab === 'history' && queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).length > 0 && (
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button onClick={() => handleBatchDownload('alive')} className="btn-outline" style={{ borderColor: '#10b981', color: '#10b981', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Download size={18} /> Tải Link Sống
@@ -349,21 +367,9 @@ function App() {
                 )}
             </div>
             )}
-            
-            {activeTab === 'check6m' && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '20px', background: 'rgba(255,255,255,0.05)', padding: '12px 16px', borderRadius: '8px', borderLeft: '4px solid var(--neon-purple)' }}>
-                    <p style={{ margin: 0, display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                        <span style={{ color: 'var(--neon-purple)' }}><Calendar size={18} /></span>
-                        <span>
-                            <b>Kiểm tra bài viết 6 tháng:</b> Tiến trình này sẽ gọi API của Apify để kiểm tra xem tài khoản có hoạt động (đăng bài) trong 6 tháng qua hay không. Đồng thời, hệ thống sẽ <b>tự động lấy link ảnh đại diện (avatar) mới nhất</b> từ Apify để cập nhật vào cột ảnh (nếu có) hoặc tự tạo cột mới.
-                        </span>
-                    </p>
-                </motion.div>
-            )}
-            
             {activeTab !== 'api' && (
             <AnimatePresence>
-                {(activeTab === 'check6m' ? queue.filter(j => j.type === 'CHECK_ACTIVITY') : activeTab === 'queue' ? queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => b.createdAt - a.createdAt)).map(job => {
+                {(activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status)).sort((a, b) => b.createdAt - a.createdAt)).map(job => {
                     const percent = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
                     return (
                         <motion.div key={job.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, height: 0 }} className="glass-panel p-6" style={{ marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
@@ -373,12 +379,17 @@ function App() {
                             
                             <div className="flex justify-between items-center mb-4">
                                 <div>
-                                    <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                                         {job.filename}
                                         <span style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)' }}>
                                             {job.status}
                                         </span>
                                         <JobTimer job={job} />
+                                        {job.checkAvatarApify && activeTab === 'history' && (
+                                            <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }} title="Tiến trình này đã trích xuất/sửa link ảnh Avatar thông qua Apify API">
+                                                <CheckCircle size={12}/> Đã sửa ảnh bằng Apify
+                                            </span>
+                                        )}
                                     </h3>
                                     <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <span>Đã quét: {job.completed}/{job.total} (Luồng: {job.concurrency})</span>
@@ -422,14 +433,14 @@ function App() {
                                             <a href={job.downloadLinks.deadFile} download className="btn-outline" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '6px 12px', borderRadius: '0 4px 4px 0', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Link Chết</a>
                                         </div>
                                     )}
-                                    {job.downloadLinks.checkedFile && (
+                                     {job.downloadLinks.checkedFile && (
                                         <div style={{ display: 'flex' }}>
                                             <a href={job.downloadLinks.checkedFile} download className="btn-outline" style={{ borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', padding: '6px 12px', borderRadius: '4px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}><Download size={14}/> Tải kết quả</a>
                                         </div>
                                     )}
-                                    {job.status === 'COMPLETED' && job.downloadLinks.aliveFile && !job.downloadLinks.checkedFile && job.type !== 'CHECK_ACTIVITY' && (
-                                        <button onClick={() => handleCheckActivity(job.id)} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '6px 12px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}>
-                                            <Calendar size={14} /> Kiểm tra hoạt động
+                                    {activeTab === 'history' && !job.checkAvatarApify && (job.status === 'COMPLETED' || job.status === 'ERROR') && (
+                                        <button onClick={() => handleFixAvatar(job.id)} className="btn-outline" style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '6px 12px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.9rem' }}>
+                                            <RefreshCw size={14} /> Chạy sửa ảnh bằng Apify
                                         </button>
                                     )}
                                 </div>
@@ -457,9 +468,9 @@ function App() {
             </AnimatePresence>
             )}
             
-            {activeTab !== 'api' && (activeTab === 'check6m' ? queue.filter(j => j.type === 'CHECK_ACTIVITY') : activeTab === 'queue' ? queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => j.type !== 'CHECK_ACTIVITY' && ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).length === 0 && (
+            {activeTab !== 'api' && (activeTab === 'queue' ? queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED'].includes(j.status)) : queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED'].includes(j.status))).length === 0 && (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', padding: '40px', border: '1px dashed var(--glass-border)', borderRadius: '16px' }}>
-                    Chưa có tiến trình nào trong {activeTab === 'queue' ? 'hàng đợi' : activeTab === 'check6m' ? 'Kiểm tra hoạt động' : 'lịch sử'}.{activeTab === 'queue' ? <><br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!</> : ''}
+                    Chưa có tiến trình nào trong {activeTab === 'queue' ? 'hàng đợi' : 'lịch sử'}.{activeTab === 'queue' ? <><br/>Hãy kéo thả một vài file CSV vào khu vực phía trên!</> : ''}
                 </div>
             )}
             
@@ -577,59 +588,6 @@ function App() {
            mode="download"
         />
       )}
-
-      {/* Check Activity Custom Modal */}
-      <AnimatePresence>
-      {checkActivityModal.isOpen && (
-        <div className="modal-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.7)', zIndex: 9999 }}>
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }} 
-            animate={{ scale: 1, opacity: 1 }} 
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="glass-panel p-6"
-            style={{ width: '400px', maxWidth: '90%', display: 'flex', flexDirection: 'column', gap: '20px' }}
-          >
-            <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }} className="neon-text-cyan">
-               <Calendar size={20} /> Tuỳ chỉnh thời gian kiểm tra
-            </h3>
-            
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                Hệ thống sẽ gọi API Apify để quét và kiểm tra xem các fanpage/post có hoạt động trong khoảng thời gian này không.
-            </p>
-
-            <div>
-                <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Số tháng kiểm tra (mặc định: 6)</label>
-                <input 
-                    type="number" 
-                    value={checkActivityModal.months} 
-                    onChange={(e) => setCheckActivityModal({...checkActivityModal, months: e.target.value})}
-                    className="glass-input" 
-                    style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '8px', fontSize: '1rem', outline: 'none' }} 
-                    min="1"
-                    autoFocus
-                    onKeyDown={(e) => { if(e.key === 'Enter') submitCheckActivity() }}
-                />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
-                <button 
-                    onClick={() => setCheckActivityModal({ isOpen: false, jobId: null, months: 6 })} 
-                    style={{ padding: '8px 16px', background: 'transparent', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
-                >
-                    Huỷ
-                </button>
-                <button 
-                    onClick={submitCheckActivity} 
-                    className="btn-outline"
-                    style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', padding: '8px 24px', fontWeight: 'bold' }}
-                >
-                    Bắt đầu chạy
-                </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-      </AnimatePresence>
     </div>
   );
 }

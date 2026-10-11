@@ -208,9 +208,6 @@ function getFacebookAvatarUrl(fbLink) {
 }
 
 async function runJob(job) {
-  if (job.type === 'CHECK_ACTIVITY') {
-      return runCheckActivityJob(job);
-  }
   pushLog(job, `Khởi tạo tiến trình quét file: ${job.filename}`, 'info');
   const csvFile = fs.readFileSync(job.filePath, 'utf8');
   
@@ -230,6 +227,9 @@ async function runJob(job) {
           if (!fbCol) throw new Error('Không tìm thấy cột chứa link Facebook');
 
           let imgCol = Object.keys(rows[0]).find(c => c.toLowerCase().includes('image') || c.toLowerCase().includes('avatar') || c.toLowerCase().includes('ảnh') || c.toLowerCase().includes('pic'));
+          if (!imgCol && (job.checkAvatar || job.checkAvatarApify)) {
+             imgCol = 'Avatar'; // Create column if not exists
+          }
 
           job.total = rows.length;
           broadcastQueue();
@@ -237,11 +237,14 @@ async function runJob(job) {
           let aliveRows = [];
           let deadRows = [];
           
-          const browser = await puppeteer.launch({ 
-            headless: job.headless ? 'new' : false,
-            protocolTimeout: 600000,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-notifications']
-          });
+          let browser = null;
+          if (job.checkAlive || job.checkAvatar) {
+              browser = await puppeteer.launch({ 
+                headless: job.headless ? 'new' : false,
+                protocolTimeout: 600000,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-notifications']
+              });
+          }
 
           const chunks = [];
           for (let i = 0; i < rows.length; i += job.concurrency) chunks.push(rows.slice(i, i + job.concurrency));
@@ -273,101 +276,187 @@ async function runJob(job) {
                    return;
                 }
                 
-                let page;
-                try {
-                  await checkState();
-                  page = await browser.newPage();
-                  const fullUrl = fbMatch.startsWith('http') ? fbMatch : `https://${fbMatch}`;
-                  
-                  // Chờ random thời gian trước khi truy cập để mô phỏng người thật
-                  const minD = job.minDelay || 2000;
-                  const maxD = Math.max(job.maxDelay || 5000, minD); // Đảm bảo max >= min
-                  const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
-                  
-                  pushLog(job, `⏳ Chờ ${(randomDelay/1000).toFixed(1)}s trước khi mở: ${fullUrl}`, 'info');
-                  await new Promise(r => setTimeout(r, randomDelay));
-                  await checkState();
+                const fullUrl = fbMatch.startsWith('http') ? fbMatch : `https://${fbMatch}`;
+                let isDead = false;
+                let hasError = false;
 
-                  pushLog(job, `⚡ Đang kiểm tra: ${fullUrl}`, 'info');
-                  
-                  await page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-                  await checkState();
-                  await new Promise(r => setTimeout(r, 2000));
-                  await checkState();
-                  
-                  const pageText = await page.evaluate(() => document.body.innerText);
-                  const isDead = pageText.includes("isn't available") || 
-                                 pageText.includes("không hiển thị") || 
-                                 pageText.includes("Không tìm thấy trang") ||
-                                 pageText.includes("This content isn't available") ||
-                                 pageText.includes("Nội dung này hiện không") ||
-                                 pageText.includes("This page isn");
-                                 
-                  if (isDead) {
+                // --- 1. APIFY CHECKS ---
+                if (job.checkAliveApify || job.checkAvatarApify) {
+                    try {
+                        let token = getApifyKey();
+                        if (!token) throw new Error('Hết API Key Apify');
+                        
+                        const minD = job.minDelay || 2000;
+                        const maxD = Math.max(job.maxDelay || 5000, minD);
+                        const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
+                        pushLog(job, `⏳ Chờ ${(randomDelay/1000).toFixed(1)}s trước khi gọi Apify: ${fullUrl}`, 'info');
+                        await new Promise(r => setTimeout(r, randomDelay));
+                        await checkState();
+
+                        pushLog(job, `⚡ Gọi Apify kiểm tra: ${fullUrl}`, 'info');
+                        const data = await callApify(fullUrl, token);
+                        incrementKeyUsage(token);
+                        
+                        let apifyData = data && data.length > 0 ? data[0] : null;
+
+                        if (job.checkAliveApify) {
+                            if (apifyData && apifyData.time) {
+                                row['Latest_Post_Date'] = apifyData.time;
+                                const postDate = new Date(apifyData.time);
+                                const targetDate = new Date();
+                                targetDate.setMonth(targetDate.getMonth() - (job.monthsToCheck || 6));
+                                if (postDate >= targetDate) {
+                                    row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'TRUE';
+                                    isDead = false;
+                                } else {
+                                    row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'FALSE';
+                                    isDead = true; 
+                                }
+                            } else {
+                                row['Latest_Post_Date'] = 'NOT_FOUND';
+                                row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'UNKNOWN';
+                                isDead = true; 
+                            }
+                        }
+
+                        if (job.checkAvatarApify && apifyData) {
+                            let extractedAvatar = null;
+                            const post = apifyData;
+                            if (post.user && post.user.profilePic) extractedAvatar = post.user.profilePic;
+                            else if (post.user && post.user.profile_pic) extractedAvatar = post.user.profile_pic;
+                            else if (post.author && post.author.profileUrl) extractedAvatar = post.author.profileUrl;
+                            else if (post.author && post.author.profilePicture) extractedAvatar = post.author.profilePicture;
+                            else if (post.author && post.author.profile_picture) extractedAvatar = post.author.profile_picture;
+                            else if (post.page && post.page.profilePic) extractedAvatar = post.page.profilePic;
+                            else if (post.page && post.page.profilePicture) extractedAvatar = post.page.profilePicture;
+                            
+                            if (extractedAvatar) {
+                                row[imgCol] = extractedAvatar;
+                                pushLog(job, `🖼️ Cập nhật Avatar (Apify) thành công`, 'success');
+                            }
+                        }
+
+                    } catch (apiErr) {
+                        if (apiErr.message.includes('403') || apiErr.message.includes('429')) {
+                            pushLog(job, `⚠️ API Key lỗi/hết hạn, đánh dấu hết hạn...`, 'warning');
+                            let token = getApifyKey();
+                            if (token) markKeyAsExpired(token);
+                        } else {
+                            pushLog(job, `⚠️ LỖI Apify: ${apiErr.message}`, 'error');
+                        }
+                        hasError = true;
+                    }
+                }
+
+                // --- 2. PUPPETEER CHECKS ---
+                let page;
+                if (browser && !hasError) {
+                    try {
+                        await checkState();
+                        page = await browser.newPage();
+                        
+                        const minD = job.minDelay || 2000;
+                        const maxD = Math.max(job.maxDelay || 5000, minD);
+                        const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
+                        
+                        pushLog(job, `⏳ Chờ ${(randomDelay/1000).toFixed(1)}s trước khi mở (Puppeteer): ${fullUrl}`, 'info');
+                        await new Promise(r => setTimeout(r, randomDelay));
+                        await checkState();
+
+                        pushLog(job, `⚡ Đang kiểm tra (Puppeteer): ${fullUrl}`, 'info');
+                        await page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                        await checkState();
+                        await new Promise(r => setTimeout(r, 2000));
+                        await checkState();
+
+                        if (job.checkAlive) {
+                            const pageText = await page.evaluate(() => document.body.innerText);
+                            const pDead = pageText.includes("isn't available") || 
+                                           pageText.includes("không hiển thị") || 
+                                           pageText.includes("Không tìm thấy trang") ||
+                                           pageText.includes("This content isn't available") ||
+                                           pageText.includes("Nội dung này hiện không") ||
+                                           pageText.includes("This page isn");
+                            if (pDead) {
+                                isDead = true; 
+                            } else {
+                                if (!job.checkAliveApify) {
+                                    isDead = false;
+                                }
+                            }
+                        }
+
+                        if (job.checkAvatar && !isDead) {
+                            let imageWorks = false;
+                            let currentImgUrl = row[imgCol];
+                            
+                            const graphApiAvatar = getFacebookAvatarUrl(fullUrl); 
+                            if (graphApiAvatar) {
+                                row[imgCol] = graphApiAvatar;
+                                imageWorks = true;
+                                pushLog(job, `✅ Lưu ảnh đại diện vĩnh viễn bằng Graph API`, 'success');
+                            }
+                            
+                            if (!imageWorks && currentImgUrl) {
+                                const imgPage = await browser.newPage();
+                                const imgRes = await imgPage.goto(currentImgUrl, { timeout: 15000 }).catch(() => null);
+                                if (imgRes && imgRes.status() === 200) {
+                                    const ct = imgRes.headers()['content-type'];
+                                    if (ct && ct.startsWith('image/')) {
+                                        imageWorks = true;
+                                    }
+                                }
+                                await imgPage.close();
+                            }
+                            
+                            if (!imageWorks) {
+                                pushLog(job, `Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...`, 'warning');
+                                const newAvatar = await page.evaluate(() => {
+                                    const meta = document.querySelector('meta[property="og:image"]');
+                                    if (meta && meta.content) return meta.content;
+                                    const svgImg = document.querySelector('svg[role="img"] image');
+                                    if (svgImg) return svgImg.getAttribute('xlink:href') || svgImg.getAttribute('href');
+                                    return null;
+                                });
+                                
+                                if (newAvatar) {
+                                    row[imgCol] = newAvatar;
+                                    pushLog(job, `✅ Cập nhật ảnh đại diện thành công`, 'success');
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        if (err.message === 'ABORTED') throw err;
+                        hasError = true;
+                        pushLog(job, `⚠️ LỖI (Puppeteer): ${fbMatch} - ${err.message}`, 'warning');
+                    } finally {
+                        if (page && !page.isClosed()) await page.close();
+                    }
+                }
+
+                if (hasError) {
+                    aliveRows.push(row); // Keep in output but increment error stats
+                    job.stats.error++;
+                } else if (isDead) {
                     deadRows.push(row);
                     job.stats.dead++;
                     pushLog(job, `❌ DEAD: ${fullUrl}`, 'error');
-                  } else {
-                    let imageWorks = false;
-                    let currentImgUrl = imgCol ? row[imgCol] : null;
-                    
-                    const graphApiAvatar = getFacebookAvatarUrl(fullUrl); 
-                    if (graphApiAvatar) {
-                        if (!imgCol) imgCol = 'Avatar';
-                        row[imgCol] = graphApiAvatar;
-                        imageWorks = true;
-                        pushLog(job, `✅ Lưu ảnh đại diện vĩnh viễn bằng Graph API`, 'success');
-                    }
-                    
-                    if (!imageWorks && currentImgUrl) {
-                        const imgPage = await browser.newPage();
-                        const imgRes = await imgPage.goto(currentImgUrl, { timeout: 15000 }).catch(() => null);
-                        if (imgRes && imgRes.status() === 200) {
-                            const ct = imgRes.headers()['content-type'];
-                            if (ct && ct.startsWith('image/')) {
-                                imageWorks = true;
-                            }
-                        }
-                        await imgPage.close();
-                    }
-                    
-                    if (!imageWorks) {
-                        pushLog(job, `Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...`, 'warning');
-                        const newAvatar = await page.evaluate(() => {
-                            const meta = document.querySelector('meta[property="og:image"]');
-                            if (meta && meta.content) return meta.content;
-                            const svgImg = document.querySelector('svg[role="img"] image');
-                            if (svgImg) return svgImg.getAttribute('xlink:href') || svgImg.getAttribute('href');
-                            return null;
-                        });
-                        
-                        if (newAvatar) {
-                            if (!imgCol) imgCol = 'Avatar';
-                            row[imgCol] = newAvatar;
-                            pushLog(job, `✅ Cập nhật ảnh đại diện thành công`, 'success');
-                        }
-                    }
-
+                } else {
                     aliveRows.push(row);
                     job.stats.alive++;
-                    pushLog(job, `✅ ALIVE: ${fullUrl}`, 'success');
-                  }
-                } catch (err) {
-                  if (err.message === 'ABORTED') throw err;
-                  aliveRows.push(row);
-                  job.stats.error++;
-                  pushLog(job, `⚠️ LỖI: ${fbMatch} - ${err.message}`, 'warning');
-                } finally {
-                  if (page && !page.isClosed()) await page.close();
-                  job.completed++;
-                  broadcastQueue();
+                    if (!job.checkAliveApify || row[`Active_Within_${job.monthsToCheck || 6}_Months`] === 'TRUE') {
+                        pushLog(job, `✅ ALIVE: ${fullUrl}`, 'success');
+                    }
                 }
+
+                job.completed++;
+                broadcastQueue();
               }));
             }
           } catch (e) {
-            if (e.message !== 'ABORTED') throw e;
+            if (e.message !== 'ABORTED' && e.message !== 'Hết API Key Apify') throw e;
           } finally {
-            await browser.close();
+            if (browser) await browser.close();
             
             if (job.status !== 'REMOVED') {
                 const ts = new Date().getTime();
@@ -403,161 +492,6 @@ async function runJob(job) {
 
 app.get('/api/queue', (req, res) => res.json(queue));
 
-async function runCheckActivityJob(job) {
-  const checkMonths = job.monthsToCheck || 6;
-  pushLog(job, `Khởi tạo tiến trình Check hoạt động (${checkMonths} tháng): ${job.filename}`, 'info');
-  const csvFile = fs.readFileSync(job.filePath, 'utf8');
-  
-  return new Promise((resolve, reject) => {
-    Papa.parse(csvFile, {
-      header: true, skipEmptyLines: true,
-      complete: async (results) => {
-        try {
-          const rows = results.data;
-          if (rows.length === 0) throw new Error('File CSV rỗng');
-          
-          let fbCol = Object.keys(rows[0]).find(c => c.toLowerCase().includes('facebook'));
-          if (!fbCol) {
-            const rowWithFb = rows.find(r => Object.values(r).some(v => v && v.includes('facebook.com')));
-            if (rowWithFb) fbCol = Object.keys(rowWithFb).find(k => rowWithFb[k] && rowWithFb[k].includes('facebook.com'));
-          }
-          if (!fbCol) throw new Error('Không tìm thấy cột chứa link Facebook');
-
-          let imgCol = Object.keys(rows[0]).find(c => c.toLowerCase().includes('image') || c.toLowerCase().includes('avatar') || c.toLowerCase().includes('ảnh') || c.toLowerCase().includes('pic'));
-          if (!imgCol) imgCol = 'Avatar';
-
-          job.total = rows.length;
-          broadcastQueue();
-          let checkedRows = [];
-          
-          const checkState = async () => {
-             while (job.status === 'PAUSED') await new Promise(r => setTimeout(r, 1000));
-             if (job.status === 'CANCELED' || job.status === 'REMOVED') throw new Error('ABORTED');
-          };
-
-          try {
-            for (const row of rows) {
-                await checkState();
-                
-                let url = row[fbCol];
-                let fbMatch = null;
-                const match = JSON.stringify(row).match(/(?:https?:\/\/)?(?:www\.)?facebook\.com\/[^\s,"']+/i);
-                if (match) fbMatch = match[0];
-                else if (url && typeof url === 'string') {
-                    const uM = url.match(/(?:https?:\/\/)?(?:www\.)?facebook\.com\/[^\s,"']+/i);
-                    if (uM) fbMatch = uM[0];
-                }
-
-                if (!fbMatch) {
-                   checkedRows.push(row);
-                   job.completed++;
-                   broadcastQueue();
-                   continue;
-                }
-
-                const fullUrl = fbMatch.startsWith('http') ? fbMatch : `https://${fbMatch}`;
-                
-                const minD = job.minDelay || 2000;
-                const maxD = Math.max(job.maxDelay || 5000, minD);
-                const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
-                pushLog(job, `⏳ Chờ ${(randomDelay/1000).toFixed(1)}s trước khi gọi Apify cho: ${fullUrl}`, 'info');
-                await new Promise(r => setTimeout(r, randomDelay));
-                await checkState();
-
-                let token = getApifyKey();
-                if (!token) {
-                    pushLog(job, `❌ Đã hết sạch API Key hợp lệ trong apify_keys.json`, 'error');
-                    throw new Error('Hết API Key Apify');
-                }
-
-                pushLog(job, `⚡ Gọi Apify kiểm tra: ${fullUrl}`, 'info');
-                try {
-                    const data = await callApify(fullUrl, token);
-                    incrementKeyUsage(token);
-                    
-                    let active = false;
-                    let lastPostDate = '';
-                    if (data && data.length > 0) {
-                        const post = data[0];
-                        if (post.time) {
-                            lastPostDate = post.time;
-                            const postDate = new Date(post.time);
-                            const targetDate = new Date();
-                            targetDate.setMonth(targetDate.getMonth() - checkMonths);
-                            if (postDate >= targetDate) active = true;
-                        }
-
-                        let avatarUrl = null;
-                        if (post.user && post.user.profilePic) avatarUrl = post.user.profilePic;
-                        else if (post.user && post.user.profile_pic) avatarUrl = post.user.profile_pic;
-                        else if (post.author && post.author.profileUrl) avatarUrl = post.author.profileUrl;
-                        else if (post.author && post.author.profilePicture) avatarUrl = post.author.profilePicture;
-                        else if (post.author && post.author.profile_picture) avatarUrl = post.author.profile_picture;
-                        else if (post.page && post.page.profilePic) avatarUrl = post.page.profilePic;
-                        else if (post.page && post.page.profilePicture) avatarUrl = post.page.profilePicture;
-                        
-                        if (avatarUrl) {
-                            row[imgCol] = avatarUrl;
-                            pushLog(job, `🖼️ Cập nhật Avatar thành công`, 'success');
-                        }
-                    }
-                    
-                    row['Latest_Post_Date'] = lastPostDate;
-                    row[`Active_Within_${checkMonths}_Months`] = active ? 'TRUE' : 'FALSE';
-                    
-                    if (active) {
-                        job.stats.alive++;
-                        pushLog(job, `✅ Sống (có bài đăng): ${lastPostDate.substring(0,10)}`, 'success');
-                    } else {
-                        job.stats.dead++;
-                        pushLog(job, `❌ Không có bài đăng trong ${checkMonths} tháng`, 'error');
-                    }
-                } catch (apiErr) {
-                    if (apiErr.message.includes('403') || apiErr.message.includes('429')) {
-                        pushLog(job, `⚠️ API Key lỗi/hết hạn, đánh dấu hết hạn...`, 'warning');
-                        markKeyAsExpired(token);
-                    } else {
-                        pushLog(job, `⚠️ LỖI Apify: ${apiErr.message}`, 'error');
-                    }
-                    job.stats.error++;
-                    row['Latest_Post_Date'] = 'LỖI_API';
-                    row[`Active_Within_${checkMonths}_Months`] = 'UNKNOWN';
-                }
-                
-                checkedRows.push(row);
-                job.completed++;
-                broadcastQueue();
-            }
-          } catch (e) {
-            if (e.message !== 'ABORTED' && e.message !== 'Hết API Key Apify') throw e;
-          } finally {
-            if (job.status !== 'REMOVED') {
-                const ts = new Date().getTime();
-                const baseName = job.filename.replace(/\.[^/.]+$/, "");
-                const outFilename = `${baseName}_checked_${ts}.csv`;
-                const outPath = path.join(__dirname, 'outputs', outFilename);
-                fs.writeFileSync(outPath, Papa.unparse(checkedRows));
-                
-                job.downloadLinks = job.downloadLinks || {};
-                job.downloadLinks.checkedFile = `http://localhost:3001/api/download/${encodeURIComponent(outFilename)}`;
-                
-                if (job.status !== 'CANCELED') job.status = 'COMPLETED';
-                if (job.lastStartedAt) {
-                    job.accumulatedTime = (job.accumulatedTime || 0) + (Date.now() - job.lastStartedAt);
-                    job.lastStartedAt = null;
-                }
-                pushLog(job, `🎉 Hoàn thành Check hoạt động!`, 'success');
-            }
-            resolve();
-          }
-        } catch (err) {
-          reject(err);
-        }
-      }
-    });
-  });
-}
-
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   const job = {
@@ -566,6 +500,11 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
     status: 'PENDING',
     concurrency: parseInt(req.body.concurrency) || 3,
     headless: req.body.headless === 'true' || req.body.headless === true,
+    checkAlive: req.body.checkAlive === 'true' || req.body.checkAlive === true,
+    checkAliveApify: req.body.checkAliveApify === 'true' || req.body.checkAliveApify === true,
+    checkAvatar: req.body.checkAvatar === 'true' || req.body.checkAvatar === true,
+    checkAvatarApify: req.body.checkAvatarApify === 'true' || req.body.checkAvatarApify === true,
+    monthsToCheck: parseInt(req.body.monthsToCheck) || 6,
     minDelay: parseInt(req.body.minDelay) || 2000,
     maxDelay: parseInt(req.body.maxDelay) || 5000,
     stats: { alive: 0, dead: 0, error: 0 },
@@ -589,35 +528,41 @@ app.post('/api/clear-history', (req, res) => {
   res.json({ success: true });
 });
 
-
-
-app.post('/api/queue/:id/check-activity', (req, res) => {
+app.post('/api/queue/:id/fix-avatar', (req, res) => {
   const { id } = req.params;
   const historyJob = queue.find(j => j.id === id);
-  if (!historyJob || !historyJob.downloadLinks || !historyJob.downloadLinks.aliveFile) {
-      return res.status(400).json({ error: 'Job không hợp lệ hoặc chưa có file Alive' });
+  if (!historyJob) {
+      return res.status(400).json({ error: 'Không tìm thấy tiến trình' });
   }
   
-  const monthsToCheck = parseInt(req.body.monthsToCheck) || 6;
-  const filename = historyJob.downloadLinks.aliveFile.split('/').pop();
-  const filePath = path.join(__dirname, 'outputs', decodeURIComponent(filename));
-  const config = getConfig();
+  let targetFilePath = historyJob.filePath;
+  if (historyJob.downloadLinks && historyJob.downloadLinks.aliveFile) {
+      const filename = historyJob.downloadLinks.aliveFile.split('/').pop();
+      const p = path.join(__dirname, 'outputs', decodeURIComponent(filename));
+      if (fs.existsSync(p)) {
+          targetFilePath = p;
+      }
+  }
   
+  const config = getConfig();
   const job = {
     id: crypto.randomBytes(8).toString('hex'),
-    type: 'CHECK_ACTIVITY',
-    monthsToCheck: monthsToCheck,
-    filename: `Check${monthsToCheck}m_${historyJob.filename}`,
+    filename: `FixAvatar_${historyJob.filename}`,
     status: 'PENDING',
     concurrency: 1, // Chạy 1 luồng để xoay vòng API an toàn
     headless: true,
+    checkAlive: false,
+    checkAliveApify: false,
+    checkAvatar: false,
+    checkAvatarApify: true,
+    monthsToCheck: 6,
     minDelay: config.minDelay,
     maxDelay: config.maxDelay,
     stats: { alive: 0, dead: 0, error: 0 },
     completed: 0,
     total: 0,
     logs: [],
-    filePath: filePath,
+    filePath: targetFilePath,
     createdAt: Date.now(),
     accumulatedTime: 0,
     lastStartedAt: null
