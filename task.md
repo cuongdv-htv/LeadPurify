@@ -4,9 +4,18 @@ Tệp này dùng để quản lý các task (nhiệm vụ) trong dự án LeadPu
 Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi code, các bước thực hiện chi tiết phải được ghi chép vào đây trước khi bắt đầu code thực tế.
 
 ## Các Task Đang Thực Hiện
-- [ ] Chưa có task nào.
+*Hiện không có task nào đang chờ thực hiện.*
 
 ## Task Đã Hoàn Thành
+- [x] Triển khai toàn diện cải tiến trải nghiệm người dùng (UX/UI First-Time User Audit):
+  - [x] 1. Backend (`server.js`): Thêm endpoint `GET /api/download-template` xuất file CSV mẫu chuẩn UTF-8 BOM và mở rộng bộ nhận diện tên cột Facebook linh hoạt (`facebook`, `fb`, `link_fb`, `link_facebook`, `facebook_url`, `url`, `link`, v.v.), hỗ trợ chọn cột thủ công qua `facebookColumn` & `avatarColumn`.
+  - [x] 2. Frontend (`LiquidAlertModal.jsx` & `LiquidConfirmModal.jsx`): Chuyển đổi 100% Toast thông báo sang Hộp thoại Modal nội bộ phong cách Liquid Glass trung tâm màn hình (Alert, Success, Error, Warning) có nút "Đã hiểu", hiệu ứng mờ nền backdrop blur, thay thế triệt để Toast và toàn bộ `window.alert` / `window.confirm`.
+  - [x] 3. Frontend (`App.jsx`): Thêm nút "Tải file mẫu CSV" tại Dropzone, xử lý bắt lỗi và Toast khi upload tệp, thông báo số lượng tệp khi kéo thả hàng loạt.
+  - [x] 4. Frontend (`App.jsx`): Tinh chỉnh Tab API Keys (thêm banner giải thích tính năng cốt lõi chạy 100% miễn phí không cần API Key, giảm mức độ căng thẳng của cảnh báo hết hạn token sang tông hổ phách nhẹ nhàng).
+  - [x] 5. Frontend (`App.jsx`): Thân thiện hóa thuật ngữ & micro-copy ("Chế độ chạy ẩn (Headless)" -> "Chế độ ẩn trình duyệt (Chạy ngầm)", gợi ý thanh trượt luồng xử lý, tooltip phân biệt "Xóa lịch sử" và "Dọn dẹp ổ cứng").
+  - [x] 6. Frontend (`CsvEditorModal.jsx`): Bổ sung bộ nhận diện & gán cột Facebook / Avatar (`Column Mapper`) trực quan, tích hợp ô tìm kiếm lọc dòng nhanh trong bảng CSV.
+  - [x] 7. Frontend (`App.jsx`): Bổ sung thanh thống kê Mini-Dashboard (Tổng lead đã quét, Tỷ lệ Sống %, Số Avatar đã sửa HD, Tệp hoàn tất) luôn hiển thị trực quan.
+  - [x] 8. Kiểm thử toàn diện qua trình duyệt (browser subagent), kiểm tra giao diện, bắt lỗi và xác nhận hệ thống vận hành hoàn hảo.
 - [x] Kiểm tra lại toàn bộ các chức năng download và bổ sung hậu tố timestamp:
   - [x] 1. Backend (`server.js`): Xây dựng các hàm helper `getFormattedTimestamp(date)` sinh timestamp chuẩn `YYYYMMDD_HHmmss`, `cleanBaseFilename(filename)` làm sạch tiền tố/hậu tố lặp lại và `formatDownloadFilename(filename, stat)` gắn nhãn thời gian chuẩn hóa.
   - [x] 2. Backend (`server.js`): Cập nhật CORS với `exposedHeaders: ['Content-Disposition']` giúp frontend đọc được filename từ response header.

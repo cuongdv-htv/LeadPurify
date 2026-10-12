@@ -23,10 +23,16 @@ import {
   Sliders,
   FileSpreadsheet,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  HelpCircle,
+  Activity,
+  FileDown,
+  CheckCircle2
 } from 'lucide-react';
 import './index.css';
 import CsvEditorModal from './components/CsvEditorModal';
+import LiquidAlertModal from './components/LiquidAlertModal';
+import LiquidConfirmModal from './components/LiquidConfirmModal';
 
 const socket = io('http://localhost:3001');
 
@@ -115,6 +121,72 @@ function App() {
     monthsToCheck: 6
   });
 
+  // Hệ thống Liquid Alert Modal (thay thế Toast theo yêu cầu người dùng)
+  const [alertModalConfig, setAlertModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info',
+    buttonText: 'Đã hiểu'
+  });
+
+  const showAlert = (message, type = 'info', title = null) => {
+    let defaultTitle = 'Thông báo';
+    if (type === 'success') defaultTitle = 'Thành công';
+    else if (type === 'error') defaultTitle = 'Đã xảy ra lỗi';
+    else if (type === 'warning') defaultTitle = 'Cảnh báo';
+    else if (type === 'info') defaultTitle = 'Thông báo';
+
+    setAlertModalConfig({
+      isOpen: true,
+      title: title || defaultTitle,
+      message: String(message || ''),
+      type,
+      buttonText: 'Đã hiểu'
+    });
+  };
+
+  const closeAlert = () => {
+    setAlertModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
+
+  // Toàn bộ thông báo được kích hoạt bằng Modal trung tâm
+  const showToast = showAlert;
+
+  // Hệ thống Liquid Confirm Modal
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Xác nhận',
+    tone: 'danger',
+    isLoading: false,
+    onConfirm: () => {}
+  });
+
+  const openConfirm = ({ title, message, confirmText = 'Xác nhận', tone = 'danger', onConfirm }) => {
+    setConfirmConfig({
+      isOpen: true,
+      title,
+      message,
+      confirmText,
+      tone,
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          await onConfirm();
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isOpen: false, isLoading: false }));
+        }
+      }
+    });
+  };
+
+  const closeConfirm = () => {
+    setConfirmConfig(prev => ({ ...prev, isOpen: false, isLoading: false }));
+  };
+
   const fetchQueueData = () => {
     axios.get('http://localhost:3001/api/queue').then(res => setQueue(res.data)).catch(console.error);
   };
@@ -156,7 +228,12 @@ function App() {
     };
   }, []);
 
-  const uploadFileDirectly = async (file) => {
+  const handleDownloadTemplate = () => {
+    window.open('http://localhost:3001/api/download-template', '_blank');
+    showToast('Đang tải tệp CSV mẫu chuẩn...', 'info', 'Tải file mẫu');
+  };
+
+  const uploadFileDirectly = async (file, options = {}) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('concurrency', concurrency);
@@ -165,10 +242,15 @@ function App() {
     formData.append('checkAliveApify', jobOptions.checkAliveApify);
     formData.append('checkAvatar', jobOptions.checkAvatar);
     formData.append('monthsToCheck', jobOptions.monthsToCheck);
+    if (options.facebookColumn) formData.append('facebookColumn', options.facebookColumn);
+    if (options.avatarColumn) formData.append('avatarColumn', options.avatarColumn);
     try {
       await axios.post('http://localhost:3001/api/upload', formData);
+      showToast(`Đã thêm tệp "${file.name}" vào hàng đợi thành công!`, 'success');
     } catch(err) {
       console.error(err);
+      const errMsg = err.response?.data?.error || err.message || 'Lỗi khi tải tệp lên';
+      showToast(`Không thể tải tệp "${file.name}": ${errMsg}`, 'error', 'Lỗi tải tệp');
     }
   };
 
@@ -179,6 +261,7 @@ function App() {
     if (files.length === 1) {
       setPreviewFile(files[0]);
     } else {
+      showToast(`Đang tải lên ${files.length} tệp vào hàng đợi...`, 'info', 'Tải nhiều tệp');
       for (let i = 0; i < files.length; i++) {
         await uploadFileDirectly(files[i]);
       }
@@ -186,18 +269,36 @@ function App() {
     e.target.value = ''; 
   };
 
-  const handleConfirmUpload = async (newFile) => {
+  const handleConfirmUpload = async (newFile, options = {}) => {
     setPreviewFile(null);
-    await uploadFileDirectly(newFile);
+    await uploadFileDirectly(newFile, options);
   };
 
   const jobAction = async (id, action) => {
     if (action === 'remove') {
-      if (!window.confirm('Bạn có chắc muốn xóa tiến trình này và tất cả các tệp kết quả / tệp gốc liên quan khỏi ổ cứng không?')) {
-        return;
-      }
+      openConfirm({
+        title: 'Xóa tiến trình',
+        message: 'Bạn có chắc muốn xóa tiến trình này và tất cả các tệp kết quả / tệp gốc liên quan khỏi ổ cứng không?',
+        confirmText: 'Xóa vĩnh viễn',
+        tone: 'danger',
+        onConfirm: async () => {
+          await axios.post(`http://localhost:3001/api/queue/${id}/remove`);
+          showToast('Đã xóa tiến trình và dọn dẹp dữ liệu liên quan', 'success');
+        }
+      });
+      return;
     }
-    await axios.post(`http://localhost:3001/api/queue/${id}/${action}`);
+    
+    try {
+      await axios.post(`http://localhost:3001/api/queue/${id}/${action}`);
+      if (action === 'pause') showToast('Đã tạm dừng tiến trình', 'warning');
+      else if (action === 'resume') showToast('Đã tiếp tục tiến trình', 'success');
+      else if (action === 'cancel') showToast('Đã hủy bỏ tiến trình', 'error');
+      else if (action === 'retry') showToast('Đã đưa tiến trình vào hàng đợi để chạy lại', 'info');
+      else if (action === 'force') showToast('Đã ưu tiên tiến trình chạy ngay', 'info');
+    } catch (e) {
+      showToast(e.response?.data?.error || 'Có lỗi xảy ra khi thực hiện thao tác', 'error');
+    }
   };
 
   const handleBatchDownload = async (type) => {
@@ -212,12 +313,13 @@ function App() {
     });
 
     if (matchingJobs.length === 0) {
-      alert(`Không có tiến trình nào trong lịch sử có ${type === 'alive' ? 'link sống' : 'link chết'} để tải.`);
+      showToast(`Không có tiến trình nào trong lịch sử có ${type === 'alive' ? 'link sống' : 'link chết'} để tải.`, 'warning', 'Chưa có kết quả');
       return;
     }
 
     try {
       setIsDownloadingZip(type);
+      showToast(`Đang nén gói ZIP ${type === 'alive' ? 'Link Sống' : 'Link Chết'}...`, 'info', 'Nén dữ liệu');
       const res = await axios.get(`http://localhost:3001/api/download-batch-zip/${type}`, {
         responseType: 'blob'
       });
@@ -245,6 +347,7 @@ function App() {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(blobUrl);
+      showToast(`Đã tải xuống thành công: ${filename}`, 'success', 'Tải hoàn tất');
     } catch (err) {
       console.error('Lỗi khi tải file zip:', err);
       let errMsg = 'Có lỗi xảy ra khi nén và tải file ZIP.';
@@ -257,75 +360,90 @@ function App() {
       } else if (err.response?.data?.error) {
         errMsg = err.response.data.error;
       }
-      alert(errMsg);
+      showToast(errMsg, 'error', 'Lỗi tải ZIP');
     } finally {
       setIsDownloadingZip(null);
     }
   };
 
-  const handleClearHistory = async () => {
-    if (window.confirm('Bạn có chắc muốn xóa toàn bộ lịch sử không?\nThao tác này sẽ xóa sạch các file kết quả và file tải lên liên quan trên ổ cứng.')) {
-      try {
-        const res = await axios.post('http://localhost:3001/api/clear-history');
-        const freedMb = ((res.data?.freedBytes || 0) / (1024 * 1024)).toFixed(2);
-        const count = res.data?.deletedFilesCount || 0;
-        if (count > 0 || res.data?.clearedCount > 0) {
-          alert(`Đã xóa sạch lịch sử và dọn dẹp ${count} tệp (giải phóng ${freedMb} MB).`);
+  const handleClearHistory = () => {
+    openConfirm({
+      title: 'Xóa toàn bộ lịch sử',
+      message: 'Bạn có chắc muốn xóa toàn bộ lịch sử không?\nThao tác này sẽ xóa sạch các file kết quả và file tải lên liên quan trên ổ cứng để giải phóng dung lượng.',
+      confirmText: 'Xóa sạch lịch sử',
+      tone: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await axios.post('http://localhost:3001/api/clear-history');
+          const freedMb = ((res.data?.freedBytes || 0) / (1024 * 1024)).toFixed(2);
+          const count = res.data?.deletedFilesCount || 0;
+          showToast(`Đã xóa sạch lịch sử và dọn dẹp ${count} tệp (giải phóng ${freedMb} MB ổ cứng).`, 'success', 'Đã dọn dẹp');
+        } catch (err) {
+          showToast('Lỗi khi xóa lịch sử: ' + (err.response?.data?.error || err.message), 'error');
         }
-      } catch (err) {
-        alert('Lỗi khi xóa lịch sử: ' + (err.response?.data?.error || err.message));
       }
-    }
+    });
   };
 
-  const handleCleanStorage = async () => {
-    if (!window.confirm('Hệ thống sẽ quét và dọn dẹp toàn bộ các tệp kết quả (outputs) và tệp tải lên (uploads) mồ côi không gắn với bất kỳ tiến trình nào đang chạy.\nBạn có muốn tiếp tục?')) {
-      return;
-    }
-    try {
-      const res = await axios.post('http://localhost:3001/api/clean-storage');
-      const { deletedCount, freedBytes } = res.data;
-      const mb = ((freedBytes || 0) / (1024 * 1024)).toFixed(2);
-      alert(`Đã dọn dẹp thành công ${deletedCount} tệp mồ côi (giải phóng ${mb} MB ổ cứng).`);
-    } catch (err) {
-      alert('Lỗi khi dọn dẹp ổ cứng: ' + (err.response?.data?.error || err.message));
-    }
+  const handleCleanStorage = () => {
+    openConfirm({
+      title: 'Dọn dẹp ổ cứng (Tệp mồ côi)',
+      message: 'Hệ thống sẽ quét và dọn dẹp toàn bộ các tệp kết quả (outputs) và tệp tải lên (uploads) mồ côi không gắn với bất kỳ tiến trình nào đang hoạt động.\nBạn có muốn tiếp tục?',
+      confirmText: 'Dọn dẹp ngay',
+      tone: 'warning',
+      onConfirm: async () => {
+        try {
+          const res = await axios.post('http://localhost:3001/api/clean-storage');
+          const { deletedCount, freedBytes } = res.data;
+          const mb = ((freedBytes || 0) / (1024 * 1024)).toFixed(2);
+          showToast(`Đã dọn dẹp thành công ${deletedCount} tệp mồ côi (giải phóng ${mb} MB ổ cứng).`, 'success', 'Dọn dẹp hoàn tất');
+        } catch (err) {
+          showToast('Lỗi khi dọn dẹp ổ cứng: ' + (err.response?.data?.error || err.message), 'error');
+        }
+      }
+    });
   };
 
   const handleFixAvatar = async (jobId) => {
     try {
       await axios.post(`http://localhost:3001/api/queue/${jobId}/fix-avatar`);
+      showToast('Đã đưa tiến trình vào hàng đợi để sửa ảnh Avatar HD', 'info');
       setActiveTab('queue');
     } catch (e) {
-      alert(e.response?.data?.error || 'Có lỗi xảy ra');
+      showToast(e.response?.data?.error || 'Có lỗi xảy ra', 'error');
     }
   };
 
-  const handleBatchFixAvatar = async () => {
+  const handleBatchFixAvatar = () => {
     const unfixJobs = queue.filter(j => 
       ['COMPLETED', 'ERROR'].includes(j.status) && 
       !j.avatarFixed && !j.checkAvatarApify
     );
 
     if (unfixJobs.length === 0) {
-      alert('Không có tiến trình nào trong lịch sử chưa sửa ảnh.');
+      showToast('Không có tiến trình nào trong lịch sử chưa sửa ảnh.', 'info', 'Đã sửa toàn bộ');
       return;
     }
 
-    if (!window.confirm(`Tìm thấy ${unfixJobs.length} tiến trình chưa sửa ảnh đại diện.\nBạn có muốn đưa tất cả vào hàng đợi để tự động sửa ảnh sang chuẩn HD (không cần API) không?`)) {
-      return;
-    }
-
-    try {
-      const res = await axios.post('http://localhost:3001/api/queue/batch-fix-avatar');
-      if (res.data.count > 0) {
-        setActiveTab('queue');
-      } else {
-        alert('Không có tiến trình hợp lệ nào được thêm vào hàng đợi (tệp dữ liệu có thể không tồn tại hoặc các tiến trình đã có trong hàng đợi).');
+    openConfirm({
+      title: 'Sửa ảnh Avatar hàng loạt',
+      message: `Tìm thấy ${unfixJobs.length} tiến trình chưa sửa ảnh đại diện.\nBạn có muốn đưa tất cả vào hàng đợi để tự động sửa ảnh sang chuẩn HD (không cần API) không?`,
+      confirmText: 'Bắt đầu sửa HD',
+      tone: 'primary',
+      onConfirm: async () => {
+        try {
+          const res = await axios.post('http://localhost:3001/api/queue/batch-fix-avatar');
+          if (res.data.count > 0) {
+            showToast(`Đã đưa ${res.data.count} tiến trình vào hàng đợi sửa ảnh HD`, 'success');
+            setActiveTab('queue');
+          } else {
+            showToast('Không có tiến trình hợp lệ nào được thêm vào hàng đợi.', 'warning');
+          }
+        } catch (e) {
+          showToast(e.response?.data?.error || 'Có lỗi xảy ra khi đưa tiến trình vào hàng đợi.', 'error');
+        }
       }
-    } catch (e) {
-      alert(e.response?.data?.error || 'Có lỗi xảy ra khi đưa tiến trình vào hàng đợi.');
-    }
+    });
   };
 
   const handlePreviewHistory = async (url, originalFilename) => {
@@ -336,7 +454,7 @@ function App() {
       setHistoryPreviewFile(file);
     } catch (err) {
       console.error("Lỗi khi lấy file lịch sử:", err);
-      alert("Không thể tải file để xem trước.");
+      showToast("Không thể tải file để xem trước.", "error", "Lỗi xem trước");
     }
   };
 
@@ -354,6 +472,7 @@ function App() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     setHistoryPreviewFile(null);
+    showToast(`Đã tải xuống: ${downloadName}`, 'success');
   };
 
   const handleSaveApifyKeys = async () => {
@@ -365,9 +484,9 @@ function App() {
     try {
       await axios.post('http://localhost:3001/api/apify-keys', { keys: newKeys });
       setApifyKeys(newKeys);
-      alert('Lưu API Keys thành công!');
+      showToast('Lưu danh sách API Keys thành công!', 'success');
     } catch (e) {
-      alert('Lỗi khi lưu API Keys');
+      showToast('Lỗi khi lưu danh sách API Keys', 'error');
     }
   };
 
@@ -375,72 +494,92 @@ function App() {
     try {
       const res = await axios.post('http://localhost:3001/api/config', apifyConfig);
       setApifyConfig(res.data.config);
-      alert('Lưu cấu hình thành công!');
+      showToast('Lưu cấu hình xoay vòng & độ trễ thành công!', 'success');
     } catch (e) {
-      alert('Lỗi khi lưu cấu hình');
+      showToast('Lỗi khi lưu cấu hình', 'error');
     }
   };
 
   const handleCheckApifyKeys = async () => {
     setIsCheckingKeys(true);
+    showToast('Đang kết nối kiểm tra toàn bộ API Keys...', 'info');
     try {
       const res = await axios.post('http://localhost:3001/api/apify-keys/check');
       setApifyKeys(res.data);
+      const activeCount = res.data.filter(k => k.status === 'active').length;
+      showToast(`Kiểm tra hoàn tất: ${activeCount}/${res.data.length} Keys đang hoạt động tốt!`, 'success');
     } catch (e) {
-      alert('Lỗi khi kiểm tra trạng thái API Keys');
+      showToast('Lỗi khi kiểm tra trạng thái API Keys', 'error');
     } finally {
       setIsCheckingKeys(false);
     }
   };
 
-  const handleResetApifyUsage = async () => {
-    if (!window.confirm('Bạn có chắc muốn đặt lại lượt dùng về 0 và kích hoạt lại toàn bộ Keys?')) return;
-    try {
-      const res = await axios.post('http://localhost:3001/api/apify-keys/reset-usage');
-      setApifyKeys(res.data);
-      alert('Đã đặt lại lượt dùng về 0 và kích hoạt lại toàn bộ Keys thành công!');
-    } catch (e) {
-      alert('Lỗi khi đặt lại lượt dùng: ' + e.message);
-    }
+  const handleResetApifyUsage = () => {
+    openConfirm({
+      title: 'Đặt lại lượt dùng API Keys',
+      message: 'Bạn có chắc muốn đặt lại lượt dùng về 0 và kích hoạt lại toàn bộ các Keys trong danh sách không?',
+      confirmText: 'Đặt lại ngay',
+      tone: 'warning',
+      onConfirm: async () => {
+        try {
+          const res = await axios.post('http://localhost:3001/api/apify-keys/reset-usage');
+          setApifyKeys(res.data);
+          showToast('Đã đặt lại lượt dùng về 0 và kích hoạt lại toàn bộ Keys thành công!', 'success');
+        } catch (e) {
+          showToast('Lỗi khi đặt lại lượt dùng: ' + e.message, 'error');
+        }
+      }
+    });
   };
 
   const handleTriggerQueue = async () => {
     try {
       await axios.post('http://localhost:3001/api/queue/trigger');
+      showToast('Đã kích hoạt hàng đợi xử lý', 'info');
     } catch(e) {
       console.error(e);
+      showToast('Lỗi khi kích hoạt hàng đợi', 'error');
     }
   };
 
-  const handleBatchRetry = async () => {
+  const handleBatchRetry = () => {
     const failedJobs = queue.filter(j => ['ERROR', 'INTERRUPTED', 'CANCELED'].includes(j.status));
     if (failedJobs.length === 0) {
-      alert('Không có tiến trình lỗi hoặc gián đoạn nào.');
+      showToast('Không có tiến trình lỗi hoặc gián đoạn nào.', 'info');
       return;
     }
-    if (!window.confirm(`Tìm thấy ${failedJobs.length} tiến trình lỗi/gián đoạn.\nBạn có muốn đưa tất cả vào hàng đợi để chạy lại từ đầu không?`)) {
-      return;
-    }
-    try {
-      await axios.post('http://localhost:3001/api/queue/batch-retry');
-      setActiveTab('queue');
-    } catch(e) {
-      alert(e.response?.data?.error || 'Có lỗi xảy ra khi chạy lại.');
-    }
+
+    openConfirm({
+      title: 'Chạy lại toàn bộ lỗi / gián đoạn',
+      message: `Tìm thấy ${failedJobs.length} tiến trình bị lỗi hoặc gián đoạn.\nBạn có muốn đưa tất cả vào hàng đợi để chạy lại từ đầu không?`,
+      confirmText: 'Chạy lại từ đầu',
+      tone: 'primary',
+      onConfirm: async () => {
+        try {
+          await axios.post('http://localhost:3001/api/queue/batch-retry');
+          showToast(`Đã đưa ${failedJobs.length} tiến trình vào hàng đợi chạy lại`, 'success');
+          setActiveTab('queue');
+        } catch(e) {
+          showToast(e.response?.data?.error || 'Có lỗi xảy ra khi chạy lại.', 'error');
+        }
+      }
+    });
   };
 
   const handleBatchResume = async () => {
     const pausedOrInterrupted = queue.filter(j => j.status === 'INTERRUPTED' || j.status === 'PAUSED');
     if (pausedOrInterrupted.length === 0) {
-      alert('Không có tiến trình nào đang tạm dừng hoặc bị gián đoạn.');
+      showToast('Không có tiến trình nào đang tạm dừng hoặc bị gián đoạn.', 'info');
       return;
     }
     try {
       setIsQueueActionLoading(true);
       await axios.post('http://localhost:3001/api/queue/batch-resume');
+      showToast(`Đang tiếp tục ${pausedOrInterrupted.length} tiến trình...`, 'success');
       setActiveTab('queue');
     } catch(e) {
-      alert(e.response?.data?.error || 'Có lỗi xảy ra khi tiếp tục tiến trình.');
+      showToast(e.response?.data?.error || 'Có lỗi xảy ra khi tiếp tục tiến trình.', 'error');
     } finally {
       setIsQueueActionLoading(false);
     }
@@ -450,56 +589,75 @@ function App() {
     try {
       setIsQueueActionLoading(true);
       await axios.post('http://localhost:3001/api/queue/batch-pause');
+      showToast('Đã tạm dừng toàn bộ tiến trình đang chạy và chờ', 'warning');
     } catch (e) {
-      alert(e.response?.data?.error || 'Có lỗi xảy ra khi tạm dừng toàn bộ tiến trình.');
+      showToast(e.response?.data?.error || 'Có lỗi xảy ra khi tạm dừng toàn bộ tiến trình.', 'error');
     } finally {
       setIsQueueActionLoading(false);
     }
   };
 
-  const handleBatchStop = async () => {
+  const handleBatchStop = () => {
     const runningOrPendingJobs = queue.filter(j => ['RUNNING', 'PAUSED', 'PENDING'].includes(j.status));
     if (runningOrPendingJobs.length === 0) {
-      alert('Không có tiến trình nào đang chạy hoặc chờ trong hàng đợi để dừng.');
+      showToast('Không có tiến trình nào đang chạy hoặc chờ trong hàng đợi để dừng.', 'info');
       return;
     }
 
-    if (!window.confirm(`Bạn có chắc muốn dừng toàn bộ ${runningOrPendingJobs.length} tiến trình đang chạy và chờ trong hàng đợi không?\nCác tiến trình sẽ được chuyển vào lịch sử và lưu kết quả một phần (nếu có).`)) {
-      return;
-    }
-
-    try {
-      setIsQueueActionLoading(true);
-      await axios.post('http://localhost:3001/api/queue/batch-stop');
-    } catch (e) {
-      alert(e.response?.data?.error || 'Có lỗi xảy ra khi dừng toàn bộ tiến trình.');
-    } finally {
-      setIsQueueActionLoading(false);
-    }
+    openConfirm({
+      title: 'Dừng toàn bộ tiến trình',
+      message: `Bạn có chắc muốn dừng toàn bộ ${runningOrPendingJobs.length} tiến trình đang chạy và chờ trong hàng đợi không?\nCác tiến trình sẽ được chuyển vào lịch sử và lưu kết quả một phần (nếu có).`,
+      confirmText: 'Dừng toàn bộ',
+      tone: 'danger',
+      onConfirm: async () => {
+        try {
+          setIsQueueActionLoading(true);
+          await axios.post('http://localhost:3001/api/queue/batch-stop');
+          showToast('Đã dừng toàn bộ tiến trình và lưu kết quả an toàn', 'warning');
+        } catch (e) {
+          showToast(e.response?.data?.error || 'Có lỗi xảy ra khi dừng toàn bộ tiến trình.', 'error');
+        } finally {
+          setIsQueueActionLoading(false);
+        }
+      }
+    });
   };
 
-  const handleBatchClearQueue = async () => {
+  const handleBatchClearQueue = () => {
     if (queueItems.length === 0) {
-      alert('Hàng đợi hiện đang trống.');
+      showToast('Hàng đợi hiện đang trống.', 'info');
       return;
     }
 
-    if (!window.confirm(`Bạn có chắc muốn xóa toàn bộ ${queueItems.length} tiến trình trong hàng đợi không?\nThao tác này sẽ hủy các tiến trình đang chạy/chờ và dọn dẹp các tệp liên quan khỏi ổ cứng.`)) {
-      return;
-    }
-
-    try {
-      setIsQueueActionLoading(true);
-      await axios.post('http://localhost:3001/api/queue/batch-clear');
-    } catch (e) {
-      alert(e.response?.data?.error || 'Có lỗi xảy ra khi xóa toàn bộ tiến trình trong hàng đợi.');
-    } finally {
-      setIsQueueActionLoading(false);
-    }
+    openConfirm({
+      title: 'Xóa toàn bộ hàng đợi',
+      message: `Bạn có chắc muốn xóa toàn bộ ${queueItems.length} tiến trình trong hàng đợi không?\nThao tác này sẽ hủy các tiến trình đang chạy/chờ và dọn dẹp các tệp liên quan khỏi ổ cứng.`,
+      confirmText: 'Xóa toàn bộ',
+      tone: 'danger',
+      onConfirm: async () => {
+        try {
+          setIsQueueActionLoading(true);
+          await axios.post('http://localhost:3001/api/queue/batch-clear');
+          showToast('Đã xóa toàn bộ tiến trình trong hàng đợi', 'success');
+        } catch (e) {
+          showToast(e.response?.data?.error || 'Có lỗi xảy ra khi xóa toàn bộ tiến trình.', 'error');
+        } finally {
+          setIsQueueActionLoading(false);
+        }
+      }
+    });
   };
 
   const queueItems = queue.filter(j => ['PENDING', 'RUNNING', 'PAUSED', 'INTERRUPTED'].includes(j.status));
   const historyItems = queue.filter(j => ['COMPLETED', 'ERROR', 'CANCELED', 'INTERRUPTED'].includes(j.status)).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  // Thống kê nhanh Mini-Dashboard
+  const totalCompletedJobs = historyItems.filter(j => j.status === 'COMPLETED').length;
+  const totalAliveCount = historyItems.reduce((acc, j) => acc + (j.stats?.alive || 0), 0);
+  const totalDeadCount = historyItems.reduce((acc, j) => acc + (j.stats?.dead || 0), 0);
+  const totalProcessedLeads = totalAliveCount + totalDeadCount;
+  const aliveRatePercent = totalProcessedLeads > 0 ? Math.round((totalAliveCount / totalProcessedLeads) * 100) : 0;
+  const totalAvatarFixedJobs = historyItems.filter(j => j.avatarFixed || j.checkAvatarApify).length;
 
   return (
     <div className="app-layout" style={{ minHeight: '100dvh' }}>
@@ -592,10 +750,69 @@ function App() {
             Quy trình làm sạch dữ liệu LeadPurify
           </h4>
           <p style={{ margin: 0, fontSize: '0.875rem', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
-            1. <b>Hàng đợi:</b> Kéo thả tệp CSV chứa danh sách link để hệ thống tự động kiểm tra trạng thái hoạt động.<br/>
-            2. <b>Lịch sử:</b> Kiểm tra tỷ lệ sống/chết và tải xuống danh sách kết quả đã phân loại (Sống / Chết / Lỗi).<br/>
+            1. <b>Hàng đợi:</b> Kéo thả tệp CSV chứa danh sách link Facebook (hoặc tải file mẫu) để hệ thống tự động kiểm tra trạng thái hoạt động.<br/>
+            2. <b>Lịch sử:</b> Kiểm tra tỷ lệ sống/chết và tải xuống danh sách kết quả đã phân loại (Sống / Chết / Lỗi) kèm ảnh Avatar HD.<br/>
             3. <b>Kiểm tra hoạt động:</b> Từ các tệp "Sống", bạn có thể quét dữ liệu bài đăng gần nhất (Apify API) để kiểm tra mức độ tương tác.
           </p>
+        </div>
+      </motion.div>
+
+      {/* Mini-Dashboard KPI Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45 }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+          gap: '1rem',
+          marginBottom: '1.75rem'
+        }}
+      >
+        <div className="liquid-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(0, 102, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Activity size={20} style={{ color: 'var(--color-accent)' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tổng Lead Đã Quét</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{totalProcessedLeads.toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div className="liquid-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <CheckCircle2 size={20} style={{ color: '#34d399' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tỷ Lệ Link Sống</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#34d399' }}>
+              {aliveRatePercent}% <span style={{ fontSize: '0.8125rem', fontWeight: 400, color: 'var(--text-muted)' }}>({totalAliveCount}/{totalProcessedLeads})</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="liquid-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Sparkles size={20} style={{ color: '#38bdf8' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avatar Chuẩn HD</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#38bdf8' }}>
+              {totalAvatarFixedJobs} <span style={{ fontSize: '0.8125rem', fontWeight: 400, color: 'var(--text-muted)' }}>tiến trình</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="liquid-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(168, 85, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <FileSpreadsheet size={20} style={{ color: '#c084fc' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tệp Hoàn Tất</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              {totalCompletedJobs} <span style={{ fontSize: '0.8125rem', fontWeight: 400, color: 'var(--text-muted)' }}>/ {historyItems.length}</span>
+            </div>
+          </div>
         </div>
       </motion.div>
 
@@ -620,8 +837,33 @@ function App() {
                 Kéo thả các tệp CSV vào đây
               </h3>
               <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                hoặc nhấp chuột để chọn tệp từ máy tính (hỗ trợ chọn nhiều tệp)
+                Nhấp chuột để chọn tệp CSV (hỗ trợ kéo thả nhiều tệp cùng lúc)
               </p>
+              
+              <div style={{ marginTop: '0.875rem' }}>
+                <button 
+                  type="button"
+                  className="btn-outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownloadTemplate();
+                  }}
+                  style={{ 
+                    padding: '0.35rem 0.85rem', 
+                    fontSize: '0.8125rem', 
+                    borderColor: 'rgba(56, 189, 248, 0.35)', 
+                    color: '#38bdf8',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    background: 'rgba(56, 189, 248, 0.08)'
+                  }}
+                  title="Tải tệp CSV mẫu chuẩn có sẵn cột tên, sđt, link facebook, avatar..."
+                >
+                  <FileDown size={14} /> Tải tệp CSV mẫu chuẩn
+                </button>
+              </div>
+
               <input 
                 id="multiFileUpload" 
                 type="file" 
@@ -653,7 +895,7 @@ function App() {
                     checked={jobOptions.checkAlive} 
                     onChange={e => setJobOptions({...jobOptions, checkAlive: e.target.checked})} 
                   />
-                  <span>Kiểm tra link sống / chết</span>
+                  <span>Kiểm tra link sống / chết (Trình duyệt nội bộ, miễn phí)</span>
                 </label>
 
                 <label className="liquid-checkbox-label">
@@ -663,7 +905,7 @@ function App() {
                     checked={jobOptions.checkAliveApify} 
                     onChange={e => setJobOptions({...jobOptions, checkAliveApify: e.target.checked})} 
                   />
-                  <span>Kiểm tra link sống / chết bằng Apify</span>
+                  <span>Kiểm tra tương tác bài viết (Yêu cầu Token Apify)</span>
                 </label>
 
                 {jobOptions.checkAliveApify && (
@@ -687,7 +929,7 @@ function App() {
                     checked={jobOptions.checkAvatar} 
                     onChange={e => setJobOptions({...jobOptions, checkAvatar: e.target.checked})} 
                   />
-                  <span>Kiểm tra link ảnh avatar và tự động sửa (Chuẩn HD, không cần API)</span>
+                  <span>Kiểm tra & tự động sửa link Avatar chuẩn HD (Không cần API)</span>
                 </label>
 
                 {/* Concurrency Range */}
@@ -704,25 +946,33 @@ function App() {
                     onChange={(e) => setConcurrency(e.target.value)} 
                     className="liquid-range"
                   />
+                  <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    💡 Khuyên dùng 3 luồng để máy vận hành ổn định và không quá tải RAM
+                  </p>
                 </div>
 
                 {/* Headless Toggle */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.25rem' }}>
-                  <span className="liquid-label" style={{ margin: 0 }}>Chế độ chạy ẩn (Headless):</span>
+                  <div>
+                    <span className="liquid-label" style={{ margin: 0 }}>Chế độ ẩn trình duyệt (Chạy ngầm):</span>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {headless ? 'Đang ẩn hoàn toàn cửa sổ Chrome' : 'Đang mở cửa sổ Chrome để theo dõi'}
+                    </div>
+                  </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button 
                       className={`btn-outline ${headless ? 'btn-outline-accent' : ''}`} 
                       style={{ padding: '0.35rem 0.85rem', fontSize: '0.8125rem' }} 
                       onClick={() => setHeadless(true)}
                     >
-                      Bật
+                      Bật (Ẩn)
                     </button>
                     <button 
                       className={`btn-outline ${!headless ? 'btn-outline-warning' : ''}`} 
                       style={{ padding: '0.35rem 0.85rem', fontSize: '0.8125rem' }} 
                       onClick={() => setHeadless(false)}
                     >
-                      Tắt
+                      Tắt (Hiện)
                     </button>
                   </div>
                 </div>
@@ -1128,21 +1378,41 @@ function App() {
               Nhập danh sách API Token của Apify (mỗi token trên một dòng riêng). Hệ thống sẽ tự động luân phiên xoay vòng khi token đạt ngưỡng request tối đa hoặc gặp giới hạn định ngạch.
             </p>
 
-            {/* Cảnh báo khi toàn bộ keys hết hạn hoặc không có key hoạt động */}
+            {/* Free Core Feature Explainer Banner */}
+            <div style={{ 
+              padding: '1rem 1.25rem', 
+              background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%)', 
+              border: '1px solid rgba(56, 189, 248, 0.25)', 
+              borderRadius: 'var(--radius-md)', 
+              marginBottom: '1.5rem', 
+              display: 'flex', 
+              alignItems: 'flex-start', 
+              gap: '0.875rem' 
+            }}>
+              <CheckCircle size={22} style={{ color: 'var(--status-alive)', flexShrink: 0, marginTop: '2px' }} />
+              <div style={{ fontSize: '0.875rem', lineHeight: 1.6 }}>
+                <strong style={{ color: '#fff' }}>💡 Bạn KHÔNG BẮT BUỘC phải cấu hình Apify Token:</strong>
+                <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)' }}>
+                  Tính năng cốt lõi (<strong>Kiểm tra sống/chết Facebook</strong> và <strong>Tự động lấy ảnh đại diện HD</strong>) chạy <strong style={{ color: 'var(--status-alive)' }}>100% Miễn phí & Cục bộ trên máy tính của bạn</strong> mà không cần tài khoản hay tốn chi phí nào. Apify Token chỉ dùng khi bạn bật tùy chọn nâng cao <em>"Quét bài viết gần nhất"</em>.
+                </p>
+              </div>
+            </div>
+
+            {/* Cảnh báo mềm khi toàn bộ keys hết hạn hoặc không có key hoạt động */}
             {apifyKeys.length > 0 && !apifyKeys.some(k => k.status === 'active') && (
               <div style={{ 
                 padding: '0.875rem 1.25rem', 
-                background: 'rgba(239, 68, 68, 0.12)', 
-                border: '1px solid rgba(239, 68, 68, 0.35)', 
+                background: 'rgba(245, 158, 11, 0.1)', 
+                border: '1px solid rgba(245, 158, 11, 0.3)', 
                 borderRadius: 'var(--radius-md)', 
                 marginBottom: '1.5rem', 
                 display: 'flex', 
-                alignItems: 'center', 
+                alignItems: 'flex-start', 
                 gap: '0.75rem' 
               }}>
-                <AlertTriangle size={20} style={{ color: '#ef4444', flexShrink: 0 }} />
-                <span style={{ fontSize: '0.875rem', color: '#fca5a5' }}>
-                  <strong>Cảnh báo:</strong> Toàn bộ API Token hiện tại đều đã hết hạn hoặc không hợp lệ (401/403/429). Hãy đăng nhập <a href="https://console.apify.com/account/integrations" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'underline' }}>Apify Console</a>, sao chép API Token cá nhân mới, dán vào ô bên dưới và nhấn "Lưu danh sách Keys".
+                <AlertTriangle size={20} style={{ color: 'var(--status-warning)', flexShrink: 0, marginTop: '2px' }} />
+                <span style={{ fontSize: '0.875rem', color: '#fde68a' }}>
+                  <strong>Lưu ý:</strong> Toàn bộ Apify API Token hiện tại đã hết hạn mức hoặc không hợp lệ. Nếu bạn không dùng tính năng quét bài viết nâng cao của Apify, bạn có thể hoàn toàn yên tâm bỏ qua thông báo này. Để tiếp tục dùng Apify, hãy lấy token mới từ <a href="https://console.apify.com/account/integrations" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'underline' }}>Apify Console</a>.
                 </span>
               </div>
             )}
@@ -1299,6 +1569,19 @@ function App() {
           mode="download"
         />
       )}
+
+      {/* Liquid Glass Alert Modal for All Notifications */}
+      <LiquidAlertModal 
+        isOpen={alertModalConfig.isOpen}
+        title={alertModalConfig.title}
+        message={alertModalConfig.message}
+        type={alertModalConfig.type}
+        buttonText={alertModalConfig.buttonText}
+        onClose={closeAlert}
+      />
+
+      {/* Sleek Liquid Glass Confirmation Dialog */}
+      <LiquidConfirmModal {...confirmConfig} onCancel={closeConfirm} />
     </div>
   );
 }
