@@ -7,6 +7,13 @@ Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi 
 - [ ] Chưa có task nào.
 
 ## Task Đã Hoàn Thành
+- [x] Kiểm tra lại toàn bộ các chức năng download và bổ sung hậu tố timestamp:
+  - [x] 1. Backend (`server.js`): Xây dựng các hàm helper `getFormattedTimestamp(date)` sinh timestamp chuẩn `YYYYMMDD_HHmmss`, `cleanBaseFilename(filename)` làm sạch tiền tố/hậu tố lặp lại và `formatDownloadFilename(filename, stat)` gắn nhãn thời gian chuẩn hóa.
+  - [x] 2. Backend (`server.js`): Cập nhật CORS với `exposedHeaders: ['Content-Disposition']` giúp frontend đọc được filename từ response header.
+  - [x] 3. Backend (`server.js`): Cập nhật endpoint `GET /api/download/:filename` định dạng lại `Content-Disposition` chuẩn RFC 5987/6266 kèm hậu tố timestamp theo thời gian xử lý tệp.
+  - [x] 4. Backend (`server.js`): Cập nhật endpoint `GET /api/download-batch-zip/:type` gắn nhãn thời gian cho file zip tổng (`LeadPurify_Link_Song_YYYYMMDD_HHmmss.zip`) và tất cả các file CSV thành phần bên trong zip.
+  - [x] 5. Backend (`server.js`): Cập nhật lưu file kết quả khi hoàn thành (`runJob`) và kết quả tạm thời (`Partial_...`) sang định dạng timestamp `YYYYMMDD_HHmmss`.
+  - [x] 6. Frontend (`App.jsx`): Bổ sung helper `getFormattedTimestamp` và `getTimestampedDownloadName`. Cập nhật `handleBatchDownload`, `handleConfirmHistoryDownload` và các nút tải trực tiếp / xem trước modal để luôn có hậu tố timestamp.
 - [x] Thay đổi logic kiểm tra & sửa link ảnh avatar sang bộ trích xuất nội bộ (Local Scraper), loại bỏ 100% sự phụ thuộc vào Apify API:
   - [x] 1. Backend (`server.js`): Xây dựng hàm `checkImageUrlValid(url)` kiểm tra HTTP status & content-type của ảnh avatar cũ (dùng Range 1KB cực nhanh).
   - [x] 2. Backend (`server.js`): Xây dựng hàm `fetchFacebookAvatarViaHttp(fbUrl)` bóc tách OpenGraph `og:image` siêu tốc (~300ms) không cần mở trình duyệt.
