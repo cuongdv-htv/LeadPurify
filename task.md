@@ -7,6 +7,13 @@ Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi 
 *Hiện không có task nào đang chờ thực hiện.*
 
 ## Task Đã Hoàn Thành
+- [x] Tự động nhận diện và thay thế ảnh đại diện placeholder/Unsplash bằng Avatar Facebook thật & bổ sung fallback Graph API:
+  - [x] 1. Backend (`server.js`): Xây dựng hàm `isPlaceholderOrStockImageUrl(url)` nhận diện các dịch vụ ảnh placeholder/stock (`images.unsplash.com`, `placeholder`, `dummyimage`, `picsum.photos`,...).
+  - [x] 2. Backend (`server.js`): Xây dựng hàm `isFacebookCdnUrl(url)` phân biệt ảnh CDN Facebook thực sự (`fbcdn.net`, `fbsbx.com`) với các link ngoại lai.
+  - [x] 3. Backend (`server.js`): Tái thiết lập hàm `getFacebookGraphAvatarUrl(fbLink)` tạo link Graph API chuẩn kích thước lớn (`width=800`) làm phương án dự phòng (fallback).
+  - [x] 4. Backend (`server.js`): Cập nhật quy trình kiểm tra ảnh trong `runJob`: Nếu ảnh hiện tại là Unsplash / Placeholder / link hỏng / Graph API cũ -> Kích hoạt cào ảnh thật mới từ Facebook; nếu cào không ra thì fallback sang Graph API thay vì giữ nguyên link Unsplash.
+  - [x] 5. Backend (`server.js`): Cập nhật `cleanRowForDownload` và kiểm tra logic xử lý cột ảnh avatar.
+  - [x] 6. Kiểm thử đơn vị các hàm nhận diện URL và luồng xử lý avatar.
 - [x] Tích hợp tính năng Kiểm tra tương tác bài viết nội bộ hoàn toàn miễn phí (Local Post Activity Checker) có Checkbox ON/OFF:
   - [x] 1. Backend (`config.json` & `server.js`): Thêm cấu hình lưu trữ `facebookCookie`, endpoint `GET /api/config` và `POST /api/config`, hàm `parseCookieString` hỗ trợ cả cookie string và mảng JSON.
   - [x] 2. Backend (`server.js`): Xây dựng bộ trích xuất bài viết nội bộ `extractFacebookLatestPostDate`: bóc tách timestamp từ thẻ script Relay/GraphQL (`creation_time`, `publish_time`), trích xuất DOM (`time`, `abbr[data-utime]`, link feed `aria-label`), phân tích ngày tiếng Việt & tiếng Anh, tự động vượt popup đăng nhập.
