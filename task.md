@@ -7,6 +7,13 @@ Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi 
 *Hiện không có task nào đang chờ thực hiện.*
 
 ## Task Đã Hoàn Thành
+- [x] Tích hợp tính năng Kiểm tra tương tác bài viết nội bộ hoàn toàn miễn phí (Local Post Activity Checker) có Checkbox ON/OFF:
+  - [x] 1. Backend (`config.json` & `server.js`): Thêm cấu hình lưu trữ `facebookCookie`, endpoint `GET /api/config` và `POST /api/config`, hàm `parseCookieString` hỗ trợ cả cookie string và mảng JSON.
+  - [x] 2. Backend (`server.js`): Xây dựng bộ trích xuất bài viết nội bộ `extractFacebookLatestPostDate`: bóc tách timestamp từ thẻ script Relay/GraphQL (`creation_time`, `publish_time`), trích xuất DOM (`time`, `abbr[data-utime]`, link feed `aria-label`), phân tích ngày tiếng Việt & tiếng Anh, tự động vượt popup đăng nhập.
+  - [x] 3. Backend (`server.js`): Cập nhật quy trình quét `runJob` và endpoint `POST /api/upload`: nhận tùy chọn `checkActiveLocal`, tự động inject cookie vào Puppeteer page, tối ưu dùng chung page giữa check sống/chết, check bài viết và check avatar.
+  - [x] 4. Frontend (`App.jsx`): Thêm checkbox ON/OFF "Kiểm tra tương tác bài viết (Trình duyệt nội bộ, miễn phí 100%)", ô cấu hình "Số tháng hoạt động" và ghi chú rõ ràng không cần API.
+  - [x] 5. Frontend (`App.jsx`): Mở rộng tab "Cài đặt & API Keys": Thêm mục cấu hình Cookie Facebook (nick clone/phụ) có nút Lưu Cookie, nút Xóa Cookie, modal thông báo Liquid Glass và badge trạng thái trực quan.
+  - [x] 6. Kiểm thử tổng thể giao diện và chức năng bằng browser subagent, xác nhận mọi thành phần hoạt động trơn tru.
 - [x] Triển khai toàn diện cải tiến trải nghiệm người dùng (UX/UI First-Time User Audit):
   - [x] 1. Backend (`server.js`): Thêm endpoint `GET /api/download-template` xuất file CSV mẫu chuẩn UTF-8 BOM và mở rộng bộ nhận diện tên cột Facebook linh hoạt (`facebook`, `fb`, `link_fb`, `link_facebook`, `facebook_url`, `url`, `link`, v.v.), hỗ trợ chọn cột thủ công qua `facebookColumn` & `avatarColumn`.
   - [x] 2. Frontend (`LiquidAlertModal.jsx` & `LiquidConfirmModal.jsx`): Chuyển đổi 100% Toast thông báo sang Hộp thoại Modal nội bộ phong cách Liquid Glass trung tâm màn hình (Alert, Success, Error, Warning) có nút "Đã hiểu", hiệu ứng mờ nền backdrop blur, thay thế triệt để Toast và toàn bộ `window.alert` / `window.confirm`.

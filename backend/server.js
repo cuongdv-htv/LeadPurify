@@ -170,9 +170,11 @@ function formatDownloadFilename(filename, fileStats = null) {
 function getConfig() {
     try {
         const configPath = path.join(__dirname, 'config.json');
-        if (!fs.existsSync(configPath)) return { maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000 };
-        return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    } catch(e) { return { maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000 }; }
+        if (!fs.existsSync(configPath)) return { maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000, facebookCookie: '' };
+        const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        if (cfg.facebookCookie === undefined) cfg.facebookCookie = '';
+        return cfg;
+    } catch(e) { return { maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000, facebookCookie: '' }; }
 }
 
 function getApifyKey() {
@@ -821,6 +823,301 @@ async function extractFacebookAvatar(fbUrl, browser, existingPage = null) {
     return null;
 }
 
+// --- TRÍCH XUẤT BÀI VIẾT VÀ TƯƠNG TÁC NỘI BỘ (100% MIỄN PHÍ) ---
+function parseCookieString(cookieStr) {
+    if (!cookieStr || typeof cookieStr !== 'string') return [];
+    const cookies = [];
+    const trimmed = cookieStr.trim();
+    if (!trimmed) return [];
+
+    // Hỗ trợ định dạng JSON array cookie (từ extension J2TEAM / EditThisCookie)
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        try {
+            const arr = JSON.parse(trimmed);
+            if (Array.isArray(arr)) {
+                return arr.map(c => ({
+                    name: c.name,
+                    value: c.value,
+                    domain: c.domain ? (c.domain.startsWith('.') ? c.domain : `.${c.domain}`) : '.facebook.com',
+                    path: c.path || '/'
+                })).filter(c => c.name && c.value);
+            }
+        } catch(e) {}
+    }
+
+    // Hỗ trợ định dạng chuỗi 'c_user=...; xs=...'
+    const pairs = trimmed.split(';');
+    for (const pair of pairs) {
+        const p = pair.trim();
+        if (!p) continue;
+        const eqIdx = p.indexOf('=');
+        if (eqIdx > 0) {
+            const name = p.substring(0, eqIdx).trim();
+            const value = p.substring(eqIdx + 1).trim();
+            if (name && value) {
+                cookies.push({
+                    name,
+                    value,
+                    domain: '.facebook.com',
+                    path: '/'
+                });
+            }
+        }
+    }
+    return cookies;
+}
+
+function parseFacebookDateString(rawStr) {
+    if (!rawStr || typeof rawStr !== 'string') return null;
+    const str = rawStr.trim();
+    if (!str) return null;
+
+    const now = new Date();
+
+    // 1. Thử parse trực tiếp nếu là ISO string hoặc định dạng Date chuẩn
+    const directDate = new Date(str);
+    if (!isNaN(directDate.getTime()) && directDate.getFullYear() > 2005 && directDate.getFullYear() <= now.getFullYear() + 1) {
+        return directDate;
+    }
+
+    const lower = str.toLowerCase();
+
+    // 2. "Vừa xong" / "Just now"
+    if (lower.includes('vừa xong') || lower.includes('just now')) {
+        return now;
+    }
+
+    // 3. Phút / Minutes
+    const minMatch = lower.match(/(\d+)\s*(?:phút|mins?|m\b)/);
+    if (minMatch) {
+        return new Date(now.getTime() - parseInt(minMatch[1]) * 60 * 1000);
+    }
+
+    // 4. Giờ / Hours
+    const hrMatch = lower.match(/(\d+)\s*(?:giờ|hrs?|h\b)/);
+    if (hrMatch) {
+        return new Date(now.getTime() - parseInt(hrMatch[1]) * 3600 * 1000);
+    }
+
+    // 5. Ngày / Days
+    const dayMatch = lower.match(/(\d+)\s*(?:ngày|days?|d\b)/);
+    if (dayMatch && !lower.includes('tháng')) {
+        return new Date(now.getTime() - parseInt(dayMatch[1]) * 86400 * 1000);
+    }
+
+    // 6. Tuần / Weeks
+    const weekMatch = lower.match(/(\d+)\s*(?:tuần|weeks?|w\b)/);
+    if (weekMatch) {
+        return new Date(now.getTime() - parseInt(weekMatch[1]) * 7 * 86400 * 1000);
+    }
+
+    // 7. Tháng (relative): "X tháng trước"
+    const relMonthMatch = lower.match(/(\d+)\s*(?:tháng trước|months? ago)/);
+    if (relMonthMatch) {
+        const d = new Date(now);
+        d.setMonth(d.getMonth() - parseInt(relMonthMatch[1]));
+        return d;
+    }
+
+    // 8. "Hôm qua" / "Yesterday"
+    if (lower.includes('hôm qua') || lower.includes('yesterday')) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 1);
+        const timeMatch = lower.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+            d.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
+        }
+        return d;
+    }
+
+    // 9. Tiếng Việt: "DD tháng MM, YYYY" hoặc "DD tháng MM lúc HH:MM" hoặc "DD tháng MM"
+    const vnDateMatch = lower.match(/(\d{1,2})\s+tháng\s+(\d{1,2})(?:[,\s]+(?:năm\s+)?(\d{4}))?/);
+    if (vnDateMatch) {
+        const day = parseInt(vnDateMatch[1]);
+        const month = parseInt(vnDateMatch[2]) - 1;
+        const year = vnDateMatch[3] ? parseInt(vnDateMatch[3]) : now.getFullYear();
+        const d = new Date(year, month, day);
+        const timeMatch = lower.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+            d.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
+        }
+        if (!isNaN(d.getTime())) return d;
+    }
+
+    // 10. Tiếng Anh: "Month DD, YYYY" hoặc "DD Month YYYY"
+    const monthsEn = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+    for (const [mName, mIdx] of Object.entries(monthsEn)) {
+        if (lower.includes(mName)) {
+            const m1 = lower.match(new RegExp(`${mName}\\w*\\s+(\\d{1,2})(?:[\\s,]+(\\d{4}))?`));
+            const m2 = lower.match(new RegExp(`(\\d{1,2})\\s+${mName}\\w*(?:[\\s,]+(\\d{4}))?`));
+            const match = m1 || m2;
+            if (match) {
+                const day = parseInt(m1 ? match[1] : match[1]);
+                const year = match[2] ? parseInt(match[2]) : now.getFullYear();
+                const d = new Date(year, mIdx, day);
+                if (!isNaN(d.getTime())) return d;
+            }
+        }
+    }
+
+    return null;
+}
+
+async function extractFacebookLatestPostDate(page, fullUrl) {
+    if (!page || !fullUrl) return { postDate: null, reason: 'INVALID_PARAM' };
+
+    try {
+        // 1. Kiểm tra trang có bị Facebook báo không tồn tại / chặn nội dung
+        const isDeadOrNotAvailable = await page.evaluate(() => {
+            const t = document.body ? document.body.innerText : '';
+            return t.includes("isn't available") || 
+                   t.includes("không hiển thị") || 
+                   t.includes("Không tìm thấy trang") ||
+                   t.includes("This content isn't available") ||
+                   t.includes("Nội dung này hiện không") ||
+                   t.includes("This page isn");
+        });
+        if (isDeadOrNotAvailable) {
+            return { postDate: null, reason: 'PAGE_NOT_AVAILABLE' };
+        }
+
+        // 2. Tự động đóng/ẩn popup đăng nhập của Facebook nếu có
+        await page.evaluate(() => {
+            try {
+                const closeBtns = document.querySelectorAll('[aria-label="Đóng" i], [aria-label="Close" i], [aria-label*="Đóng" i], [aria-label*="Close" i]');
+                closeBtns.forEach(b => { try { b.click(); } catch(e){} });
+
+                const dialogs = document.querySelectorAll('div[role="dialog"]');
+                dialogs.forEach(d => {
+                    const text = d.innerText || '';
+                    if (text.includes('đăng nhập') || text.includes('Log In') || text.includes('Xem thêm trên Facebook') || text.includes('See more on Facebook')) {
+                        d.style.display = 'none';
+                    }
+                });
+            } catch(e) {}
+        });
+
+        // 3. Cuộn nhẹ xuống để kích hoạt nạp feed bài viết
+        await page.evaluate(() => {
+            try { window.scrollBy(0, 1000); } catch(e) {}
+        });
+        await new Promise(r => setTimeout(r, 1500));
+
+        // TẦNG 1: Trích xuất các epoch timestamp từ thẻ script Relay/GraphQL (Chính xác 100%, độc lập ngôn ngữ)
+        const relayTimestamps = await page.evaluate(() => {
+            const found = [];
+            const nowSec = Math.floor(Date.now() / 1000);
+            const minSec = 1262304000; // 2010-01-01
+
+            const scripts = document.querySelectorAll('script[type="application/json"]');
+            for (const s of scripts) {
+                const text = s.textContent;
+                if (!text) continue;
+                
+                const regex = /"(?:creation_time|publish_time|post_timestamp)"\s*:\s*(\d{10})\b/g;
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    const val = parseInt(match[1]);
+                    if (val >= minSec && val <= nowSec + 86400) {
+                        found.push(val);
+                    }
+                }
+            }
+            return found;
+        });
+
+        if (relayTimestamps && relayTimestamps.length > 0) {
+            const maxTimestamp = Math.max(...relayTimestamps);
+            return {
+                postDate: new Date(maxTimestamp * 1000),
+                source: 'relay_json'
+            };
+        }
+
+        // TẦNG 2: Trích xuất từ DOM (<time>, <abbr>, aria-label, text bài viết)
+        const domCandidates = await page.evaluate(() => {
+            const list = [];
+            
+            // 1. Thẻ abbr hoặc time
+            const timeEls = document.querySelectorAll('abbr[data-utime], abbr[title], time[datetime], time');
+            for (const el of timeEls) {
+                const utime = el.getAttribute('data-utime');
+                if (utime) {
+                    const u = parseInt(utime);
+                    if (u > 1262304000) list.push({ raw: utime, epoch: u });
+                }
+                const dt = el.getAttribute('datetime');
+                if (dt) list.push({ raw: dt });
+                const title = el.getAttribute('title');
+                if (title) list.push({ raw: title });
+                if (el.innerText) list.push({ raw: el.innerText.trim() });
+            }
+
+            // 2. Link bài viết trong Feed có aria-label hoặc text ngày giờ
+            const postLinks = document.querySelectorAll('a[href*="/posts/"], a[href*="/permalink/"], a[href*="/photos/"], a[href*="/videos/"], a[href*="story_fbid="]');
+            for (const a of postLinks) {
+                const aria = a.getAttribute('aria-label');
+                if (aria && aria.length > 2 && aria.length < 50) {
+                    list.push({ raw: aria });
+                }
+                const txt = a.innerText ? a.innerText.trim() : '';
+                if (txt && txt.length > 1 && txt.length < 50) {
+                    list.push({ raw: txt });
+                }
+            }
+
+            // 3. Tìm các span chứa thời gian bài viết
+            const spans = document.querySelectorAll('span[id*="jsc_c"], span[dir="auto"]');
+            for (const sp of spans) {
+                const txt = sp.innerText ? sp.innerText.trim() : '';
+                if (txt && txt.length > 1 && txt.length < 35) {
+                    if (/(\d+\s*(?:phút|giờ|ngày|tháng|năm|m|h|d|w|min|hr)|hôm qua|yesterday|vừa xong|just now)/i.test(txt)) {
+                        list.push({ raw: txt });
+                    }
+                }
+            }
+
+            return list;
+        });
+
+        // Phân tích các chuỗi ứng viên từ DOM
+        if (domCandidates && domCandidates.length > 0) {
+            let latestDate = null;
+            for (const item of domCandidates) {
+                if (item.epoch) {
+                    const d = new Date(item.epoch * 1000);
+                    if (!latestDate || d > latestDate) latestDate = d;
+                } else if (item.raw) {
+                    const parsed = parseFacebookDateString(item.raw);
+                    if (parsed && (!latestDate || parsed > latestDate)) {
+                        latestDate = parsed;
+                    }
+                }
+            }
+            if (latestDate) {
+                return {
+                    postDate: latestDate,
+                    source: 'dom_elements'
+                };
+            }
+        }
+
+        // TẦNG 3: Kiểm tra nếu trang yêu cầu đăng nhập và không thấy bài viết
+        const isLoginRequired = await page.evaluate(() => {
+            const t = document.body ? document.body.innerText : '';
+            return t.includes('Đăng nhập để xem') || t.includes('Log In to See') || t.includes('Bạn phải đăng nhập');
+        });
+
+        if (isLoginRequired) {
+            return { postDate: null, reason: 'LOGIN_REQUIRED' };
+        }
+
+        return { postDate: null, reason: 'NO_RECENT_POSTS_FOUND' };
+    } catch(err) {
+        return { postDate: null, reason: `ERROR: ${err.message}` };
+    }
+}
+
 async function runJob(job) {
   pushLog(job, `Khởi tạo tiến trình quét file: ${job.filename}`, 'info');
   if (!fs.existsSync(job.filePath)) {
@@ -896,7 +1193,7 @@ async function runJob(job) {
           broadcastQueue();
           
           let browser = null;
-          if (job.checkAlive || job.checkAvatar) {
+          if (job.checkAlive || job.checkAvatar || job.checkActiveLocal) {
               browser = await puppeteer.launch({ 
                 headless: job.headless ? 'new' : false,
                 protocolTimeout: 600000,
@@ -1041,69 +1338,119 @@ async function runJob(job) {
                     }
                 }
 
-                // --- 2. KIỂM TRA SỐNG/CHẾT (PUPPETEER) & XỬ LÝ AVATAR (CRAWLER NỘI BỘ) ---
+                // --- 2. KIỂM TRA TRÌNH DUYỆT NỘI BỘ (PUPPETEER): SỐNG/CHẾT, BÀI VIẾT GẦN NHẤT & AVATAR ---
                 let page = null;
                 if (browser && !hasError) {
                     try {
                         await checkState();
 
-                        // 2.1. Kiểm tra sống/chết nếu được yêu cầu
-                        if (job.checkAlive) {
+                        const needsBrowserCheck = job.checkAlive || job.checkActiveLocal || (job.checkAvatar && !isDead);
+
+                        if (needsBrowserCheck) {
                             page = await browser.newPage();
-                            
+
+                            // Áp dụng Cookie Facebook cấu hình (nếu có)
+                            const config = getConfig();
+                            if (config.facebookCookie) {
+                                const fbCookies = parseCookieString(config.facebookCookie);
+                                if (fbCookies.length > 0) {
+                                    try {
+                                        await page.setCookie(...fbCookies);
+                                    } catch(e) {}
+                                }
+                            }
+
                             const minD = job.minDelay || 1500;
                             const maxD = Math.max(job.maxDelay || 3500, minD);
                             const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
-                            
+
                             pushLog(job, `⏳ Chờ ${(randomDelay/1000).toFixed(1)}s trước khi mở (Puppeteer): ${fullUrl}`, 'info');
                             await new Promise(r => setTimeout(r, randomDelay));
                             await checkState();
 
-                            pushLog(job, `⚡ Đang kiểm tra sống/chết (Puppeteer): ${fullUrl}`, 'info');
+                            pushLog(job, `🌐 Mở trang qua Puppeteer: ${fullUrl}`, 'info');
                             await page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
                             await checkState();
-                            await new Promise(r => setTimeout(r, 1500));
+                            await new Promise(r => setTimeout(r, 1200));
                             await checkState();
 
-                            const pageText = await page.evaluate(() => document.body.innerText);
-                            const pDead = pageText.includes("isn't available") || 
-                                           pageText.includes("không hiển thị") || 
-                                           pageText.includes("Không tìm thấy trang") ||
-                                           pageText.includes("This content isn't available") ||
-                                           pageText.includes("Nội dung này hiện không") ||
-                                           pageText.includes("This page isn");
-                            if (pDead) {
-                                isDead = true; 
-                            } else {
-                                if (!job.checkAliveApify) {
-                                    isDead = false;
-                                }
-                            }
-                        }
-
-                        // 2.2. Kiểm tra và sửa ảnh avatar (Hoàn toàn tự động, không cần Apify)
-                        if (job.checkAvatar && !isDead) {
-                            let currentImgUrl = row[imgCol];
-                            let isImgValid = false;
-
-                            // Kiểm tra ảnh hiện tại có còn tải được không
-                            if (currentImgUrl && typeof currentImgUrl === 'string' && currentImgUrl.startsWith('http')) {
-                                if (!currentImgUrl.includes('graph.facebook.com')) {
-                                    isImgValid = await checkImageUrlValid(currentImgUrl);
-                                }
-                            }
-
-                            if (isImgValid) {
-                                row[imgCol] = optimizeFacebookAvatarUrl(currentImgUrl);
-                                pushLog(job, `✅ Ảnh đại diện còn hoạt động tốt (HD): ${fbMatch}`, 'info');
-                            } else {
-                                pushLog(job, `🖼️ Đang trích xuất ảnh đại diện mới: ${fbMatch}`, 'info');
-                                const newAvatar = await extractFacebookAvatar(fullUrl, browser, page);
-                                if (newAvatar) {
-                                    row[imgCol] = newAvatar;
-                                    pushLog(job, `✅ Cập nhật Avatar HD thành công: ${fbMatch}`, 'success');
+                            // 2.1. Kiểm tra sống/chết nếu được yêu cầu
+                            if (job.checkAlive) {
+                                const pageText = await page.evaluate(() => document.body ? document.body.innerText : '');
+                                const pDead = pageText.includes("isn't available") || 
+                                               pageText.includes("không hiển thị") || 
+                                               pageText.includes("Không tìm thấy trang") ||
+                                               pageText.includes("This content isn't available") ||
+                                               pageText.includes("Nội dung này hiện không") ||
+                                               pageText.includes("This page isn");
+                                if (pDead) {
+                                    isDead = true; 
                                 } else {
-                                    pushLog(job, `⚠️ Không tìm thấy ảnh đại diện mới: ${fbMatch}`, 'warning');
+                                    if (!job.checkAliveApify && !job.checkActiveLocal) {
+                                        isDead = false;
+                                    }
+                                }
+                            }
+
+                            // 2.2. Kiểm tra tương tác bài viết nội bộ (Local Post Activity Check)
+                            if (job.checkActiveLocal && !isDead) {
+                                pushLog(job, `🔍 Kiểm tra bài viết gần nhất (Trình duyệt nội bộ): ${fbMatch}`, 'info');
+                                const activityResult = await extractFacebookLatestPostDate(page, fullUrl);
+
+                                if (activityResult && activityResult.postDate) {
+                                    const postDate = new Date(activityResult.postDate);
+                                    const targetDate = new Date();
+                                    targetDate.setMonth(targetDate.getMonth() - (job.monthsToCheck || 6));
+
+                                    const postDateStr = postDate.toISOString().split('T')[0];
+                                    row['Latest_Post_Date'] = postDateStr;
+
+                                    if (postDate >= targetDate) {
+                                        row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'TRUE';
+                                        isDead = false;
+                                        pushLog(job, `📅 Bài viết mới nhất: ${postDateStr} (Còn hoạt động trong ${job.monthsToCheck || 6} tháng): ${fbMatch}`, 'success');
+                                    } else {
+                                        row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'FALSE';
+                                        isDead = true;
+                                        pushLog(job, `⏳ Bài viết mới nhất: ${postDateStr} (Không hoạt động trong ${job.monthsToCheck || 6} tháng): ${fbMatch}`, 'warning');
+                                    }
+                                } else {
+                                    const reason = activityResult ? activityResult.reason : 'NOT_FOUND';
+                                    row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'FALSE';
+                                    row['Latest_Post_Date'] = reason;
+                                    isDead = true;
+                                    if (reason === 'LOGIN_REQUIRED') {
+                                        pushLog(job, `⚠️ Yêu cầu đăng nhập để xem bài viết: ${fbMatch} (Gợi ý: Cài đặt Cookie nick phụ trong tab Cài đặt)`, 'warning');
+                                    } else {
+                                        pushLog(job, `⚠️ Không tìm thấy bài viết gần đây: ${fbMatch}`, 'warning');
+                                    }
+                                }
+                            }
+
+                            // 2.3. Kiểm tra và sửa ảnh avatar (Hoàn toàn tự động, không cần Apify)
+                            if (job.checkAvatar && !isDead) {
+                                let currentImgUrl = row[imgCol];
+                                let isImgValid = false;
+
+                                // Kiểm tra ảnh hiện tại có còn tải được không
+                                if (currentImgUrl && typeof currentImgUrl === 'string' && currentImgUrl.startsWith('http')) {
+                                    if (!currentImgUrl.includes('graph.facebook.com')) {
+                                        isImgValid = await checkImageUrlValid(currentImgUrl);
+                                    }
+                                }
+
+                                if (isImgValid) {
+                                    row[imgCol] = optimizeFacebookAvatarUrl(currentImgUrl);
+                                    pushLog(job, `✅ Ảnh đại diện còn hoạt động tốt (HD): ${fbMatch}`, 'info');
+                                } else {
+                                    pushLog(job, `🖼️ Đang trích xuất ảnh đại diện mới: ${fbMatch}`, 'info');
+                                    const newAvatar = await extractFacebookAvatar(fullUrl, browser, page);
+                                    if (newAvatar) {
+                                        row[imgCol] = newAvatar;
+                                        pushLog(job, `✅ Cập nhật Avatar HD thành công: ${fbMatch}`, 'success');
+                                    } else {
+                                        pushLog(job, `⚠️ Không tìm thấy ảnh đại diện mới: ${fbMatch}`, 'warning');
+                                    }
                                 }
                             }
                         }
@@ -1126,7 +1473,7 @@ async function runJob(job) {
                 } else {
                     aliveRows.push(row);
                     job.stats.alive++;
-                    if (!job.checkAliveApify || row[`Active_Within_${job.monthsToCheck || 6}_Months`] === 'TRUE') {
+                    if ((!job.checkAliveApify && !job.checkActiveLocal) || row[`Active_Within_${job.monthsToCheck || 6}_Months`] === 'TRUE') {
                         pushLog(job, `✅ ALIVE: ${fullUrl}`, 'success');
                     }
                 }
@@ -1259,6 +1606,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
     concurrency: parseInt(req.body.concurrency) || 3,
     headless: req.body.headless === 'true' || req.body.headless === true,
     checkAlive: req.body.checkAlive === 'true' || req.body.checkAlive === true,
+    checkActiveLocal: req.body.checkActiveLocal === 'true' || req.body.checkActiveLocal === true,
     checkAliveApify: req.body.checkAliveApify === 'true' || req.body.checkAliveApify === true,
     checkAvatar: req.body.checkAvatar === 'true' || req.body.checkAvatar === true || req.body.checkAvatarApify === 'true' || req.body.checkAvatarApify === true,
     checkAvatarApify: false,
@@ -1598,10 +1946,13 @@ app.get('/api/config', (req, res) => {
 app.post('/api/config', (req, res) => {
     try {
         const configPath = path.join(__dirname, 'config.json');
+        const existingConfig = getConfig();
         const newConfig = {
-            maxUsagePerKey: parseInt(req.body.maxUsagePerKey) || 400,
-            minDelay: parseInt(req.body.minDelay) || 2000,
-            maxDelay: parseInt(req.body.maxDelay) || 5000
+            ...existingConfig,
+            maxUsagePerKey: req.body.maxUsagePerKey !== undefined ? (parseInt(req.body.maxUsagePerKey) || 400) : (existingConfig.maxUsagePerKey || 400),
+            minDelay: req.body.minDelay !== undefined ? (parseInt(req.body.minDelay) || 2000) : (existingConfig.minDelay || 2000),
+            maxDelay: req.body.maxDelay !== undefined ? (parseInt(req.body.maxDelay) || 5000) : (existingConfig.maxDelay || 5000),
+            facebookCookie: req.body.facebookCookie !== undefined ? req.body.facebookCookie.trim() : (existingConfig.facebookCookie || '')
         };
         fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
         res.json({ success: true, config: newConfig });
