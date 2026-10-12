@@ -330,8 +330,18 @@ function saveCheckpoint(jobId, data) {
     const cpPath = getCheckpointPath(jobId);
     try {
         const tmpPath = `${cpPath}.tmp`;
-        fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
-        fs.renameSync(tmpPath, cpPath);
+        const str = JSON.stringify(data, null, 2);
+        try {
+            fs.writeFileSync(tmpPath, str, 'utf8');
+            try {
+                fs.renameSync(tmpPath, cpPath);
+            } catch (renErr) {
+                fs.writeFileSync(cpPath, str, 'utf8');
+                try { fs.unlinkSync(tmpPath); } catch(uErr) {}
+            }
+        } catch (wrErr) {
+            fs.writeFileSync(cpPath, str, 'utf8');
+        }
     } catch(e) {
         console.error(`[LeadPurify] Lỗi lưu checkpoint của job ${jobId}:`, e.message);
     }
@@ -356,13 +366,23 @@ function saveQueue() {
     try {
         const tmpFile = `${QUEUE_FILE}.tmp`;
         const data = JSON.stringify(queue, null, 2);
-        fs.writeFileSync(tmpFile, data, 'utf8');
         if (fs.existsSync(QUEUE_FILE)) {
             try { fs.copyFileSync(QUEUE_FILE, QUEUE_BAK_FILE); } catch(e) {}
         }
-        fs.renameSync(tmpFile, QUEUE_FILE);
+        try {
+            fs.writeFileSync(tmpFile, data, 'utf8');
+            try {
+                fs.renameSync(tmpFile, QUEUE_FILE);
+            } catch (renameErr) {
+                // Trên Windows, renameSync có thể bị EPERM nếu tệp đang bị khóa tạm thời
+                fs.writeFileSync(QUEUE_FILE, data, 'utf8');
+                try { fs.unlinkSync(tmpFile); } catch(uErr) {}
+            }
+        } catch (writeErr) {
+            fs.writeFileSync(QUEUE_FILE, data, 'utf8');
+        }
     } catch(err) {
-        console.error('[LeadPurify] Lỗi lưu queue.json:', err);
+        console.error('[LeadPurify] Lỗi lưu queue.json:', err.message);
     }
 }
 
