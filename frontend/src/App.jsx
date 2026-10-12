@@ -27,7 +27,9 @@ import {
   HelpCircle,
   Activity,
   FileDown,
-  CheckCircle2
+  CheckCircle2,
+  ShieldCheck,
+  Globe
 } from 'lucide-react';
 import './index.css';
 import CsvEditorModal from './components/CsvEditorModal';
@@ -113,9 +115,11 @@ function App() {
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState(null); // 'alive' | 'dead' | null
   const [isQueueActionLoading, setIsQueueActionLoading] = useState(false);
-  const [apifyConfig, setApifyConfig] = useState({ maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000 });
+  const [apifyConfig, setApifyConfig] = useState({ maxUsagePerKey: 400, minDelay: 2000, maxDelay: 5000, facebookCookie: '' });
+  const [facebookCookieInput, setFacebookCookieInput] = useState('');
   const [jobOptions, setJobOptions] = useState({
     checkAlive: true,
+    checkActiveLocal: false,
     checkAliveApify: false,
     checkAvatar: true,
     monthsToCheck: 6
@@ -218,7 +222,12 @@ function App() {
       setApifyKeys(res.data);
       setApifyInput(res.data.map(k => k.key).join('\n'));
     }).catch(console.error);
-    axios.get('http://localhost:3001/api/config').then(res => setApifyConfig(res.data)).catch(console.error);
+    axios.get('http://localhost:3001/api/config').then(res => {
+      setApifyConfig(res.data);
+      if (res.data.facebookCookie) {
+        setFacebookCookieInput(res.data.facebookCookie);
+      }
+    }).catch(console.error);
 
     return () => {
       socket.off('connect', onConnect);
@@ -239,6 +248,7 @@ function App() {
     formData.append('concurrency', concurrency);
     formData.append('headless', headless);
     formData.append('checkAlive', jobOptions.checkAlive);
+    formData.append('checkActiveLocal', jobOptions.checkActiveLocal);
     formData.append('checkAliveApify', jobOptions.checkAliveApify);
     formData.append('checkAvatar', jobOptions.checkAvatar);
     formData.append('monthsToCheck', jobOptions.monthsToCheck);
@@ -500,6 +510,41 @@ function App() {
     }
   };
 
+  const handleSaveFacebookCookie = async () => {
+    try {
+      const res = await axios.post('http://localhost:3001/api/config', {
+        ...apifyConfig,
+        facebookCookie: facebookCookieInput.trim()
+      });
+      setApifyConfig(res.data.config);
+      showToast('Đã lưu Cookie Facebook thành công! Trình duyệt nội bộ sẽ dùng Cookie này khi kiểm tra bài viết.', 'success', 'Cài đặt Cookie');
+    } catch (e) {
+      showToast('Lỗi khi lưu Cookie Facebook: ' + e.message, 'error', 'Lỗi cài đặt');
+    }
+  };
+
+  const handleClearFacebookCookie = () => {
+    openConfirm({
+      title: 'Xóa Cookie Facebook',
+      message: 'Bạn có chắc muốn xóa Cookie Facebook đã lưu không? Hệ thống sẽ quay về chế độ duyệt khách công khai.',
+      confirmText: 'Xóa Cookie',
+      tone: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await axios.post('http://localhost:3001/api/config', {
+            ...apifyConfig,
+            facebookCookie: ''
+          });
+          setApifyConfig(res.data.config);
+          setFacebookCookieInput('');
+          showToast('Đã xóa Cookie Facebook thành công! Hệ thống sẽ duyệt ở chế độ khách.', 'success');
+        } catch (e) {
+          showToast('Lỗi khi xóa Cookie: ' + e.message, 'error');
+        }
+      }
+    });
+  };
+
   const handleCheckApifyKeys = async () => {
     setIsCheckingKeys(true);
     showToast('Đang kết nối kiểm tra toàn bộ API Keys...', 'info');
@@ -729,8 +774,8 @@ function App() {
             className={`liquid-nav-btn ${activeTab === 'api' ? 'active' : ''}`}
             onClick={() => setActiveTab('api')}
           >
-            <Key size={16} />
-            API Keys
+            <Settings size={16} />
+            Cài đặt & API Keys
           </button>
         </nav>
       </header>
@@ -898,14 +943,62 @@ function App() {
                   <span>Kiểm tra link sống / chết (Trình duyệt nội bộ, miễn phí)</span>
                 </label>
 
+                {/* Checkbox 2: Kiểm tra tương tác bài viết nội bộ (Miễn phí 100%) */}
+                <label className="liquid-checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    className="liquid-checkbox"
+                    checked={jobOptions.checkActiveLocal} 
+                    onChange={e => {
+                      const checked = e.target.checked;
+                      setJobOptions({
+                        ...jobOptions, 
+                        checkActiveLocal: checked,
+                        checkAliveApify: checked ? false : jobOptions.checkAliveApify
+                      });
+                    }} 
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span>Kiểm tra tương tác bài viết (Trình duyệt nội bộ, Miễn phí 100%)</span>
+                    <span className="liquid-badge liquid-badge-success" style={{ fontSize: '0.7rem', padding: '0.1rem 0.5rem' }}>
+                      0đ / Không cần Token
+                    </span>
+                  </div>
+                </label>
+
+                {jobOptions.checkActiveLocal && (
+                  <div style={{ paddingLeft: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Số tháng hoạt động:</span>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      value={jobOptions.monthsToCheck} 
+                      onChange={e => setJobOptions({...jobOptions, monthsToCheck: e.target.value})} 
+                      className="liquid-input"
+                      style={{ width: '70px', padding: '0.35rem 0.5rem', textAlign: 'center' }} 
+                    />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      (Tự động quét bài viết gần nhất. Tùy chọn cấu hình Cookie nick phụ trong tab Cài đặt)
+                    </span>
+                  </div>
+                )}
+
+                {/* Checkbox 3: Dịch vụ Apify Cloud (dự phòng) */}
                 <label className="liquid-checkbox-label">
                   <input 
                     type="checkbox" 
                     className="liquid-checkbox"
                     checked={jobOptions.checkAliveApify} 
-                    onChange={e => setJobOptions({...jobOptions, checkAliveApify: e.target.checked})} 
+                    onChange={e => {
+                      const checked = e.target.checked;
+                      setJobOptions({
+                        ...jobOptions, 
+                        checkAliveApify: checked,
+                        checkActiveLocal: checked ? false : jobOptions.checkActiveLocal
+                      });
+                    }} 
                   />
-                  <span>Kiểm tra tương tác bài viết (Yêu cầu Token Apify)</span>
+                  <span>Kiểm tra bài viết qua Apify Cloud (Yêu cầu Token Apify)</span>
                 </label>
 
                 {jobOptions.checkAliveApify && (
@@ -1369,14 +1462,58 @@ function App() {
             style={{ padding: '2rem' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <Key size={22} style={{ color: 'var(--color-accent)' }} />
+              <Settings size={22} style={{ color: 'var(--color-accent)' }} />
               <h2 style={{ fontSize: '1.375rem', margin: 0, fontWeight: 600 }}>
-                Quản lý Apify API Keys
+                Cấu hình Cookie & Quản lý API Keys
               </h2>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9375rem', marginBottom: '1.5rem' }}>
-              Nhập danh sách API Token của Apify (mỗi token trên một dòng riêng). Hệ thống sẽ tự động luân phiên xoay vòng khi token đạt ngưỡng request tối đa hoặc gặp giới hạn định ngạch.
+              Tùy chỉnh tài khoản Facebook phụ để quét bài viết nội bộ miễn phí hoặc quản lý danh sách Apify Token nếu bạn sử dụng dịch vụ đám mây.
             </p>
+
+            {/* Facebook Cookie Section for Free Local Post Inspection */}
+            <div className="liquid-card" style={{ padding: '1.5rem', marginBottom: '2rem', background: 'rgba(255, 255, 255, 0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                  <Globe size={20} style={{ color: '#38bdf8' }} />
+                  <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>
+                    Cookie Facebook (Kiểm tra bài viết nội bộ miễn phí 100%)
+                  </h3>
+                </div>
+                <span className={`liquid-badge ${apifyConfig.facebookCookie ? 'liquid-badge-success' : 'liquid-badge-warning'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  {apifyConfig.facebookCookie ? <ShieldCheck size={13} /> : <Info size={13} />}
+                  {apifyConfig.facebookCookie ? 'Đã lưu Cookie (Sẵn sàng quét)' : 'Chưa cấu hình (Chế độ khách công khai)'}
+                </span>
+              </div>
+
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0 0 1rem 0', lineHeight: 1.6 }}>
+                Tùy chọn: Nhập chuỗi Cookie của tài khoản Facebook phụ (nick clone) để trình duyệt nội bộ có thể duyệt các bài viết trang cá nhân mà không bị Facebook yêu cầu đăng nhập. Dữ liệu chỉ lưu an toàn trên máy cục bộ của bạn, không gửi ra ngoài.
+              </p>
+
+              <textarea 
+                value={facebookCookieInput}
+                onChange={(e) => setFacebookCookieInput(e.target.value)}
+                placeholder="Dán Cookie nick clone vào đây (ví dụ: c_user=1000...; xs=...; hoặc mảng JSON cookie từ tiện ích J2TEAM / EditThisCookie)"
+                className="liquid-textarea font-mono"
+                style={{ height: '90px', resize: 'vertical', fontSize: '0.8125rem', marginBottom: '0.875rem' }}
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button onClick={handleSaveFacebookCookie} className="btn-primary" style={{ padding: '0.45rem 1rem' }}>
+                    <CheckCircle2 size={16} /> Lưu Cookie Facebook
+                  </button>
+                  {apifyConfig.facebookCookie && (
+                    <button onClick={handleClearFacebookCookie} className="btn-outline btn-outline-danger" style={{ padding: '0.45rem 1rem' }}>
+                      <Trash2 size={15} /> Xóa Cookie
+                    </button>
+                  )}
+                </div>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                  💡 Khuyên dùng nick phụ để kiểm tra bài viết thoải mái 0đ mà không lo checkpoint nick chính.
+                </span>
+              </div>
+            </div>
 
             {/* Free Core Feature Explainer Banner */}
             <div style={{ 

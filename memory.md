@@ -17,6 +17,10 @@ AI và các Developer nên ghi lại các quy ước mã nguồn, các lỗi đ�
   - Checkpoint: Tiến trình quét lưu checkpoint sau mỗi chunk (`outputs/checkpoint_{jobId}.json`) chứa danh sách hàng đã quét, vị trí dừng, và kết quả sống/chết. Khi server tắt hoặc gặp sự cố, tiến trình được chuyển sang `INTERRUPTED` và cho phép "Tiếp tục" quét tiếp từ điểm dừng mà không bị mất dữ liệu hay tốn quota Apify.
   - Graceful Shutdown: Bắt các tín hiệu SIGINT, SIGTERM, SIGHUP, SIGBREAK, uncaughtException để đóng Puppeteer browser sạch sẽ và lưu trạng thái hàng đợi trước khi thoát process.
   - Cơ chế trích xuất & Sửa Avatar HD:
-  - Hệ thống sử dụng bộ cào nội bộ 2 tầng (Hybrid Scraper) thay vì Apify: Tầng 1 dùng Fast HTTP request bóc tách thẻ OpenGraph `og:image` (~300ms, không tốn RAM trình duyệt), Tầng 2 dự phòng qua Puppeteer bóc tách DOM/SVG profile image.
-  - Trước khi cào mới, hệ thống tự động kiểm tra xem URL ảnh cũ có còn sống không bằng request Range 1KB siêu nhẹ. Nếu còn sống, tự động nâng cấp sang HD bằng `optimizeFacebookAvatarUrl` (loại bỏ param `ctp=s50x50` của Facebook CDN). Không cần bất kỳ API Token nào.
+    - Hệ thống sử dụng bộ cào nội bộ 2 tầng (Hybrid Scraper) thay vì Apify: Tầng 1 dùng Fast HTTP request bóc tách thẻ OpenGraph `og:image` (~300ms, không tốn RAM trình duyệt), Tầng 2 dự phòng qua Puppeteer bóc tách DOM/SVG profile image.
+    - Trước khi cào mới, hệ thống tự động kiểm tra xem URL ảnh cũ có còn sống không bằng request Range 1KB siêu nhẹ. Nếu còn sống, tự động nâng cấp sang HD bằng `optimizeFacebookAvatarUrl` (loại bỏ param `ctp=s50x50` của Facebook CDN). Không cần bất kỳ API Token nào.
+  - Cơ chế kiểm tra bài viết & tương tác nội bộ miễn phí (Local Post Activity Checker):
+    - Độc lập 100% không cần Token Apify: Sử dụng Puppeteer bóc tách timestamp từ thẻ script Relay JSON (`creation_time`, `publish_time`) hoặc DOM (`time`, `abbr`, link feed).
+    - Tự động đóng popup đăng nhập của Facebook và hỗ trợ nạp Cookie Facebook của nick clone/phụ qua tab Cài đặt để vượt tường đăng nhập khi quét trang cá nhân.
+    - Tối ưu hóa hiệu năng: Tái sử dụng cùng một tab Puppeteer cho cả kiểm tra sống/chết, bài viết gần nhất và avatar trong 1 lần tải duy nhất.
 

@@ -1,5 +1,6 @@
 {
   "maxUsagePerKey": 700,
   "minDelay": 1000,
-  "maxDelay": 2000
+  "maxDelay": 2000,
+  "facebookCookie": ""
 }
