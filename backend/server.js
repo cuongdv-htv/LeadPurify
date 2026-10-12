@@ -9,6 +9,7 @@ const path = require('path');
 const Papa = require('papaparse');
 const crypto = require('crypto');
 const https = require('https');
+const http = require('http');
 const { createZipBuffer } = require('./zipHelper');
 
 function callApify(url, token) {
@@ -523,46 +524,243 @@ async function processQueue() {
   }
 }
 
-function getFacebookAvatarUrl(fbLink) {
-    if (!fbLink || typeof fbLink !== 'string') return null;
+function checkImageUrlValid(url, timeoutMs = 6000) {
+    if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+        return Promise.resolve(false);
+    }
+    return new Promise((resolve) => {
+        try {
+            const client = url.startsWith('https:') ? https : http;
+            const req = client.request(url, {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                    'Range': 'bytes=0-1024'
+                },
+                timeout: timeoutMs
+            }, (res) => {
+                const statusCode = res.statusCode;
+                const contentType = (res.headers['content-type'] || '').toLowerCase();
+                res.destroy();
+                if (statusCode >= 200 && statusCode < 400 && (contentType.startsWith('image/') || contentType.includes('octet-stream'))) {
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            });
+            req.on('timeout', () => {
+                req.destroy();
+                resolve(false);
+            });
+            req.on('error', () => {
+                resolve(false);
+            });
+            req.end();
+        } catch(e) {
+            resolve(false);
+        }
+    });
+}
 
+function extractAvatarFromHtml(html) {
+    if (!html || typeof html !== 'string') return null;
+
+    // 1. Thẻ meta og:image, og:image:url hoặc twitter:image
+    const ogMatch = html.match(/<meta[^>]+(?:property|name)=["'](?:og:image|og:image:url|twitter:image)["'][^>]+content=["']([^"']+)["']/i) ||
+                    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|og:image:url|twitter:image)["']/i);
+    
+    if (ogMatch && ogMatch[1]) {
+        let url = ogMatch[1].replace(/&amp;/g, '&').trim();
+        if (!url.includes('static.xx.fbcdn.net') && !url.includes('fb_icon_325x325') && (url.includes('fbcdn.net') || url.includes('scontent') || url.startsWith('http'))) {
+            return optimizeFacebookAvatarUrl(url);
+        }
+    }
+
+    // 2. Tìm trong script JSON nhúng của Facebook (Relay store profile_picture)
+    const scriptMatches = html.match(/"profile_picture":\s*\{\s*"uri":\s*"([^"]+)"/i) ||
+                          html.match(/"profilePic":\s*\{\s*"uri":\s*"([^"]+)"/i);
+    if (scriptMatches && scriptMatches[1]) {
+        let uri = scriptMatches[1].replace(/\\u0025/g, '%').replace(/\\u0026/g, '&').replace(/\\\//g, '/').replace(/\\/g, '');
+        if (uri.startsWith('http') && !uri.includes('static.xx.fbcdn.net')) {
+            return optimizeFacebookAvatarUrl(uri);
+        }
+    }
+
+    return null;
+}
+
+function fetchFacebookAvatarViaHttp(fbUrl, timeoutMs = 7000, redirectCount = 0) {
+    if (!fbUrl || typeof fbUrl !== 'string' || redirectCount > 3) return Promise.resolve(null);
+    return new Promise((resolve) => {
+        try {
+            let targetUrl = fbUrl.trim();
+            if (!targetUrl.startsWith('http')) targetUrl = `https://${targetUrl}`;
+            
+            const client = targetUrl.startsWith('https:') ? https : http;
+            const req = client.request(targetUrl, {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7'
+                },
+                timeout: timeoutMs
+            }, (res) => {
+                if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                    res.destroy();
+                    const redirectUrl = res.headers.location.startsWith('http') 
+                        ? res.headers.location 
+                        : new URL(res.headers.location, targetUrl).toString();
+                    return resolve(fetchFacebookAvatarViaHttp(redirectUrl, timeoutMs, redirectCount + 1));
+                }
+
+                if (res.statusCode !== 200) {
+                    res.destroy();
+                    return resolve(null);
+                }
+
+                let html = '';
+                let isDestroyed = false;
+                res.on('data', chunk => {
+                    html += chunk.toString('utf8');
+                    if (html.includes('property="og:image"') || html.includes('property=\'og:image\'') || html.includes('name="twitter:image"')) {
+                        if (html.length > 60000 && !isDestroyed) {
+                            isDestroyed = true;
+                            res.destroy();
+                            const avatar = extractAvatarFromHtml(html);
+                            resolve(avatar);
+                        }
+                    }
+                });
+
+                res.on('end', () => {
+                    if (!isDestroyed) {
+                        const avatar = extractAvatarFromHtml(html);
+                        resolve(avatar);
+                    }
+                });
+
+                res.on('error', () => {
+                    if (!isDestroyed) resolve(null);
+                });
+            });
+
+            req.on('timeout', () => {
+                req.destroy();
+                resolve(null);
+            });
+            req.on('error', () => resolve(null));
+            req.end();
+        } catch(e) {
+            resolve(null);
+        }
+    });
+}
+
+async function fetchFacebookAvatarViaPuppeteer(page, fbUrl) {
+    if (!page || !fbUrl) return null;
     try {
-        let urlString = fbLink.trim();
-        if (!urlString.startsWith('http')) {
-            urlString = 'https://' + urlString;
-        }
+        await page.goto(fbUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+        await new Promise(r => setTimeout(r, 1200));
 
-        const urlObj = new URL(urlString);
-        if (!urlObj.hostname.includes('facebook.com') && !urlObj.hostname.includes('fb.com')) {
+        const avatar = await page.evaluate(() => {
+            // 1. Thẻ meta
+            const meta = document.querySelector('meta[property="og:image"], meta[property="og:image:url"], meta[name="twitter:image"]');
+            if (meta && meta.content) {
+                const c = meta.content;
+                if (!c.includes('static.xx.fbcdn.net') && !c.includes('fb_icon_325x325')) {
+                    return c;
+                }
+            }
+
+            // 2. SVG profile image
+            const svgImgs = document.querySelectorAll('svg image, image[preserveAspectRatio]');
+            for (const img of svgImgs) {
+                const href = img.getAttribute('xlink:href') || img.getAttribute('href');
+                if (href && (href.includes('fbcdn.net') || href.includes('scontent')) && !href.includes('rsrc.php')) {
+                    return href;
+                }
+            }
+
+            // 3. Thẻ img avatar
+            const imgSelectors = [
+                'img[role="img"]',
+                'img[data-imgperflogname="profileCoverPhoto"] ~ img',
+                'img[alt*="ảnh đại diện" i]',
+                'img[alt*="profile picture" i]',
+                'img[aria-label*="avatar" i]'
+            ];
+            for (const sel of imgSelectors) {
+                const el = document.querySelector(sel);
+                if (el && el.src && (el.src.includes('fbcdn.net') || el.src.includes('scontent')) && !el.src.includes('rsrc.php')) {
+                    return el.src;
+                }
+            }
+
+            // 4. Script JSON Relay store
+            const scripts = document.querySelectorAll('script[type="application/json"]');
+            for (const s of scripts) {
+                const text = s.textContent;
+                if (text && text.includes('profile_picture') && text.includes('uri')) {
+                    const m = text.match(/"profile_picture":\s*\{\s*"uri":\s*"([^"]+)"/);
+                    if (m && m[1]) {
+                        return m[1].replace(/\\u0025/g, '%').replace(/\\u0026/g, '&').replace(/\\\//g, '/').replace(/\\/g, '');
+                    }
+                }
+            }
+
             return null;
-        }
+        });
 
-        if (urlObj.pathname.includes('profile.php')) {
-            const id = urlObj.searchParams.get('id');
-            if (id) {
-                return `https://graph.facebook.com/${id}/picture?width=800`;
+        if (avatar) {
+            return optimizeFacebookAvatarUrl(avatar);
+        }
+        return null;
+    } catch(err) {
+        return null;
+    }
+}
+
+async function extractFacebookAvatar(fbUrl, browser, existingPage = null) {
+    if (!fbUrl) return null;
+
+    // Tầng 1: Fast HTTP GET (~300ms, siêu tốc không tốn tài nguyên trình duyệt)
+    try {
+        const httpAvatar = await fetchFacebookAvatarViaHttp(fbUrl);
+        if (httpAvatar) return httpAvatar;
+    } catch(e) {}
+
+    // Tầng 2: Fallback Puppeteer nếu Fast HTTP không tìm thấy
+    if (existingPage) {
+        try {
+            const pageAvatar = await fetchFacebookAvatarViaPuppeteer(existingPage, fbUrl);
+            if (pageAvatar) return pageAvatar;
+        } catch(e) {}
+    } else if (browser) {
+        let tempPage = null;
+        try {
+            tempPage = await browser.newPage();
+            // Tối ưu tốc độ: chặn tải hình ảnh, font, css thừa
+            await tempPage.setRequestInterception(true);
+            tempPage.on('request', (req) => {
+                const rType = req.resourceType();
+                if (['image', 'font', 'stylesheet', 'media'].includes(rType)) {
+                    req.abort();
+                } else {
+                    req.continue();
+                }
+            });
+            const pageAvatar = await fetchFacebookAvatarViaPuppeteer(tempPage, fbUrl);
+            if (pageAvatar) return pageAvatar;
+        } catch(e) {} finally {
+            if (tempPage && !tempPage.isClosed()) {
+                await tempPage.close().catch(() => {});
             }
         }
-
-        const pathParts = urlObj.pathname.split('/').filter(part => part.length > 0);
-        if (pathParts.length === 0) return null;
-
-        let usernameOrId = null;
-
-        if (pathParts[0] === 'people' && pathParts.length >= 3) {
-            usernameOrId = pathParts[2];
-        } else if (!['people', 'groups', 'events', 'watch', 'marketplace'].includes(pathParts[0])) {
-            usernameOrId = pathParts[0];
-        }
-
-        if (usernameOrId) {
-            return `https://graph.facebook.com/${usernameOrId}/picture?width=800`;
-        }
-
-        return null;
-    } catch (error) {
-        return null; 
     }
+
+    return null;
 }
 
 async function runJob(job) {
@@ -665,8 +863,8 @@ async function runJob(job) {
                 let isDead = false;
                 let hasError = false;
 
-                // --- 1. APIFY CHECKS ---
-                if (job.checkAliveApify || job.checkAvatarApify) {
+                // --- 1. APIFY CHECKS (CHỈ KHI KIỂM TRA HOẠT ĐỘNG BÀI VIẾT) ---
+                if (job.checkAliveApify) {
                     let apifyData = null;
                     let apifySuccess = false;
 
@@ -726,27 +924,26 @@ async function runJob(job) {
                     }
 
                     if (apifySuccess && !hasError) {
-                        if (job.checkAliveApify) {
-                            if (apifyData && apifyData.time) {
-                                const postDate = new Date(apifyData.time);
-                                const targetDate = new Date();
-                                targetDate.setMonth(targetDate.getMonth() - (job.monthsToCheck || 6));
-                                if (postDate >= targetDate) {
-                                    row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'TRUE';
-                                    isDead = false;
-                                } else {
-                                    row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'FALSE';
-                                    isDead = true; 
-                                }
-                                row['Latest_Post_Date'] = apifyData.time;
+                        if (apifyData && apifyData.time) {
+                            const postDate = new Date(apifyData.time);
+                            const targetDate = new Date();
+                            targetDate.setMonth(targetDate.getMonth() - (job.monthsToCheck || 6));
+                            if (postDate >= targetDate) {
+                                row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'TRUE';
+                                isDead = false;
                             } else {
-                                row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'UNKNOWN';
-                                row['Latest_Post_Date'] = 'NOT_FOUND';
+                                row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'FALSE';
                                 isDead = true; 
                             }
+                            row['Latest_Post_Date'] = apifyData.time;
+                        } else {
+                            row[`Active_Within_${job.monthsToCheck || 6}_Months`] = 'UNKNOWN';
+                            row['Latest_Post_Date'] = 'NOT_FOUND';
+                            isDead = true; 
                         }
 
-                        if (job.checkAvatarApify && apifyData) {
+                        // Nếu bật checkAvatar và Apify có avatar sẵn, tận dụng thêm
+                        if (job.checkAvatar && apifyData) {
                             let extractedAvatar = null;
                             const post = apifyData;
                             if (post.user && post.user.profilePic) extractedAvatar = post.user.profilePic;
@@ -758,36 +955,36 @@ async function runJob(job) {
                             else if (post.page && post.page.profilePicture) extractedAvatar = post.page.profilePicture;
                             
                             if (extractedAvatar) {
-                                extractedAvatar = optimizeFacebookAvatarUrl(extractedAvatar);
-                                row[imgCol] = extractedAvatar;
-                                pushLog(job, `🖼️ Cập nhật Avatar HD (Apify) thành công`, 'success');
+                                row[imgCol] = optimizeFacebookAvatarUrl(extractedAvatar);
                             }
                         }
                     }
                 }
 
-                // --- 2. PUPPETEER CHECKS ---
-                let page;
+                // --- 2. KIỂM TRA SỐNG/CHẾT (PUPPETEER) & XỬ LÝ AVATAR (CRAWLER NỘI BỘ) ---
+                let page = null;
                 if (browser && !hasError) {
                     try {
                         await checkState();
-                        page = await browser.newPage();
-                        
-                        const minD = job.minDelay || 2000;
-                        const maxD = Math.max(job.maxDelay || 5000, minD);
-                        const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
-                        
-                        pushLog(job, `⏳ Chờ ${(randomDelay/1000).toFixed(1)}s trước khi mở (Puppeteer): ${fullUrl}`, 'info');
-                        await new Promise(r => setTimeout(r, randomDelay));
-                        await checkState();
 
-                        pushLog(job, `⚡ Đang kiểm tra (Puppeteer): ${fullUrl}`, 'info');
-                        await page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-                        await checkState();
-                        await new Promise(r => setTimeout(r, 2000));
-                        await checkState();
-
+                        // 2.1. Kiểm tra sống/chết nếu được yêu cầu
                         if (job.checkAlive) {
+                            page = await browser.newPage();
+                            
+                            const minD = job.minDelay || 1500;
+                            const maxD = Math.max(job.maxDelay || 3500, minD);
+                            const randomDelay = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
+                            
+                            pushLog(job, `⏳ Chờ ${(randomDelay/1000).toFixed(1)}s trước khi mở (Puppeteer): ${fullUrl}`, 'info');
+                            await new Promise(r => setTimeout(r, randomDelay));
+                            await checkState();
+
+                            pushLog(job, `⚡ Đang kiểm tra sống/chết (Puppeteer): ${fullUrl}`, 'info');
+                            await page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                            await checkState();
+                            await new Promise(r => setTimeout(r, 1500));
+                            await checkState();
+
                             const pageText = await page.evaluate(() => document.body.innerText);
                             const pDead = pageText.includes("isn't available") || 
                                            pageText.includes("không hiển thị") || 
@@ -804,51 +1001,38 @@ async function runJob(job) {
                             }
                         }
 
+                        // 2.2. Kiểm tra và sửa ảnh avatar (Hoàn toàn tự động, không cần Apify)
                         if (job.checkAvatar && !isDead) {
-                            let imageWorks = false;
                             let currentImgUrl = row[imgCol];
-                            
-                            const graphApiAvatar = getFacebookAvatarUrl(fullUrl); 
-                            if (graphApiAvatar) {
-                                row[imgCol] = graphApiAvatar;
-                                imageWorks = true;
-                                pushLog(job, `✅ Lưu ảnh đại diện vĩnh viễn bằng Graph API`, 'success');
-                            }
-                            
-                            if (!imageWorks && currentImgUrl) {
-                                const imgPage = await browser.newPage();
-                                const imgRes = await imgPage.goto(currentImgUrl, { timeout: 15000 }).catch(() => null);
-                                if (imgRes && imgRes.status() === 200) {
-                                    const ct = imgRes.headers()['content-type'];
-                                    if (ct && ct.startsWith('image/')) {
-                                        imageWorks = true;
-                                    }
+                            let isImgValid = false;
+
+                            // Kiểm tra ảnh hiện tại có còn tải được không
+                            if (currentImgUrl && typeof currentImgUrl === 'string' && currentImgUrl.startsWith('http')) {
+                                if (!currentImgUrl.includes('graph.facebook.com')) {
+                                    isImgValid = await checkImageUrlValid(currentImgUrl);
                                 }
-                                await imgPage.close();
                             }
-                            
-                            if (!imageWorks) {
-                                pushLog(job, `Ảnh hỏng hoặc thiếu, đang lấy ảnh đại diện mới...`, 'warning');
-                                const newAvatar = await page.evaluate(() => {
-                                    const meta = document.querySelector('meta[property="og:image"]');
-                                    if (meta && meta.content) return meta.content;
-                                    const svgImg = document.querySelector('svg[role="img"] image');
-                                    if (svgImg) return svgImg.getAttribute('xlink:href') || svgImg.getAttribute('href');
-                                    return null;
-                                });
-                                
+
+                            if (isImgValid) {
+                                row[imgCol] = optimizeFacebookAvatarUrl(currentImgUrl);
+                                pushLog(job, `✅ Ảnh đại diện còn hoạt động tốt (HD): ${fbMatch}`, 'info');
+                            } else {
+                                pushLog(job, `🖼️ Đang trích xuất ảnh đại diện mới: ${fbMatch}`, 'info');
+                                const newAvatar = await extractFacebookAvatar(fullUrl, browser, page);
                                 if (newAvatar) {
-                                    row[imgCol] = optimizeFacebookAvatarUrl(newAvatar);
-                                    pushLog(job, `✅ Cập nhật ảnh đại diện thành công`, 'success');
+                                    row[imgCol] = newAvatar;
+                                    pushLog(job, `✅ Cập nhật Avatar HD thành công: ${fbMatch}`, 'success');
+                                } else {
+                                    pushLog(job, `⚠️ Không tìm thấy ảnh đại diện mới: ${fbMatch}`, 'warning');
                                 }
                             }
                         }
                     } catch (err) {
                         if (err.message === 'ABORTED') throw err;
                         hasError = true;
-                        pushLog(job, `⚠️ LỖI (Puppeteer): ${fbMatch} - ${err.message}`, 'warning');
+                        pushLog(job, `⚠️ LỖI: ${fbMatch} - ${err.message}`, 'warning');
                     } finally {
-                        if (page && !page.isClosed()) await page.close();
+                        if (page && !page.isClosed()) await page.close().catch(() => {});
                     }
                 }
 
@@ -910,6 +1094,9 @@ async function runJob(job) {
                     deadFile: `http://localhost:3001/api/download/${encodeURIComponent(deadFilename)}` 
                 };
                 job.status = 'COMPLETED';
+                if (job.checkAvatar) {
+                    job.avatarFixed = true;
+                }
                 removeCheckpoint(job.id);
                 job.hasCheckpoint = false;
                 job.resumeFromCheckpoint = false;
@@ -956,8 +1143,8 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
     headless: req.body.headless === 'true' || req.body.headless === true,
     checkAlive: req.body.checkAlive === 'true' || req.body.checkAlive === true,
     checkAliveApify: req.body.checkAliveApify === 'true' || req.body.checkAliveApify === true,
-    checkAvatar: req.body.checkAvatar === 'true' || req.body.checkAvatar === true,
-    checkAvatarApify: req.body.checkAvatarApify === 'true' || req.body.checkAvatarApify === true,
+    checkAvatar: req.body.checkAvatar === 'true' || req.body.checkAvatar === true || req.body.checkAvatarApify === 'true' || req.body.checkAvatarApify === true,
+    checkAvatarApify: false,
     monthsToCheck: parseInt(req.body.monthsToCheck) || 6,
     minDelay: parseInt(req.body.minDelay) || 2000,
     maxDelay: parseInt(req.body.maxDelay) || 5000,
@@ -1035,15 +1222,16 @@ function createFixAvatarJob(historyJob) {
     id: crypto.randomBytes(8).toString('hex'),
     filename: `FixAvatar_${historyJob.filename}`,
     status: 'PENDING',
-    concurrency: 1, // Chạy 1 luồng để xoay vòng API an toàn
+    concurrency: 3, // Chạy 3 luồng song song nhanh chóng không phụ thuộc Apify
     headless: true,
     checkAlive: false,
     checkAliveApify: false,
-    checkAvatar: false,
-    checkAvatarApify: true,
+    checkAvatar: true,
+    checkAvatarApify: false,
+    avatarFixed: true,
     monthsToCheck: 6,
-    minDelay: config.minDelay,
-    maxDelay: config.maxDelay,
+    minDelay: 500,
+    maxDelay: 1500,
     stats: { alive: 0, dead: 0, error: 0 },
     completed: 0,
     total: 0,
@@ -1082,6 +1270,7 @@ app.post('/api/queue/batch-fix-avatar', (req, res) => {
   } else {
     eligibleHistoryJobs = queue.filter(j => 
       ['COMPLETED', 'ERROR'].includes(j.status) && 
+      !j.avatarFixed &&
       !j.checkAvatarApify &&
       !queue.some(q => ['PENDING', 'RUNNING'].includes(q.status) && q.filename === `FixAvatar_${j.filename}`)
     );

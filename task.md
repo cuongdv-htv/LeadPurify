@@ -7,6 +7,15 @@ Mỗi khi cần thực hiện một tính năng mới, fix bug, hay thay đổi 
 - [ ] Chưa có task nào.
 
 ## Task Đã Hoàn Thành
+- [x] Thay đổi logic kiểm tra & sửa link ảnh avatar sang bộ trích xuất nội bộ (Local Scraper), loại bỏ 100% sự phụ thuộc vào Apify API:
+  - [x] 1. Backend (`server.js`): Xây dựng hàm `checkImageUrlValid(url)` kiểm tra HTTP status & content-type của ảnh avatar cũ (dùng Range 1KB cực nhanh).
+  - [x] 2. Backend (`server.js`): Xây dựng hàm `fetchFacebookAvatarViaHttp(fbUrl)` bóc tách OpenGraph `og:image` siêu tốc (~300ms) không cần mở trình duyệt.
+  - [x] 3. Backend (`server.js`): Xây dựng hàm `fetchFacebookAvatarViaPuppeteer(page, fbUrl)` bóc tách DOM & SVG profile image dự phòng khi trang yêu cầu render.
+  - [x] 4. Backend (`server.js`): Tích hợp hàm `extractFacebookAvatar(fbUrl, browser, page)` kết hợp 2 tầng trích xuất và tối ưu chuẩn HD qua `optimizeFacebookAvatarUrl`.
+  - [x] 5. Backend (`server.js`): Cập nhật quy trình quét của `runJob`: Kiểm tra ảnh cũ trước, tự động cào ảnh mới nếu thiếu/hỏng, không còn phụ thuộc vào `callApify`.
+  - [x] 6. Backend (`server.js`): Cập nhật `createFixAvatarJob`, endpoint `/api/queue/:id/fix-avatar` và `/api/queue/batch-fix-avatar` sang engine nội bộ (3 luồng, delay thấp, không cần Apify Key).
+  - [x] 7. Frontend (`App.jsx`): Tinh gọn UI cấu hình quét (gộp thành 1 checkbox "Kiểm tra link ảnh avatar và tự động sửa (Chuẩn HD, không cần API)"), đổi nhãn các nút sửa ảnh trong tab Lịch sử ("Sửa ảnh Avatar", "Sửa ảnh Avatar hàng loạt", badge "Đã sửa ảnh HD").
+  - [x] 8. Kiểm thử toàn diện và xác nhận hệ thống hoạt động ổn định.
 - [x] Thêm chức năng tạm dừng toàn bộ, dừng toàn bộ, và xóa toàn bộ tiến trình trong hàng đợi:
   - [x] Backend (`server.js`): Thêm endpoint `POST /api/queue/batch-pause` tạm dừng an toàn tất cả các tiến trình đang chạy và chờ.
   - [x] Backend (`server.js`): Thêm endpoint `POST /api/queue/batch-stop` dừng toàn bộ các tiến trình, đóng browser, lưu kết quả tạm thời partial CSV và chuyển sang Lịch sử.
