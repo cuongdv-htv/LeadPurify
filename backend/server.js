@@ -836,16 +836,38 @@ async function runJob(job) {
           const rows = results.data;
           if (rows.length === 0) throw new Error('File CSV rỗng');
           
-          let fbCol = Object.keys(rows[0]).find(c => c.toLowerCase().includes('facebook'));
+          // 1. Nhận diện cột link Facebook linh hoạt
+          let fbCol = job.facebookColumn && rows[0][job.facebookColumn] !== undefined ? job.facebookColumn : null;
           if (!fbCol) {
-            const rowWithFb = rows.find(r => Object.values(r).some(v => v && v.includes('facebook.com')));
-            if (rowWithFb) fbCol = Object.keys(rowWithFb).find(k => rowWithFb[k] && rowWithFb[k].includes('facebook.com'));
+            fbCol = Object.keys(rows[0]).find(c => {
+              const lower = c.toLowerCase().trim();
+              return lower.includes('facebook') || lower === 'fb' || lower.startsWith('fb_') || lower.endsWith('_fb') || lower.includes('link_fb') || lower.includes('profile');
+            });
           }
-          if (!fbCol) throw new Error('Không tìm thấy cột chứa link Facebook');
+          if (!fbCol) {
+            const rowWithFb = rows.find(r => Object.values(r).some(v => v && typeof v === 'string' && (v.includes('facebook.com') || v.includes('fb.me') || v.includes('fb.com'))));
+            if (rowWithFb) {
+              fbCol = Object.keys(rowWithFb).find(k => rowWithFb[k] && typeof rowWithFb[k] === 'string' && (rowWithFb[k].includes('facebook.com') || rowWithFb[k].includes('fb.me') || rowWithFb[k].includes('fb.com')));
+            }
+          }
+          if (!fbCol) {
+            fbCol = Object.keys(rows[0]).find(c => {
+              const lower = c.toLowerCase().trim();
+              return lower === 'link' || lower === 'url' || lower.includes('duong_dan') || lower.includes('lien_ket');
+            });
+          }
+          if (!fbCol) throw new Error('Không tìm thấy cột chứa link Facebook. Vui lòng kiểm tra lại cấu trúc file (cần có cột facebook, fb, profile hoặc link chứa facebook.com)');
 
-          let imgCol = Object.keys(rows[0]).find(c => c.toLowerCase().includes('image') || c.toLowerCase().includes('avatar') || c.toLowerCase().includes('ảnh') || c.toLowerCase().includes('pic'));
+          // 2. Nhận diện cột Avatar linh hoạt
+          let imgCol = job.avatarColumn && rows[0][job.avatarColumn] !== undefined ? job.avatarColumn : null;
+          if (!imgCol) {
+            imgCol = Object.keys(rows[0]).find(c => {
+              const lower = c.toLowerCase().trim();
+              return lower.includes('image') || lower.includes('avatar') || lower.includes('ảnh') || lower.includes('anh') || lower.includes('pic') || lower.includes('photo');
+            });
+          }
           if (!imgCol && (job.checkAvatar || job.checkAvatarApify)) {
-             imgCol = 'Avatar'; // Create column if not exists
+             imgCol = 'Avatar'; // Tạo cột mới nếu chưa có
           }
 
           job.total = rows.length;
@@ -1192,6 +1214,42 @@ async function runJob(job) {
 
 app.get('/api/queue', (req, res) => res.json(queue));
 
+// Route tải tệp CSV mẫu chuẩn cho người dùng mới
+app.get('/api/download-template', (req, res) => {
+  const sampleRows = [
+    {
+      'Tên khách hàng': 'Nha Khoa Cali Long Khánh',
+      'Số điện thoại': '0774977789',
+      'Facebook Link': 'https://facebook.com/nhakhoacalilongkhanh',
+      'Ảnh Avatar': 'https://graph.facebook.com/nhakhoacalilongkhanh/picture?width=800',
+      'Ngành nghề': 'Nha khoa',
+      'Ghi chú': 'Cơ sở TP Long Khánh'
+    },
+    {
+      'Tên khách hàng': 'Bảo Dung Spa Mẹ & Bé',
+      'Số điện thoại': '0942394878',
+      'Facebook Link': 'https://facebook.com/p/Chamsocmevabebienhoa-BaoDungspa-61556883432797',
+      'Ảnh Avatar': '',
+      'Ngành nghề': 'Dịch vụ Mẹ & Bé',
+      'Ghi chú': 'TP Biên Hòa Đồng Nai'
+    },
+    {
+      'Tên khách hàng': 'Garage Ô Tô Được Phát',
+      'Số điện thoại': '0967681929',
+      'Facebook Link': 'https://facebook.com/GarageDuocPhat',
+      'Ảnh Avatar': '',
+      'Ngành nghề': 'Sửa chữa ô tô',
+      'Ghi chú': 'Đồng sơn & bảo dưỡng'
+    }
+  ];
+
+  const csvStr = '\uFEFF' + Papa.unparse(sampleRows);
+  const filename = 'LeadPurify_Mau_Danh_Sach_Facebook.csv';
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
+  res.send(csvStr);
+});
+
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   const job = {
@@ -1204,6 +1262,8 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
     checkAliveApify: req.body.checkAliveApify === 'true' || req.body.checkAliveApify === true,
     checkAvatar: req.body.checkAvatar === 'true' || req.body.checkAvatar === true || req.body.checkAvatarApify === 'true' || req.body.checkAvatarApify === true,
     checkAvatarApify: false,
+    facebookColumn: req.body.facebookColumn ? req.body.facebookColumn.trim() : null,
+    avatarColumn: req.body.avatarColumn ? req.body.avatarColumn.trim() : null,
     monthsToCheck: parseInt(req.body.monthsToCheck) || 6,
     minDelay: parseInt(req.body.minDelay) || 2000,
     maxDelay: parseInt(req.body.maxDelay) || 5000,

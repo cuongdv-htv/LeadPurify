@@ -1,7 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2, UploadCloud, ChevronLeft, ChevronRight, Download, Plus } from 'lucide-react';
+import { 
+  X, 
+  Trash2, 
+  UploadCloud, 
+  ChevronLeft, 
+  ChevronRight, 
+  Download, 
+  Plus, 
+  Search, 
+  Link2, 
+  Image, 
+  CheckCircle2 
+} from 'lucide-react';
 import './CsvEditorModal.css';
 
 const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
@@ -15,6 +27,10 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
 
   const [selection, setSelection] = useState(null); // { start: { row, col }, end: { row, col } }
   const [isDragging, setIsDragging] = useState(false);
+
+  const [facebookCol, setFacebookCol] = useState('');
+  const [avatarCol, setAvatarCol] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [page, setPage] = useState(1);
   const rowsPerPage = 50;
@@ -54,13 +70,43 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
             return newRow;
           });
           setData(sortedData);
+
+          // Tự động nhận diện cột link Facebook
+          let detectedFb = sortedHeaders.find(c => {
+            const l = c.toLowerCase().trim();
+            return l.includes('facebook') || l === 'fb' || l.includes('link_fb') || l.includes('profile');
+          });
+          if (!detectedFb) {
+            const rowWithFb = (results.data || []).find(r => Object.values(r).some(v => typeof v === 'string' && (v.includes('facebook.com') || v.includes('fb.me'))));
+            if (rowWithFb) {
+              detectedFb = Object.keys(rowWithFb).find(k => rowWithFb[k] && typeof rowWithFb[k] === 'string' && (rowWithFb[k].includes('facebook.com') || rowWithFb[k].includes('fb.me')));
+            }
+          }
+          if (!detectedFb) {
+            detectedFb = sortedHeaders.find(c => {
+              const l = c.toLowerCase().trim();
+              return l === 'link' || l === 'url';
+            });
+          }
+          setFacebookCol(detectedFb || (sortedHeaders[0] || ''));
+
+          // Tự động nhận diện cột ảnh Avatar
+          let detectedAv = sortedHeaders.find(c => {
+            const l = c.toLowerCase().trim();
+            return l.includes('avatar') || l.includes('image') || l.includes('ảnh') || l.includes('anh') || l.includes('pic');
+          });
+          setAvatarCol(detectedAv || '');
         },
       });
     }
   }, [file]);
 
-  const totalPages = Math.ceil(data.length / rowsPerPage);
-  const currentData = data.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const filteredData = searchTerm.trim()
+    ? data.filter(row => Object.values(row).some(val => String(val || '').toLowerCase().includes(searchTerm.toLowerCase().trim())))
+    : data;
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const currentData = filteredData.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   useEffect(() => {
     if (modalRef.current) {
@@ -284,7 +330,10 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
     const csvStr = '\uFEFF' + Papa.unparse(finalData);
     const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
     const newFile = new File([blob], file.name, { type: 'text/csv' });
-    onConfirm(newFile);
+    onConfirm(newFile, {
+      facebookColumn: facebookCol,
+      avatarColumn: avatarCol
+    });
   };
 
   if (!file) return null;
@@ -307,6 +356,80 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
             </button>
           </div>
 
+          {/* Column Mapper & Search Toolbar */}
+          <div style={{
+            padding: '0.75rem 1.75rem',
+            background: 'rgba(255, 255, 255, 0.02)',
+            borderBottom: '1px solid var(--glass-border-subtle)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            {mode === "upload" && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.84375rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <Link2 size={15} style={{ color: 'var(--color-accent)' }} /> Cột link Facebook:
+                  </span>
+                  <select
+                    value={facebookCol}
+                    onChange={(e) => setFacebookCol(e.target.value)}
+                    className="liquid-input"
+                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.8125rem', background: 'rgba(20, 26, 40, 0.9)', minWidth: '130px' }}
+                  >
+                    {headers.map((h, idx) => (
+                      <option key={idx} value={h}>{h}</option>
+                    ))}
+                  </select>
+                  {facebookCol && (
+                    <span className="liquid-badge liquid-badge-success" style={{ fontSize: '0.75rem', padding: '1px 6px' }}>
+                      Đã nhận diện
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.84375rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <Image size={15} style={{ color: '#38bdf8' }} /> Cột Avatar:
+                  </span>
+                  <select
+                    value={avatarCol}
+                    onChange={(e) => setAvatarCol(e.target.value)}
+                    className="liquid-input"
+                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.8125rem', background: 'rgba(20, 26, 40, 0.9)', minWidth: '130px' }}
+                  >
+                    <option value="">(Tự động tạo mới)</option>
+                    {headers.map((h, idx) => (
+                      <option key={idx} value={h}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Live Search */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: mode === 'upload' ? 'auto' : 0 }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm dòng..."
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                  className="liquid-input"
+                  style={{ padding: '0.35rem 0.75rem 0.35rem 2rem', fontSize: '0.8125rem', width: '200px' }}
+                />
+              </div>
+              {searchTerm && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  ({filteredData.length}/{data.length})
+                </span>
+              )}
+            </div>
+          </div>
+
           <div 
             className="modal-content" 
             ref={modalRef} 
@@ -321,7 +444,14 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
                     <th className="action-col">Hành động</th>
                     <th className="index-col">#</th>
                     {headers.map((col, colIndex) => (
-                      <th key={colIndex} className="header-cell relative group" style={{ position: 'relative' }}>
+                      <th 
+                        key={colIndex} 
+                        className="header-cell relative group" 
+                        style={{ 
+                          position: 'relative',
+                          borderTop: col === facebookCol ? '2px solid var(--color-accent)' : undefined
+                        }}
+                      >
                         {editingHeader === colIndex ? (
                           <input
                             type="text"
@@ -339,7 +469,19 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
                             title="Click đúp để sửa tiêu đề cột"
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}
                           >
-                            <span>{col}</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                              {col}
+                              {col === facebookCol && (
+                                <span className="liquid-badge liquid-badge-accent" style={{ fontSize: '0.6875rem', padding: '0 4px' }} title="Cột chứa liên kết Facebook">
+                                  FB
+                                </span>
+                              )}
+                              {col === avatarCol && (
+                                <span className="liquid-badge" style={{ fontSize: '0.6875rem', padding: '0 4px', background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8' }} title="Cột ảnh đại diện">
+                                  AVATAR
+                                </span>
+                              )}
+                            </span>
                             <button 
                               className="delete-btn"
                               onClick={(e) => { e.stopPropagation(); deleteColumn(colIndex); }}
@@ -443,7 +585,7 @@ const CsvEditorModal = ({ file, onClose, onConfirm, mode = "upload" }) => {
                 <ChevronLeft size={16} /> Trước
               </button>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>
-                Trang {page} / {totalPages || 1} ({data.length} dòng)
+                Trang {page} / {totalPages || 1} ({filteredData.length} dòng)
               </span>
               <button
                 disabled={page >= totalPages}
