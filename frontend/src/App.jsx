@@ -88,7 +88,6 @@ function App() {
     checkAlive: true,
     checkAliveApify: false,
     checkAvatar: true,
-    checkAvatarApify: false,
     monthsToCheck: 6
   });
 
@@ -141,7 +140,6 @@ function App() {
     formData.append('checkAlive', jobOptions.checkAlive);
     formData.append('checkAliveApify', jobOptions.checkAliveApify);
     formData.append('checkAvatar', jobOptions.checkAvatar);
-    formData.append('checkAvatarApify', jobOptions.checkAvatarApify);
     formData.append('monthsToCheck', jobOptions.monthsToCheck);
     try {
       await axios.post('http://localhost:3001/api/upload', formData);
@@ -281,15 +279,15 @@ function App() {
   const handleBatchFixAvatar = async () => {
     const unfixJobs = queue.filter(j => 
       ['COMPLETED', 'ERROR'].includes(j.status) && 
-      !j.checkAvatarApify
+      !j.avatarFixed && !j.checkAvatarApify
     );
 
     if (unfixJobs.length === 0) {
-      alert('Không có tiến trình nào trong lịch sử chưa chạy sửa ảnh bằng Apify.');
+      alert('Không có tiến trình nào trong lịch sử chưa sửa ảnh.');
       return;
     }
 
-    if (!window.confirm(`Tìm thấy ${unfixJobs.length} tiến trình chưa chạy sửa ảnh bằng Apify.\nBạn có muốn đưa tất cả vào hàng đợi để xử lý không?`)) {
+    if (!window.confirm(`Tìm thấy ${unfixJobs.length} tiến trình chưa sửa ảnh đại diện.\nBạn có muốn đưa tất cả vào hàng đợi để tự động sửa ảnh sang chuẩn HD (không cần API) không?`)) {
       return;
     }
 
@@ -660,17 +658,7 @@ function App() {
                     checked={jobOptions.checkAvatar} 
                     onChange={e => setJobOptions({...jobOptions, checkAvatar: e.target.checked})} 
                   />
-                  <span>Kiểm tra link ảnh avatar và sửa lỗi</span>
-                </label>
-
-                <label className="liquid-checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    className="liquid-checkbox"
-                    checked={jobOptions.checkAvatarApify} 
-                    onChange={e => setJobOptions({...jobOptions, checkAvatarApify: e.target.checked})} 
-                  />
-                  <span>Kiểm tra link ảnh avatar và sửa bằng Apify</span>
+                  <span>Kiểm tra link ảnh avatar và tự động sửa (Chuẩn HD, không cần API)</span>
                 </label>
 
                 {/* Concurrency Range */}
@@ -802,12 +790,12 @@ function App() {
                         onClick={handleBatchFixAvatar} 
                         className="btn-outline btn-outline-accent" 
                         style={{ 
-                          opacity: queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length === 0 ? 0.5 : 1
+                          opacity: queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.avatarFixed && !j.checkAvatarApify).length === 0 ? 0.5 : 1
                         }}
-                        title="Đưa các tiến trình trong lịch sử chưa sửa ảnh bằng Apify vào hàng đợi"
+                        title="Đưa các tiến trình trong lịch sử chưa sửa ảnh vào hàng đợi để tự động sửa sang chuẩn HD (không cần API)"
                       >
                         <RefreshCw size={15} /> 
-                        Sửa ảnh Apify hàng loạt ({queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.checkAvatarApify).length})
+                        Sửa ảnh Avatar hàng loạt ({queue.filter(j => ['COMPLETED', 'ERROR'].includes(j.status) && !j.avatarFixed && !j.checkAvatarApify).length})
                       </button>
                       
                       <button 
@@ -906,9 +894,9 @@ function App() {
 
                           <JobTimer job={job} />
 
-                          {job.checkAvatarApify && activeTab === 'history' && (
-                            <span className="liquid-badge liquid-badge-success" title="Đã trích xuất & sửa link avatar từ Apify">
-                              <CheckCircle size={12} /> Đã sửa ảnh Apify
+                          {(job.avatarFixed || job.checkAvatarApify) && activeTab === 'history' && (
+                            <span className="liquid-badge liquid-badge-success" title="Đã trích xuất & sửa link avatar chuẩn HD">
+                              <CheckCircle size={12} /> Đã sửa ảnh HD
                             </span>
                           )}
                         </div>
@@ -1040,13 +1028,14 @@ function App() {
                           </a>
                         )}
 
-                        {activeTab === 'history' && !job.checkAvatarApify && (job.status === 'COMPLETED' || job.status === 'ERROR') && (
+                        {activeTab === 'history' && !job.avatarFixed && !job.checkAvatarApify && (job.status === 'COMPLETED' || job.status === 'ERROR') && (
                           <button 
                             onClick={() => handleFixAvatar(job.id)} 
                             className="btn-outline btn-outline-accent"
                             style={{ padding: '0.45rem 0.85rem' }}
+                            title="Quét và sửa link ảnh avatar chuẩn HD tự động (không cần API)"
                           >
-                            <RefreshCw size={14} /> Sửa ảnh bằng Apify
+                            <RefreshCw size={14} /> Sửa ảnh Avatar
                           </button>
                         )}
                       </div>

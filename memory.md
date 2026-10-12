@@ -16,5 +16,7 @@ AI và các Developer nên ghi lại các quy ước mã nguồn, các lỗi đ�
   - Lưu trữ an toàn: Mọi thao tác ghi `queue.json` phải thực hiện atomic (`.tmp` rồi rename) và luôn duy trì file backup `queue.json.bak` để tránh mất dữ liệu khi mất điện hoặc tắt máy đột ngột.
   - Checkpoint: Tiến trình quét lưu checkpoint sau mỗi chunk (`outputs/checkpoint_{jobId}.json`) chứa danh sách hàng đã quét, vị trí dừng, và kết quả sống/chết. Khi server tắt hoặc gặp sự cố, tiến trình được chuyển sang `INTERRUPTED` và cho phép "Tiếp tục" quét tiếp từ điểm dừng mà không bị mất dữ liệu hay tốn quota Apify.
   - Graceful Shutdown: Bắt các tín hiệu SIGINT, SIGTERM, SIGHUP, SIGBREAK, uncaughtException để đóng Puppeteer browser sạch sẽ và lưu trạng thái hàng đợi trước khi thoát process.
-  - Tự động chạy lại: Khi server khởi động lại, các tiến trình `PENDING` được tự động kích hoạt xử lý sau 1.2s.
+  - Cơ chế trích xuất & Sửa Avatar HD:
+  - Hệ thống sử dụng bộ cào nội bộ 2 tầng (Hybrid Scraper) thay vì Apify: Tầng 1 dùng Fast HTTP request bóc tách thẻ OpenGraph `og:image` (~300ms, không tốn RAM trình duyệt), Tầng 2 dự phòng qua Puppeteer bóc tách DOM/SVG profile image.
+  - Trước khi cào mới, hệ thống tự động kiểm tra xem URL ảnh cũ có còn sống không bằng request Range 1KB siêu nhẹ. Nếu còn sống, tự động nâng cấp sang HD bằng `optimizeFacebookAvatarUrl` (loại bỏ param `ctp=s50x50` của Facebook CDN). Không cần bất kỳ API Token nào.
 
