@@ -71,6 +71,92 @@ function optimizeFacebookAvatarUrl(url) {
     return url;
 }
 
+function isPlaceholderOrStockImageUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    const lower = url.trim().toLowerCase();
+    return (
+        lower.includes('images.unsplash.com') ||
+        lower.includes('unsplash.com') ||
+        lower.includes('via.placeholder.com') ||
+        lower.includes('placeholder.com') ||
+        lower.includes('dummyimage.com') ||
+        lower.includes('picsum.photos') ||
+        lower.includes('freepik.com') ||
+        lower.includes('shutterstock.com') ||
+        lower.includes('pixabay.com') ||
+        lower.includes('pexels.com') ||
+        lower.includes('placehold.it') ||
+        lower.includes('placekitten.com')
+    );
+}
+
+function isFacebookCdnUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    const lower = url.trim().toLowerCase();
+    if (lower.includes('static.xx.fbcdn.net') || lower.includes('rsrc.php')) {
+        return false;
+    }
+    return lower.includes('fbcdn.net') || lower.includes('fbsbx.com');
+}
+
+function getFacebookGraphAvatarUrl(fbLink) {
+    if (!fbLink || typeof fbLink !== 'string') return null;
+
+    try {
+        let urlString = fbLink.trim();
+        if (!urlString.startsWith('http')) {
+            urlString = 'https://' + urlString;
+        }
+
+        const urlObj = new URL(urlString);
+        if (!urlObj.hostname.includes('facebook.com') && !urlObj.hostname.includes('fb.com')) {
+            return null;
+        }
+
+        // 1. Dạng query parameter id: profile.php?id=123456...
+        if (urlObj.pathname.includes('profile.php')) {
+            const id = urlObj.searchParams.get('id');
+            if (id) {
+                return `https://graph.facebook.com/${id}/picture?width=800`;
+            }
+        }
+
+        const pathParts = urlObj.pathname.split('/').filter(part => part.length > 0);
+        if (pathParts.length === 0) return null;
+
+        let usernameOrId = null;
+
+        // 2. Dạng đường dẫn /p/Ten-Page-100090527019929/ hoặc /p/100090527019929/
+        if (pathParts[0] === 'p' && pathParts.length >= 2) {
+            const m = pathParts[1].match(/(\d{8,})/);
+            if (m) {
+                usernameOrId = m[1];
+            } else {
+                usernameOrId = pathParts[1];
+            }
+        } else if (pathParts[0] === 'people' && pathParts.length >= 2) {
+            // Dạng /people/Ten/100090527019929/
+            const m = pathParts[pathParts.length - 1].match(/(\d{8,})/);
+            if (m) {
+                usernameOrId = m[1];
+            } else {
+                usernameOrId = pathParts[pathParts.length - 1];
+            }
+        } else if (!['groups', 'events', 'watch', 'marketplace', 'gaming', 'stories'].includes(pathParts[0].toLowerCase())) {
+            // Dạng /username hoặc /username/videos/...
+            usernameOrId = pathParts[0];
+        }
+
+        if (usernameOrId && !['p', 'people', 'home.php', 'watch', 'stories'].includes(usernameOrId)) {
+            return `https://graph.facebook.com/${usernameOrId}/picture?width=800`;
+        }
+
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
 function isActivityCheckKey(key) {
     if (!key) return false;
     return /^active_within/i.test(key) || /^latest_post_date$/i.test(key);
@@ -1432,24 +1518,47 @@ async function runJob(job) {
                                 let currentImgUrl = row[imgCol];
                                 let isImgValid = false;
 
-                                // Kiểm tra ảnh hiện tại có còn tải được không
+                                // Kiểm tra tính hợp lệ của ảnh hiện tại:
+                                // 1. Bắt buộc phải là link http/https
+                                // 2. KHÔNG phải ảnh placeholder / stock (như images.unsplash.com, placeholder...)
+                                // 3. KHÔNG phải link Graph API cũ
+                                // 4. Phải thuộc CDN lưu trữ ảnh của Facebook (fbcdn.net, fbsbx.com)
+                                // 5. Kiểm tra request thực tế có trả về image/ hay không
                                 if (currentImgUrl && typeof currentImgUrl === 'string' && currentImgUrl.startsWith('http')) {
-                                    if (!currentImgUrl.includes('graph.facebook.com')) {
+                                    const isPlaceholder = isPlaceholderOrStockImageUrl(currentImgUrl);
+                                    const isGraphApi = currentImgUrl.includes('graph.facebook.com');
+                                    const isFbCdn = isFacebookCdnUrl(currentImgUrl);
+
+                                    if (!isPlaceholder && !isGraphApi && isFbCdn) {
                                         isImgValid = await checkImageUrlValid(currentImgUrl);
                                     }
                                 }
 
                                 if (isImgValid) {
                                     row[imgCol] = optimizeFacebookAvatarUrl(currentImgUrl);
-                                    pushLog(job, `✅ Ảnh đại diện còn hoạt động tốt (HD): ${fbMatch}`, 'info');
+                                    pushLog(job, `✅ Ảnh đại diện Facebook còn hoạt động tốt (HD): ${fbMatch}`, 'info');
                                 } else {
-                                    pushLog(job, `🖼️ Đang trích xuất ảnh đại diện mới: ${fbMatch}`, 'info');
+                                    const isPlaceholder = isPlaceholderOrStockImageUrl(currentImgUrl);
+                                    if (isPlaceholder) {
+                                        const shortUrl = currentImgUrl.length > 55 ? `${currentImgUrl.substring(0, 52)}...` : currentImgUrl;
+                                        pushLog(job, `🔄 Phát hiện ảnh mẫu placeholder (${shortUrl}), đang thay thế bằng Avatar Facebook: ${fbMatch}`, 'info');
+                                    } else {
+                                        pushLog(job, `🖼️ Đang trích xuất ảnh đại diện Facebook mới: ${fbMatch}`, 'info');
+                                    }
+
                                     const newAvatar = await extractFacebookAvatar(fullUrl, browser, page);
                                     if (newAvatar) {
                                         row[imgCol] = newAvatar;
                                         pushLog(job, `✅ Cập nhật Avatar HD thành công: ${fbMatch}`, 'success');
                                     } else {
-                                        pushLog(job, `⚠️ Không tìm thấy ảnh đại diện mới: ${fbMatch}`, 'warning');
+                                        // Phương án dự phòng (fallback): Sử dụng Graph API nếu không thể cào ảnh thật
+                                        const fallbackGraph = getFacebookGraphAvatarUrl(fullUrl);
+                                        if (fallbackGraph) {
+                                            row[imgCol] = fallbackGraph;
+                                            pushLog(job, `⚠️ Không thể cào ảnh thật, sử dụng Graph API dự phòng: ${fbMatch}`, 'warning');
+                                        } else {
+                                            pushLog(job, `⚠️ Không tìm thấy ảnh đại diện mới: ${fbMatch}`, 'warning');
+                                        }
                                     }
                                 }
                             }
