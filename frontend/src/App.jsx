@@ -70,6 +70,30 @@ const JobTimer = ({ job }) => {
   );
 };
 
+const getFormattedTimestamp = (date = new Date()) => {
+  const d = (date instanceof Date && !isNaN(date)) ? date : new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const y = d.getFullYear();
+  const m = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mm = pad(d.getMinutes());
+  const ss = pad(d.getSeconds());
+  return `${y}${m}${day}_${hh}${mm}${ss}`;
+};
+
+const getTimestampedDownloadName = (originalFilename, prefix = '') => {
+  const ts = getFormattedTimestamp();
+  let base = (originalFilename || 'leads').replace(/\.[^/.]+$/, "");
+  base = base.replace(/^(FixAvatar_|Partial_)+/i, '');
+  base = base.replace(/(_alive|_dead|_checked)+/gi, '');
+  base = base.replace(/_\d{13}/g, '');
+  base = base.replace(/_\d{8}_\d{6}/g, '');
+  base = base.trim().replace(/^_+|_+$/g, '') || 'leads';
+  const p = prefix ? `${prefix}_` : '';
+  return `${p}${base}_${ts}.csv`;
+};
+
 function App() {
   const [queue, setQueue] = useState([]);
   const [isConnected, setIsConnected] = useState(socket.connected);
@@ -198,8 +222,9 @@ function App() {
         responseType: 'blob'
       });
 
-      let filename = `LeadPurify_${type === 'alive' ? 'Link_Song' : 'Link_Chet'}.zip`;
-      const disposition = res.headers['content-disposition'];
+      const fallbackTs = getFormattedTimestamp();
+      let filename = `LeadPurify_${type === 'alive' ? 'Link_Song' : 'Link_Chet'}_${fallbackTs}.zip`;
+      const disposition = res.headers['content-disposition'] || res.headers['Content-Disposition'];
       if (disposition) {
         const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
         if (utf8Match && utf8Match[1]) {
@@ -316,10 +341,14 @@ function App() {
   };
 
   const handleConfirmHistoryDownload = (editedFile) => {
+    let downloadName = editedFile.name;
+    if (!/_\d{8}_\d{6}\.csv$/i.test(downloadName)) {
+      downloadName = getTimestampedDownloadName(downloadName);
+    }
     const url = URL.createObjectURL(editedFile);
     const a = document.createElement('a');
     a.href = url;
-    a.download = editedFile.name;
+    a.download = downloadName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -978,7 +1007,7 @@ function App() {
                         {job.downloadLinks.aliveFile && (
                           <div style={{ display: 'flex' }}>
                             <button 
-                              onClick={() => handlePreviewHistory(job.downloadLinks.aliveFile, `Alive_${job.filename}`)} 
+                              onClick={() => handlePreviewHistory(job.downloadLinks.aliveFile, getTimestampedDownloadName(job.filename, 'Alive'))} 
                               className="btn-outline btn-outline-success" 
                               style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none', padding: '0.45rem 0.75rem' }} 
                               title="Xem trước danh sách link sống"
@@ -987,7 +1016,7 @@ function App() {
                             </button>
                             <a 
                               href={job.downloadLinks.aliveFile} 
-                              download 
+                              download={getTimestampedDownloadName(job.filename, 'Alive')} 
                               className="btn-outline btn-outline-success" 
                               style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, padding: '0.45rem 0.85rem' }}
                             >
@@ -999,7 +1028,7 @@ function App() {
                         {job.downloadLinks.deadFile && (
                           <div style={{ display: 'flex' }}>
                             <button 
-                              onClick={() => handlePreviewHistory(job.downloadLinks.deadFile, `Dead_${job.filename}`)} 
+                              onClick={() => handlePreviewHistory(job.downloadLinks.deadFile, getTimestampedDownloadName(job.filename, 'Dead'))} 
                               className="btn-outline btn-outline-danger" 
                               style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none', padding: '0.45rem 0.75rem' }} 
                               title="Xem trước danh sách link chết"
@@ -1008,7 +1037,7 @@ function App() {
                             </button>
                             <a 
                               href={job.downloadLinks.deadFile} 
-                              download 
+                              download={getTimestampedDownloadName(job.filename, 'Dead')} 
                               className="btn-outline btn-outline-danger" 
                               style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, padding: '0.45rem 0.85rem' }}
                             >
@@ -1020,7 +1049,7 @@ function App() {
                         {job.downloadLinks.checkedFile && (
                           <a 
                             href={job.downloadLinks.checkedFile} 
-                            download 
+                            download={getTimestampedDownloadName(job.filename, 'Checked')} 
                             className="btn-outline btn-outline-accent" 
                             style={{ padding: '0.45rem 0.85rem' }}
                           >

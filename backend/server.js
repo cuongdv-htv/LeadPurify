@@ -112,6 +112,61 @@ function cleanRowForDownload(row) {
     return newRow;
 }
 
+function getFormattedTimestamp(date = new Date()) {
+    const d = (date instanceof Date && !isNaN(date)) ? date : new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const y = d.getFullYear();
+    const m = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mm = pad(d.getMinutes());
+    const ss = pad(d.getSeconds());
+    return `${y}${m}${day}_${hh}${mm}${ss}`;
+}
+
+function cleanBaseFilename(filename) {
+    if (!filename) return 'leads';
+    let base = path.basename(filename).replace(/\.[^/.]+$/, "");
+    // Loại bỏ prefix FixAvatar_ hoặc Partial_
+    base = base.replace(/^(FixAvatar_|Partial_)+/i, '');
+    // Loại bỏ hậu tố trạng thái lặp lại
+    base = base.replace(/(_alive|_dead|_checked)+/gi, '');
+    // Loại bỏ timestamp cũ (dạng epoch 13 số hoặc định dạng YYYYMMDD_HHmmss)
+    base = base.replace(/_\d{13}/g, '');
+    base = base.replace(/_\d{8}_\d{6}/g, '');
+    base = base.trim().replace(/^_+|_+$/g, '');
+    return base || 'leads';
+}
+
+function formatDownloadFilename(filename, fileStats = null) {
+    if (!filename) return `leads_${getFormattedTimestamp()}.csv`;
+    const ext = path.extname(filename).toLowerCase() || '.csv';
+    
+    // Nếu là file ZIP, giữ hoặc gắn đuôi timestamp chuẩn
+    if (ext === '.zip') {
+        if (/_\d{8}_\d{6}\.zip$/i.test(filename)) return filename;
+        const baseZip = path.basename(filename, ext).replace(/_\d{8}_\d{6}$/, '');
+        const ts = (fileStats && fileStats.mtime) ? getFormattedTimestamp(fileStats.mtime) : getFormattedTimestamp();
+        return `${baseZip}_${ts}.zip`;
+    }
+
+    const isPartial = /^Partial_/i.test(path.basename(filename));
+    const isDead = /_dead/i.test(path.basename(filename));
+    const isAlive = /_alive/i.test(path.basename(filename));
+    const isChecked = /_checked/i.test(path.basename(filename));
+
+    const cleanBase = cleanBaseFilename(filename);
+    const ts = (fileStats && fileStats.mtime) ? getFormattedTimestamp(fileStats.mtime) : getFormattedTimestamp();
+
+    const prefix = isPartial ? 'Partial_' : '';
+    let status = '';
+    if (isDead) status = '_dead';
+    else if (isAlive) status = '_alive';
+    else if (isChecked) status = '_checked';
+
+    return `${prefix}${cleanBase}${status}_${ts}${ext}`;
+}
+
 function getConfig() {
     try {
         const configPath = path.join(__dirname, 'config.json');
@@ -150,7 +205,10 @@ function markKeyAsExpired(token) {
 }
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  exposedHeaders: ['Content-Disposition']
+}));
 app.use(express.json());
 
 const server = createServer(app);
@@ -1077,8 +1135,8 @@ async function runJob(job) {
             currentRunningJob = null;
             
             if (job.status !== 'REMOVED' && job.status !== 'CANCELED' && job.status !== 'INTERRUPTED' && job.status !== 'PAUSED') {
-                const ts = new Date().getTime();
-                const baseName = job.filename.replace(/\.[^/.]+$/, "");
+                const ts = getFormattedTimestamp();
+                const baseName = cleanBaseFilename(job.filename);
                 const aliveFilename = `${baseName}_alive_${ts}.csv`;
                 const deadFilename = `${baseName}_dead_${ts}.csv`;
                 
@@ -1107,9 +1165,10 @@ async function runJob(job) {
                 pushLog(job, `🎉 Hoàn thành! Sống: ${job.stats.alive}, Chết: ${job.stats.dead}`, 'success');
             } else if (job.status !== 'REMOVED' && job.hasCheckpoint && (aliveRows.length > 0 || deadRows.length > 0)) {
                 // Tạo file kết quả tạm thời nếu bị hủy hoặc gián đoạn để người dùng vẫn có thể tải
-                const baseName = job.filename.replace(/\.[^/.]+$/, "");
-                const partialAlive = `Partial_${baseName}_alive_${job.id}.csv`;
-                const partialDead = `Partial_${baseName}_dead_${job.id}.csv`;
+                const ts = getFormattedTimestamp();
+                const baseName = cleanBaseFilename(job.filename);
+                const partialAlive = `Partial_${baseName}_alive_${ts}.csv`;
+                const partialDead = `Partial_${baseName}_dead_${ts}.csv`;
                 try {
                     const reorderedPartialAlive = aliveRows.map(reorderRowColumns);
                     const reorderedPartialDead = deadRows.map(reorderRowColumns);
@@ -1577,11 +1636,23 @@ app.get('/api/download/:filename', (req, res) => {
     return res.download(filePath, filename);
   }
 
+  let downloadFilename = filename;
+  try {
+    const stat = fs.statSync(filePath);
+    downloadFilename = formatDownloadFilename(filename, stat);
+  } catch (e) {
+    downloadFilename = formatDownloadFilename(filename);
+  }
+
+  const safeAsciiFilename = downloadFilename.replace(/[^\x20-\x7E]/g, '_');
+
   // Khi download về máy: xóa 2 cột kiểm tra hoạt động (Active_Within_* và Latest_Post_Date)
   try {
     const fileContent = fs.readFileSync(filePath, 'utf8');
     if (!fileContent.trim()) {
-      return res.download(filePath, filename);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeAsciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`);
+      return res.download(filePath, downloadFilename);
     }
 
     const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
@@ -1589,14 +1660,18 @@ app.get('/api/download/:filename', (req, res) => {
       const cleanedData = parsed.data.map(cleanRowForDownload);
       const csvStr = '\uFEFF' + Papa.unparse(cleanedData);
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${safeAsciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`);
       return res.send(csvStr);
     } else {
-      return res.download(filePath, filename);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeAsciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`);
+      return res.download(filePath, downloadFilename);
     }
   } catch (err) {
     console.error('Lỗi khi lọc cột tải xuống:', err);
-    return res.download(filePath, filename);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeAsciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`);
+    return res.download(filePath, downloadFilename);
   }
 });
 
@@ -1652,8 +1727,16 @@ app.get(['/api/download-batch-zip/:type', '/api/download-batch-zip'], (req, res)
         fileContent = fs.readFileSync(filePath, 'utf8');
       }
 
+      let zipEntryName = rawFilename;
+      try {
+        const stat = fs.statSync(filePath);
+        zipEntryName = formatDownloadFilename(rawFilename, stat);
+      } catch (e) {
+        zipEntryName = formatDownloadFilename(rawFilename);
+      }
+
       entries.push({
-        name: rawFilename,
+        name: zipEntryName,
         data: fileContent
       });
     }
@@ -1664,15 +1747,14 @@ app.get(['/api/download-batch-zip/:type', '/api/download-batch-zip'], (req, res)
       });
     }
 
-    const pad = (n) => String(n).padStart(2, '0');
-    const now = new Date();
-    const tsStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const tsStr = getFormattedTimestamp();
     const zipFilename = type === 'alive' ? `LeadPurify_Link_Song_${tsStr}.zip` : `LeadPurify_Link_Chet_${tsStr}.zip`;
+    const safeZipName = zipFilename.replace(/[^\x20-\x7E]/g, '_');
 
     const zipBuffer = createZipBuffer(entries);
 
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(zipFilename)}"; filename*=UTF-8''${encodeURIComponent(zipFilename)}`);
+    res.setHeader('Content-Disposition', `attachment; filename="${safeZipName}"; filename*=UTF-8''${encodeURIComponent(zipFilename)}`);
     res.setHeader('Content-Length', zipBuffer.length);
     return res.send(zipBuffer);
   } catch (error) {
